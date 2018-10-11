@@ -19,6 +19,9 @@
 name: 'example pipeline'
 version: '1.0'
 
+# output directory
+output_dir: 'output'
+
 ################################################################################
 #
 # Data sources

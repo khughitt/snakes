@@ -7,8 +7,8 @@
 # General
 name: rnaseq
 type: numeric
-xid: gene
-yid: sample
+xid: gene_id
+yid: sample_id
 
 #
 # Path to RNA-Seq count data
@@ -23,13 +23,13 @@ path: 'extra/example_data/rnaseq/*.txt'
 # Filtering
 filter:
   early: 
-    - filter1:
-        type: 'row_sums'
-        cutoff: 10
+    filter1:
+      type: 'row_sums'
+      cutoff: 10
   late:
-    - filter2:
-        type: 'row_variances'
-        cutoff: 0.10
+    filter2:
+      type: 'row_variances'
+      cutoff: 0.10
 
 # Transformations
 transform: ['log2', 'cpm']

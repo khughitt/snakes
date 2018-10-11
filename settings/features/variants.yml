@@ -7,8 +7,8 @@
 # General
 name: variants
 type: numeric
-xid: gene
-yid: sample
+xid: gene_id
+yid: sample_id
 
 #
 # Path to gene-level variant matrix

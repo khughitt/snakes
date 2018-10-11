@@ -7,8 +7,8 @@
 # General
 name: cnv
 type: numeric
-xid: gene
-yid: sample
+xid: gene_id
+yid: sample_id
 
 #
 # Path to CNV matrix

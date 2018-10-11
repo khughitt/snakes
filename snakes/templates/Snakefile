@@ -10,7 +10,10 @@
 # https://github.com/khughitt/snakes
 #
 ################################################################################
+import glob
+import os
 import yaml
+import pandas as pd
 
 #
 #  {{ config['name'] }} {{ config['version'] }}
@@ -20,10 +23,8 @@ import yaml
 sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
 response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
-{% for key, feature in features.items() %}
+{% for key, feature in features.items() -%}
 {% include 'data/' + feature['name'] + '.snakefile' %}
-{% endfor %}
+{% endfor -%}
 
-{#
 # vim: ft=python
-#}
