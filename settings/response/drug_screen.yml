@@ -1,0 +1,27 @@
+################################################################################
+#
+# Drug Screen Data Example Configuration
+#
+################################################################################
+
+# General
+name: drug_screen
+type: numeric
+xid: drug
+yid: sample
+
+#
+# Path to drug screen data
+#
+path: 'extra/example_data/drug_screen/ac50.csv'
+
+# Filtering
+filter:
+  - filter1:
+      - type: 'bimodal'
+      - cutoff: 0.9
+
+# Appearance
+# TODO...
+
+

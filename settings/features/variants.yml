@@ -1,0 +1,25 @@
+################################################################################
+#
+# Variant Example Configuration
+#
+################################################################################
+
+# General
+name: variants
+type: numeric
+xid: gene
+yid: sample
+
+#
+# Path to gene-level variant matrix
+#
+path: 'extra/example_data/variants/variants.txt'
+
+# Aggregation
+aggregate:
+  go: ['fxn1', 'fxn2']
+
+# Appearance
+# TODO...
+
+

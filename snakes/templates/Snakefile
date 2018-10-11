@@ -1,0 +1,26 @@
+################################################################################
+#                  _             
+#  ___ _ __   __ _| | _____  ___ 
+# / __| '_ \ / _` | |/ / _ \/ __|
+# \__ \ | | | (_| |   <  __/\__ \
+# |___/_| |_|\__,_|_|\_\___||___/
+#                               
+# Data integration and machine learning pipeline built on Snakemake
+#
+# https://github.com/khughitt/snakes
+#
+################################################################################
+import yaml
+
+# configfile: "default.yml"
+# config = yaml.load(open('settings/config.example.yml'))
+
+# load feature-specific config files
+
+# load feature and response workflows
+# for feature in config['features']:
+#     workflow.include(cfg['snakefile'])
+
+
+
+# vim: ft=python

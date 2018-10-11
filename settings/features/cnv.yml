@@ -1,0 +1,25 @@
+################################################################################
+#
+# Copy Number Variant (CNV) Example Configuration
+#
+################################################################################
+
+# General
+name: cnv
+type: numeric
+xid: gene
+yid: sample
+
+#
+# Path to CNV matrix
+#
+path: 'extra/example_data/cnv/*.txt'
+
+# Aggregation
+aggregate:
+  go: ['fxn1', 'fxn2']
+
+# Appearance
+# TODO...
+
+
