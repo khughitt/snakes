@@ -12,15 +12,18 @@
 ################################################################################
 import yaml
 
-# configfile: "default.yml"
-# config = yaml.load(open('settings/config.example.yml'))
+#
+#  {{ config['name'] }} {{ config['version'] }}
+#
 
-# load feature-specific config files
+# load sample and response metadata
+sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
+response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
-# load feature and response workflows
-# for feature in config['features']:
-#     workflow.include(cfg['snakefile'])
+{% for key, feature in features.items() %}
+{% include 'data/' + feature['name'] + '.snakefile' %}
+{% endfor %}
 
-
-
+{#
 # vim: ft=python
+#}

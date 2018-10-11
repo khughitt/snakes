@@ -3,18 +3,22 @@ snakes template renderer
 """
 import yaml
 from argparse import ArgumentParser
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename, Requirement
 
 class SnakefileRenderer(object):
     """Base notebook Renderer class"""
-    def __init__(self):
+    def __init__(self, config_filepath=None, **kwargs):
+        self.config = None
+
         self.feature_configs = {}
         self.response_configs = {}
 
-        self._load_config()
+        self.output_file = 'Snakefile'
 
-    def _load_config(self):
+        self._load_config(config_filepath, **kwargs)
+
+    def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
         # Load configuration
         print("- Loading configuration")
@@ -25,22 +29,31 @@ class SnakefileRenderer(object):
         args = parser.parse_args()
         args = dict((k, v) for k, v in list(vars(args).items()) if v is not None)
 
+        # Check for configuration file specified in the SnakefileRenderer constructor.
+        if config_filepath is not None:
+            config_file = config_filepath
+            if not os.path.isfile(config_file):
+                print("Invalid configuration path specified: %s" % args['config'])
+                sys.exit()
+
         # load main snakes configuration file
-        config = yaml.load(open('config.yml'))
+        self.config = yaml.load(open('config.yml'))
+
+        # Update default arguments with user-specified settings
+        self.config.update(args)
+
+        # Update with arguments specified to Notebook constructor
+        self.config.update(kwargs)
 
         # load feature-specific config files
-        for feature_yaml in config['features']:
+        for feature_yaml in self.config['features']:
             cfg = yaml.load(open(feature_yaml))
             self.feature_configs[cfg['name']] = cfg
 
         # load response-specific config files
-        for response_yaml in config['response']:
+        for response_yaml in self.config['response']:
             cfg = yaml.load(open(response_yaml))
             self.response_configs[cfg['name']] = cfg
-
-    def _buid_template(self):
-        """Dynamically constructs a jinja2 master Snakefile template"""
-        pass
 
     def _get_args(self):
         """Parses input and returns arguments"""
@@ -54,16 +67,22 @@ class SnakefileRenderer(object):
 
     def render(self):
         """Renders snakefile"""
-        # env = Environment(loader=PackageLoader('snakes', 'templates'))
-        # template = env.get_template(template_name)
         print("- Generating Snakefile...")
 
-        # snakefile = template.render(...)
+        # get snakefile jinja2 template
+        loaders = [PackageLoader('snakes', 'templates'), 
+                   PackageLoader('snakes', 'templates/data')]
+        env = Environment(loader=ChoiceLoader(loaders))
+        template = env.get_template('Snakefile')
 
-        # Output snakefile
-        # print("- Saving Snakefile to %s" % self.output_file)
+        # render template
+        snakefile = template.render(config=self.config, features=self.feature_configs,
+                                    responses=self.response_configs)
+
+        # save rendered snakefile to disk
+        print("- Saving Snakefile to {}".format(self.output_file))
         
-        # with open(self.output_file, 'w') as fp:
-        #     fp.write(html)
+        with open(self.output_file, 'w') as fp:
+            fp.write(snakefile)
 
 
