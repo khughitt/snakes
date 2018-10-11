@@ -5,9 +5,15 @@
 # {% endblock %}
 #
 ################################################################################
-{# variables to keep track of rule inputs and outputs -#}
+{##############################################-#}
+{# I/O variables                               -#}
+{##############################################-#}
 {% set cur_input  =  feature['path'] -%}
-{% set cur_output =  config['output_dir'] + '/raw/' + feature['name'] + '.csv' -%}
+{% set cur_output =  config['output_dir'] + '/' + feature['name'] + '/raw.csv' -%}
+
+#
+# Load raw data
+#
 rule {% block start_rule %}{% endblock %}:
     input: '{{ cur_input }}'
     output: '{{ cur_output }}'
@@ -37,10 +43,17 @@ rule {% block start_rule %}{% endblock %}:
         dat.to_csv(str(output[0]), sep='\t', index_label='{{ feature["xid"] }}')
 
 {% if 'filter' in feature and 'early' in feature['filter'] -%}
+#
+# Early filtering
+#
 {% for filter_name, filter_params in feature['filter']['early'].items() -%}
+{% set cur_input  = cur_output -%}
+{% set cur_output =  config['output_dir'] + '/' + feature['name'] + '/filter_early_' + filter_name + '.csv' -%}
 rule {{ feature['name'] }}_filter_early_{{ filter_name }}:
-    # foo
-{% endfor -%}
+    input: '{{ cur_input }}'
+    output: '{{ cur_output }}'
+    {% include 'filters/' + filter_params['type'] + '.snakefile' %}
+{% endfor %}
 {% endif -%}
 
 {#

@@ -26,6 +26,9 @@ filter:
     filter1:
       type: 'row_sums'
       cutoff: 10
+    filter2:
+      type: 'row_variances'
+      cutoff: 0.1
   late:
     filter2:
       type: 'row_variances'

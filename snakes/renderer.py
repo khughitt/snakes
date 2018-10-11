@@ -71,7 +71,11 @@ class SnakefileRenderer(object):
 
         # get snakefile jinja2 template
         loaders = [PackageLoader('snakes', 'templates'), 
-                   PackageLoader('snakes', 'templates/data')]
+                   PackageLoader('snakes', 'templates/aggregation'),
+                   PackageLoader('snakes', 'templates/data'),
+                   PackageLoader('snakes', 'templates/filters'),
+                   PackageLoader('snakes', 'templates/transform'),
+                   PackageLoader('snakes', 'templates/vis')]
         env = Environment(loader=ChoiceLoader(loaders))
         template = env.get_template('Snakefile')
 
