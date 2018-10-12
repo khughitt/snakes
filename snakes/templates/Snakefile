@@ -23,8 +23,10 @@ import pandas as pd
 sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
 response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
+{# dictionary to keep of most recent rules for each data type -#}
+{% set most_recent_rules = {} -%}
 {% for key, feature in features.items() -%}
-{% include 'data/' + feature['name'] + '.snakefile' %}
+{% include 'data/' + feature['name'] + '.snakefile' -%}
 {% endfor -%}
 
 # vim: ft=python

@@ -13,7 +13,6 @@
 {% set ns = namespace(found=false) %}
 {% set ns.cur_input  =  feature['path'] -%}
 {% set ns.cur_output =  config['output_dir'] + '/' + feature['name'] + '/raw.csv' -%}
-
 #
 # Load raw data
 #
@@ -56,9 +55,10 @@ rule {{ feature['name'] }}_filter_{{ filter_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'filters/' + filter_params['type'] + '.snakefile' %}
-{% endfor %}
+{% endfor -%}
 {% endif -%}
-
+{# update dict with most recent rule in workflow -#}
+{% do most_recent_rules.update({feature['name']: ns.cur_output}) %}
 {#
 # vim: ft=python
-#}
+-#}
