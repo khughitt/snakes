@@ -6,17 +6,20 @@
 #
 ################################################################################
 {##############################################-#}
-{# I/O variables                               -#}
+{# Variables to keep track of most recent rule -#}
+{# names. "namespace" used to allow scope to   -#}
+{# modified from within loops.                 -#}
 {##############################################-#}
-{% set cur_input  =  feature['path'] -%}
-{% set cur_output =  config['output_dir'] + '/' + feature['name'] + '/raw.csv' -%}
+{% set ns = namespace(found=false) %}
+{% set ns.cur_input  =  feature['path'] -%}
+{% set ns.cur_output =  config['output_dir'] + '/' + feature['name'] + '/raw.csv' -%}
 
 #
 # Load raw data
 #
 rule {% block start_rule %}{% endblock %}:
-    input: '{{ cur_input }}'
-    output: '{{ cur_output }}'
+    input: '{{ ns.cur_input }}'
+    output: '{{ ns.cur_output }}'
     run:
         # get path to input file(s)
         input_files = glob.glob(input)
@@ -42,16 +45,16 @@ rule {% block start_rule %}{% endblock %}:
 
         dat.to_csv(str(output[0]), sep='\t', index_label='{{ feature["xid"] }}')
 
-{% if 'filter' in feature and 'early' in feature['filter'] -%}
+{% if 'filter' in feature -%}
 #
-# Early filtering
+# Data filtering
 #
-{% for filter_name, filter_params in feature['filter']['early'].items() -%}
-{% set cur_input  = cur_output -%}
-{% set cur_output =  config['output_dir'] + '/' + feature['name'] + '/filter_early_' + filter_name + '.csv' -%}
-rule {{ feature['name'] }}_filter_early_{{ filter_name }}:
-    input: '{{ cur_input }}'
-    output: '{{ cur_output }}'
+{% for filter_name, filter_params in feature['filter'].items() -%}
+    {% set ns.cur_input  = ns.cur_output -%}
+    {% set ns.cur_output =  config['output_dir'] + '/' + feature['name'] + '/filter_' + filter_name + '.csv' -%}
+rule {{ feature['name'] }}_filter_{{ filter_name }}:
+    input: '{{ ns.cur_input }}'
+    output: '{{ ns.cur_output }}'
     {% include 'filters/' + filter_params['type'] + '.snakefile' %}
 {% endfor %}
 {% endif -%}

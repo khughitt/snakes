@@ -35,12 +35,12 @@ random_seed: 1
 #
 ################################################################################
 features:
-  - 'features/rnaseq.yml'
-  - 'features/cnv.yml'
-  - 'features/variants.yml'
+  - 'settings/features/rnaseq.yml'
+  - 'settings/features/cnv.yml'
+  - 'settings/features/variants.yml'
 
 response:
-  - 'response/drug_screen.yml'
+  - 'settings/response/drug_screen.yml'
 
 metadata:
   samples: 'extra/example_data/samples.csv'
@@ -58,11 +58,12 @@ exclude_samples:
 
 ################################################################################
 #
-# Dataset filters
+# Global filters
 #
 ################################################################################
-dataset_filters:
+filter:
   exclude_columns:
+    type: 'exclude_columns'
     column_id: 'sample_id'
     columns_to_exclude:
       - 'KMS21BM_JCRB'
@@ -71,14 +72,6 @@ dataset_filters:
   zero_variance_filter:
     type: 'row_variances'
     cutoff_value: 0
-
-################################################################################
-#
-# Training set filters
-#
-################################################################################
-training_set_filters:
-  min_nonzero: 4
 
 ################################################################################
 #
@@ -112,6 +105,14 @@ feature_selection:
   features_per_subsample: 2000
   random_forest_ntree: 10000
   random_forest_mtry: 4
+
+################################################################################
+#
+# Training set filters
+#
+################################################################################
+training_set_filters:
+  min_nonzero: 4
 
 ################################################################################
 #
