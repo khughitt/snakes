@@ -5,7 +5,7 @@
 ################################################################################
 
 # General
-name: drug_screen
+name: ac50
 type: numeric
 xid: drug
 yid: sample
@@ -17,11 +17,12 @@ path: 'extra/example_data/drug_screen/ac50.csv'
 
 # Filtering
 filter:
-  - filter1:
-      - type: 'bimodal'
-      - cutoff: 0.9
-
-# Appearance
-# TODO...
+  - curve_class_filter:
+    - type: 'drug_curve_class'
+    - min_valid_curves: 35 
+  - bimodal_filter:
+    - type: 'bimodal'
+    - mad_quantile_cutoff: 0.98
+    - dip_quantile_cutoff: 0.02
 
 

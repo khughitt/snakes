@@ -15,11 +15,9 @@ yid: sample_id
 #
 path: 'extra/example_data/cnv/*.txt'
 
-# Aggregation
-aggregate:
-  go: ['fxn1', 'fxn2']
-
-# Appearance
-# TODO...
-
+# Filtering
+filter:
+  missing_data_filter:
+    type: 'max_nas'
+    cutoff_value: 0
 

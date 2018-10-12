@@ -22,22 +22,81 @@ version: '1.0'
 # output directory
 output_dir: 'output'
 
+# development mode options
+dev_mode: true
+dev_mode_subsample_ratio: 0.05
+
+# random seed
+random_seed: 1
+
 ################################################################################
 #
 # Data sources
 #
 ################################################################################
 features:
-  - settings/features/rnaseq.yml
-  - settings/features/cnv.yml
-  - settings/features/variants.yml
+  - 'features/rnaseq.yml'
+  - 'features/cnv.yml'
+  - 'features/variants.yml'
 
 response:
-  - settings/response/drug_screen.yml
+  - 'response/drug_screen.yml'
 
 metadata:
-  samples: extra/example_data/samples.csv
-  response: extra/example_data/drugs.csv
+  samples: 'extra/example_data/samples.csv'
+  response: 'extra/example_data/drugs.csv'
+
+################################################################################
+#
+# Samples
+#
+################################################################################
+exclude_samples: 
+  - 'KMS21BM_JCRB'
+  - 'Karpas417_ECACC'
+  - 'SKMM1_PLB'
+
+################################################################################
+#
+# Dataset filters
+#
+################################################################################
+dataset_filters:
+  exclude_columns:
+    column_id: 'sample_id'
+    columns_to_exclude:
+      - 'KMS21BM_JCRB'
+      - 'Karpas417_ECACC'
+      - 'SKMM1_PLB'
+  zero_variance_filter:
+    type: 'row_variances'
+    cutoff_value: 0
+
+################################################################################
+#
+# Training set filters
+#
+################################################################################
+training_set_filters:
+  min_nonzero: 4
+
+################################################################################
+#
+# Aggregation settings
+#
+################################################################################
+clustering:
+  hclust:
+    num_clusters: 100
+    fxns: ['median', 'sum', 'max', 'var']
+gene_sets:
+  msigdb:
+    gmts:
+      - '/path/to/h.v6.1.entrez.gmt'
+      - '/path/to/c2.v6.1.entrez.gmt'
+      - '/path/to/c6.v6.1.entrez.gmt'
+      - '/path/to/c7.v6.1.entrez.gmt'
+    fxns: ['median', 'sum', 'max', 'var']
 
 ################################################################################
 #
@@ -46,7 +105,13 @@ metadata:
 ################################################################################
 feature_selection:
   enabled: true
-  method: 'random_forest'
+  balance_data: false
+  remove_correlated_features: true
+  max_feature_cor: 0.75
+  num_iterations: 15000
+  features_per_subsample: 2000
+  random_forest_ntree: 10000
+  random_forest_mtry: 4
 
 ################################################################################
 #
@@ -61,4 +126,5 @@ machine_learning:
 # Software
 #
 ################################################################################
+
 

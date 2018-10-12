@@ -22,24 +22,18 @@ path: 'extra/example_data/rnaseq/*.txt'
 
 # Filtering
 filter:
-  early: 
-    filter1:
-      type: 'row_sums'
-      cutoff: 10
-    filter2:
-      type: 'row_variances'
-      cutoff: 0.1
-  late:
-    filter2:
-      type: 'row_variances'
-      cutoff: 0.10
+  min_reads_filter:
+    type: 'row_sums'
+    cutoff_value: 20
+  min_var_filter:
+    type: 'row_variances'
+    cutoff_value: 0
+  coding_gene_filter:
+    type: 'gene_biotype'
+    biotypes: ['protein_coding']
 
 # Transformations
-transform: ['log2', 'cpm']
-
-# Aggregation
-aggregate:
-  go: ['fxn1', 'fxn2']
+transform: ['cpm', 'log2']
 
 # Appearance
 # TODO...

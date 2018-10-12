@@ -15,11 +15,19 @@ yid: sample_id
 #
 path: 'extra/example_data/variants/variants.txt'
 
+# Filtering
+filter:
+  min_variants_filter:
+    type: 'row_sums'
+    cutoff_value: 3
+
 # Aggregation
-aggregate:
-  go: ['fxn1', 'fxn2']
-
-# Appearance
-# TODO...
-
+#
+clustering:
+  hclust:
+    num_clusters: 100
+    fxns: ['sum', 'var']
+gene_sets:
+  msigdb:
+    fxns: ['sum', 'var']
 
