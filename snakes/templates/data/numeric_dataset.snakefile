@@ -64,12 +64,12 @@ rule {{ dataset['name'] }}_filter_{{ filter_name }}:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = config['output_dir'] + '/' + dataset['name'] + '/cleaned.csv' -%}
+{% set cleaned_file = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset['name']) -%}
 rule {{ dataset['name'] }}_cleaned:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'
 
-{# update dict with most recent rule in workflow -#}
-{% do most_recent_rules.update({dataset['name']: cleaned_file}) %}
+{# add to list of features to be used in training set contruction -#}
+{% do training_set_features.append({dataset['name']: cleaned_file}) %}
 

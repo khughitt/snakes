@@ -23,8 +23,8 @@ import pandas as pd
 sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
 response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
-{# dictionary used to keep track of the most recent rules for each data type -#}
-{% set most_recent_rules = {} -%}
+{# list used to keep track of different feature sources to use for training set construction -#}
+{% set training_set_features = [] -%}
 
 {############################################################################################-#}
 {#                                                                                           -#}
@@ -37,29 +37,33 @@ response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
 {############################################################################################-#}
 {#                                                                                           -#}
-{# Aggregation (clustering)
+{# Aggregation                                                                               -#}
 {#                                                                                           -#}
 {############################################################################################-#}
 {% for clust_method, clust_params in config['clustering'].items() -%}
 {% for dataset_name, dataset_params in datasets.items() -%}
 {% if dataset_params['role'] == 'feature' -%}
-    {% set cur_input = most_recent_rules[dataset_name] -%}
+    {% set cur_input = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_name) -%}
     {% include 'aggregation/' + clust_method + '.snakefile' %}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+
+{% for gene_set, gene_set_params in config['gene_sets'].items() -%}
+{% for dataset_name, dataset_params in datasets.items() -%}
+{% if dataset_params['role'] == 'feature' -%}
+    {% set cur_input = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_name) -%}
+    {% include 'aggregation/' + gene_set + '.snakefile' %}
 {% endif -%}
 {% endfor -%}
 {% endfor -%}
 
 {############################################################################################-#}
 {#                                                                                           -#}
-{# Aggregation (gene sets)
+{# Combine features                                                                          -#}
 {#                                                                                           -#}
 {############################################################################################-#}
-{% for gene_set, gene_set_params in config['gene_sets'].items() -%}
-{% for dataset_name, dataset_params in datasets.items() -%}
-{% if dataset_params['role'] == 'feature' -%}
-    {% set cur_input = config['output_dir'] + '/' + dataset_name + '/cleaned.csv' -%}
-    {% include 'aggregation/' + gene_set + '.snakefile' %}
-{% endif -%}
-{% endfor -%}
-{% endfor -%}
+rule combine_features:
+    input: "{{ config['output_dir'] }}/features/*.csv" 
+    output: "{{ config['output_dir'] }}/training_set.csv"
 
