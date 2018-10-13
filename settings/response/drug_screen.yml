@@ -7,6 +7,7 @@
 # General
 name: ac50
 type: numeric
+role: response
 xid: drug
 yid: sample
 

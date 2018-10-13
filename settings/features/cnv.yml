@@ -7,6 +7,7 @@
 # General
 name: cnv
 type: numeric
+role: feature
 xid: gene_id
 yid: sample_id
 

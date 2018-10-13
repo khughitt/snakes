@@ -40,8 +40,13 @@ response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 {# Aggregation
 {#                                                                                           -#}
 {############################################################################################-#}
-{% for key, clust_method in config['clustering'].items() -%}
-    {% include 'aggregation/' + key + '.snakefile' -%}
+{% for clust_method, clust_params in config['clustering'].items() -%}
+{% for dataset_name, dataset_params in datasets.items() -%}
+{% if dataset_params['role'] == 'feature' -%}
+    {% set cur_input = most_recent_rules[dataset_name] -%}
+    {% include 'aggregation/' + clust_method + '.snakefile' %}
+{% endif -%}
+{% endfor -%}
 {% endfor -%}
 
 # vim: ft=python
