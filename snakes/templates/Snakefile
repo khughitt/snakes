@@ -37,7 +37,7 @@ response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
 {############################################################################################-#}
 {#                                                                                           -#}
-{# Aggregation
+{# Aggregation (clustering)
 {#                                                                                           -#}
 {############################################################################################-#}
 {% for clust_method, clust_params in config['clustering'].items() -%}
@@ -49,4 +49,17 @@ response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 {% endfor -%}
 {% endfor -%}
 
-# vim: ft=python
+{############################################################################################-#}
+{#                                                                                           -#}
+{# Aggregation (gene sets)
+{#                                                                                           -#}
+{############################################################################################-#}
+{% for gene_set, gene_set_params in config['gene_sets'].items() -%}
+{% for dataset_name, dataset_params in datasets.items() -%}
+{% if dataset_params['role'] == 'feature' -%}
+    {% set cur_input = config['output_dir'] + '/' + dataset_name + '/cleaned.csv' -%}
+    {% include 'aggregation/' + gene_set + '.snakefile' %}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+

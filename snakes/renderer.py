@@ -124,14 +124,23 @@ class SnakefileRenderer(object):
         """Renders snakefile"""
         logging.info("Generating Snakefile...")
 
-        # get snakefile jinja2 template
+        # define custom jinja2 filters
+        def basename_no_ext(filepath):
+            """Strips directories and extension from a filepath"""
+            return os.path.basename(os.path.splitext(filepath)[0])
+
+        # template search paths
         loaders = [PackageLoader('snakes', 'templates'), 
                    PackageLoader('snakes', 'templates/aggregation'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/filters'),
                    PackageLoader('snakes', 'templates/transform'),
                    PackageLoader('snakes', 'templates/vis')]
+
+        # get snakefile jinja2 template
         env = Environment(loader=ChoiceLoader(loaders), extensions = ['jinja2.ext.do'])
+        env.filters['basename_no_ext'] = basename_no_ext 
+
         template = env.get_template('Snakefile')
 
         # render template

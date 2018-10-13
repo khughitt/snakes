@@ -19,7 +19,7 @@
 # Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
 # expression pointing to multiple plain-text files, each containing a single column.
 #
-rule {% block start_rule %}{% endblock %}:
+rule read_{{ dataset['name'] }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
@@ -61,9 +61,15 @@ rule {{ dataset['name'] }}_filter_{{ filter_name }}:
 {% endfor -%}
 {% endif -%}
 
-{# update dict with most recent rule in workflow -#}
-{% do most_recent_rules.update({dataset['name']: ns.cur_output}) %}
+#
+# Saved cleaned dataset
+#
+{% set cleaned_file = config['output_dir'] + '/' + dataset['name'] + '/cleaned.csv' -%}
+rule {{ dataset['name'] }}_cleaned:
+    input: '{{ns.cur_output}}'
+    output: '{{cleaned_file}}'
+    shell: 'cp {input} {output}'
 
-{#
-# vim: ft=python
--#}
+{# update dict with most recent rule in workflow -#}
+{% do most_recent_rules.update({dataset['name']: cleaned_file}) %}
+
