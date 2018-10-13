@@ -17,10 +17,10 @@ path: 'extra/example_data/drug_screen/ac50.csv'
 
 # Filtering
 filter:
-  curve_class_filter:
+  curve_class:
     type: 'drug_curve_class'
     min_valid_curves: 35 
-  multimodal_filter:
+  multimodal:
     type: 'non_unimodal'
     mad_quantile_cutoff: 0.98
     dip_quantile_cutoff: 0.02

@@ -22,13 +22,13 @@ path: 'extra/example_data/rnaseq/*.txt'
 
 # Filtering
 filter:
-  min_reads_filter:
+  min_reads:
     type: 'row_sums'
     cutoff_value: 20
-  min_var_filter:
+  min_var:
     type: 'row_variances'
     cutoff_value: 0
-  coding_gene_filter:
+  coding_gene:
     type: 'gene_biotype'
     biotypes: ['protein_coding']
 

@@ -1,6 +1,7 @@
 """
 snakes template renderer
 """
+import functools
 import logging
 import os
 import sys
@@ -13,14 +14,11 @@ class SnakefileRenderer(object):
     """Base SnakefileRenderer class"""
     def __init__(self, config_filepath=None, **kwargs):
         self.config = None
-
-        self.feature_configs = {}
-        self.response_configs = {}
+        self.dataset_configs = {}
 
         self.output_file = 'Snakefile'
 
         self._setup_logger()
-        logging.info("Initializing snakes")
 
         self._load_config(config_filepath, **kwargs)
         self._validate_config()
@@ -36,6 +34,8 @@ class SnakefileRenderer(object):
                                       datefmt='%Y-%m-%d %H:%M:%S')
         ch.setFormatter(formatter)
         root.addHandler(ch)
+
+        logging.info("Initializing snakes")
 
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
@@ -73,62 +73,40 @@ class SnakefileRenderer(object):
         # Update with arguments specified to SnakefileRenderer constructor
         self.config.update(kwargs)
 
-        # load feature-specific config files
-        for feature_yaml in self.config['features']:
-            # load dataset-specific config and filter
-            cfg = yaml.load(open(feature_yaml))
+        # load dataset-specific config files
+        for dataset_yaml in self.config['datasets']['features'] + self.config['datasets']['response']:
+            self._load_dataset_config(dataset_yaml)
 
-            # if global filter settings exist, use those as a base and update with
-            # dataset-specific settings
-            if 'filter' in self.config:
-                if 'filter' in cfg:
-                    dataset_filters = cfg['filter']
-                    cfg['filter'] = self.config['filter'].copy()
-                    cfg['filter'].update(dataset_filters)
+    def _load_dataset_config(self, input_yaml):
+        """Loads a feature / response dataset config file and overides any global settings with
+        dataset-specific ones."""
+        # load dataset-specific config and filter
+        cfg = yaml.load(open(input_yaml))
+
+        # combine global and dataset-specific settings
+        for param in ['filter', 'clustering', 'gene_sets']:
+            if param in self.config:
+                # use dataset-specific settings, if specified
+                if param in cfg:
+                    dataset_filters = cfg[param]
+                    cfg[param] = self.config[param].copy()
+                    cfg[param].update(dataset_filters)
                 else:
-                    cfg['filter'] = self.config['filter'].copy()
+                    # otherwise just use global config settings
+                    cfg[param] = self.config[param].copy()
 
-            self.feature_configs[cfg['name']] = cfg
-
-        # load response-specific config files
-        for response_yaml in self.config['response']:
-            # load dataset-specific config and filter
-            cfg = yaml.load(open(response_yaml))
-
-            # if global filter settings exist, use those as a base and update with
-            # dataset-specific settings
-            if 'filter' in self.config:
-                if 'filter' in cfg:
-                    response_filters = cfg['filter']
-
-                    cfg['filter'] = self.config['filter'].copy()
-                    cfg['filter'].update(response_filters)
-                else:
-                    cfg['filter'] = self.config['filter'].copy()
-
-            self.response_configs[cfg['name']] = cfg
+        self.dataset_configs[cfg['name']] = cfg
 
     def _validate_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         # check filter settings
-        for key, feature_cfg in self.feature_configs.items():
-            if 'filter' not in feature_cfg:
+        for key, dataset_cfg in self.dataset_configs.items():
+            # make sure filter type is specified
+            if 'filter' not in dataset_cfg:
                 continue
 
-            # make sure filter type is specific
-            for filter_name in feature_cfg['filter']:
-                if 'type' not in feature_cfg['filter'][filter_name]:
-                    msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
-                    raise Exception(msg)
-
-        # check filter settings
-        for key, response_cfg in self.response_configs.items():
-            if 'filter' not in response_cfg:
-                continue
-
-            # make sure filter type is specific
-            for filter_name in response_cfg['filter']:
-                if 'type' not in response_cfg['filter'][filter_name]:
+            for filter_name in dataset_cfg['filter']:
+                if 'type' not in dataset_cfg['filter'][filter_name]:
                     msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
                     raise Exception(msg)
 
@@ -157,8 +135,7 @@ class SnakefileRenderer(object):
         template = env.get_template('Snakefile')
 
         # render template
-        snakefile = template.render(config=self.config, features=self.feature_configs,
-                                    responses=self.response_configs)
+        snakefile = template.render(config=self.config, datasets=self.dataset_configs)
 
         # save rendered snakefile to disk
         logging.info("Saving Snakefile to {}".format(self.output_file))

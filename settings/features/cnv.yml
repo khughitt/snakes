@@ -17,7 +17,7 @@ path: 'extra/example_data/cnv/*.txt'
 
 # Filtering
 filter:
-  missing_data_filter:
+  missing_data:
     type: 'max_nas'
     cutoff_value: 0
 

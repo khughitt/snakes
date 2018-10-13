@@ -5,16 +5,19 @@
 # {% endblock %}
 #
 ################################################################################
-{##############################################-#}
-{# Variables to keep track of most recent rule -#}
-{# names. "namespace" used to allow scope to   -#}
-{# modified from within loops.                 -#}
-{##############################################-#}
+{############################################################################################-#}
+{# Below we define a custom namespace which is used to keep track of the most recent rule
+{# included for the dataset. The namespace approach is required so that variables can be
+{# modified in the scope of a jinja for loop.
+{############################################################################################-#}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  feature['path'] -%}
-{% set ns.cur_output =  config['output_dir'] + '/' + feature['name'] + '/raw.csv' -%}
+{% set ns.cur_input  =  dataset['path'] -%}
+{% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/raw.csv' -%}
 #
-# Load raw data
+# Load raw data from one or more files
+#
+# Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
+# expression pointing to multiple plain-text files, each containing a single column.
 #
 rule {% block start_rule %}{% endblock %}:
     input: '{{ ns.cur_input }}'
@@ -42,23 +45,25 @@ rule {% block start_rule %}{% endblock %}:
             dat = pd.concat(cols, axis=1)
             dat.columns = names
 
-        dat.to_csv(str(output[0]), sep='\t', index_label='{{ feature["xid"] }}')
+        dat.to_csv(str(output[0]), sep='\t', index_label='{{ dataset["xid"] }}')
 
-{% if 'filter' in feature -%}
+{% if 'filter' in dataset -%}
 #
 # Data filtering
 #
-{% for filter_name, filter_params in feature['filter'].items() -%}
+{% for filter_name, filter_params in dataset['filter'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  config['output_dir'] + '/' + feature['name'] + '/filter_' + filter_name + '.csv' -%}
-rule {{ feature['name'] }}_filter_{{ filter_name }}:
+    {% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/filter_' + filter_name + '.csv' -%}
+rule {{ dataset['name'] }}_filter_{{ filter_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'filters/' + filter_params['type'] + '.snakefile' %}
 {% endfor -%}
 {% endif -%}
+
 {# update dict with most recent rule in workflow -#}
-{% do most_recent_rules.update({feature['name']: ns.cur_output}) %}
+{% do most_recent_rules.update({dataset['name']: ns.cur_output}) %}
+
 {#
 # vim: ft=python
 -#}

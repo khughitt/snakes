@@ -11,18 +11,6 @@ xid: gene_id
 yid: sample_id
 
 #
-# Path to gene-level variant matrix
-#
-path: 'extra/example_data/variants/variants.txt'
-
-# Filtering
-filter:
-  min_variants_filter:
-    type: 'row_sums'
-    cutoff_value: 3
-
-# Aggregation
-#
 clustering:
   hclust:
     num_clusters: 100

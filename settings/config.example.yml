@@ -23,7 +23,8 @@ version: '1.0'
 output_dir: 'output'
 
 # development mode options
-dev_mode: true
+dev_mode:
+  enabled: true
 dev_mode_subsample_ratio: 0.05
 
 # random seed
@@ -34,13 +35,13 @@ random_seed: 1
 # Data sources
 #
 ################################################################################
-features:
-  - 'settings/features/rnaseq.yml'
-  - 'settings/features/cnv.yml'
-  - 'settings/features/variants.yml'
-
-response:
-  - 'settings/response/drug_screen.yml'
+datasets:
+  features:
+    - 'settings/features/rnaseq.yml'
+    - 'settings/features/cnv.yml'
+    - 'settings/features/variants.yml'
+  response:
+    - 'settings/response/drug_screen.yml'
 
 metadata:
   samples: 'extra/example_data/samples.csv'
@@ -69,7 +70,7 @@ filter:
       - 'KMS21BM_JCRB'
       - 'Karpas417_ECACC'
       - 'SKMM1_PLB'
-  zero_variance_filter:
+  zero_variance:
     type: 'row_variances'
     cutoff_value: 0
 

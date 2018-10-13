@@ -23,10 +23,25 @@ import pandas as pd
 sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
 response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 
-{# dictionary to keep of most recent rules for each data type -#}
+{# dictionary used to keep track of the most recent rules for each data type -#}
 {% set most_recent_rules = {} -%}
-{% for key, feature in features.items() -%}
-{% include 'data/' + feature['name'] + '.snakefile' -%}
+
+{############################################################################################-#}
+{#                                                                                           -#}
+{# Load features                                                                             -#}
+{#                                                                                           -#}
+{############################################################################################-#}
+{% for key, dataset in datasets.items() -%}
+    {% include 'data/' + dataset['name'] + '.snakefile' -%}
+{% endfor -%}
+
+{############################################################################################-#}
+{#                                                                                           -#}
+{# Aggregation
+{#                                                                                           -#}
+{############################################################################################-#}
+{% for key, clust_method in config['clustering'].items() -%}
+    {% include 'aggregation/' + key + '.snakefile' -%}
 {% endfor -%}
 
 # vim: ft=python
