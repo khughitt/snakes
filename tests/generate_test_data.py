@@ -41,11 +41,11 @@ pd.DataFrame(np.random.randint(0, 10000, size=(50, num_samples)),
              index = rnaseq_gene_ids, columns = sample_ids).to_csv('data/rnaseq.csv')
 
 # CNV
-pd.DataFrame(np.random.normal(size=(30, num_samples)),
+pd.DataFrame(np.round(np.random.normal(size=(30, num_samples)), 2),
              index = cnv_gene_ids, columns = sample_ids).to_csv('data/cnv.csv')
 
 # Drug AC-50
-pd.DataFrame(np.random.lognormal(mean=0, sigma=0.25, size = (5, num_samples)) * 50,
+pd.DataFrame(np.round(np.random.lognormal(mean=0, sigma=0.25, size = (5, num_samples)) * 50, 2),
              index = drug_ids, columns = sample_ids).to_csv('data/ac50.csv')
 
 # Sample metadata
