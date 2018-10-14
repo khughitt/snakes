@@ -1,0 +1,24 @@
+################################################################################
+#
+# Copy Number Variant (CNV) Example Configuration
+#
+################################################################################
+
+# General
+name: cnv
+type: numeric
+role: feature
+xid: gene_id
+yid: sample_id
+
+#
+# Path to CNV matrix
+#
+path: 'data/cnv.csv'
+
+# Filtering
+filter:
+  missing_data:
+    type: 'max_nas'
+    cutoff_value: 0
+

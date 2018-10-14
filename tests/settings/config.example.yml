@@ -1,0 +1,74 @@
+################################################################################
+#                  _             
+#  ___ _ __   __ _| | _____  ___ 
+# / __| '_ \ / _` | |/ / _ \/ __|
+# \__ \ | | | (_| |   <  __/\__ \
+# |___/_| |_|\__,_|_|\_\___||___/
+#                               
+# Test configuration
+#
+################################################################################
+
+################################################################################
+#
+# General settings
+#
+################################################################################
+
+# analysis name and version
+name: 'test pipeline'
+version: '1.0'
+
+# output directory
+output_dir: '/tmp/snakes'
+
+# random seed
+random_seed: 1
+
+################################################################################
+#
+# Data sources
+#
+################################################################################
+datasets:
+  features:
+    - 'settings/features/rnaseq.yml'
+    - 'settings/features/cnv.yml'
+  response:
+    - 'settings/response/drug_screen.yml'
+
+metadata:
+  samples: 'data/sample_metadata.csv'
+  response: 'data/drug_metadata.csv'
+
+################################################################################
+#
+# Global filters
+#
+################################################################################
+filter:
+  exclude_columns:
+    type: 'exclude_columns'
+    column_id: 'sample_id'
+    columns_to_exclude:
+      - 'C'
+      - 'E'
+  zero_variance:
+    type: 'row_variances'
+    cutoff_value: 0
+
+################################################################################
+#
+# Aggregation settings
+#
+################################################################################
+clustering:
+  hclust:
+    num_clusters: 4
+    fxns: ['median', 'var']
+gene_sets:
+  other:
+    gmts:
+      - 'data/gene_sets.gmt'
+    fxns: ['max', 'sum']
+

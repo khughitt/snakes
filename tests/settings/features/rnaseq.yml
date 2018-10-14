@@ -1,0 +1,33 @@
+################################################################################
+#
+# RNA-Seq Example Configuration
+#
+################################################################################
+
+# General
+name: rnaseq
+type: numeric
+role: feature
+xid: gene_id
+yid: sample_id
+
+#
+# Path to RNA-Seq count data
+#
+path: 'data/rnaseq.csv'
+
+# Filtering
+filter:
+  min_reads:
+    type: 'row_sums'
+    cutoff_value: 20
+  min_var:
+    type: 'row_variances'
+    cutoff_value: 0
+  coding_gene:
+    type: 'gene_biotype'
+    biotypes: ['protein_coding']
+
+# Transformations
+transform: ['cpm', 'log2']
+
