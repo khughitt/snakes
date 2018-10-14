@@ -22,11 +22,6 @@ version: '1.0'
 # output directory
 output_dir: 'output'
 
-# development mode options
-dev_mode:
-  enabled: true
-dev_mode_subsample_ratio: 0.05
-
 # random seed
 random_seed: 1
 

@@ -61,6 +61,21 @@ rule {{ dataset['name'] }}_filter_{{ filter_name }}:
 {% endfor -%}
 {% endif -%}
 
+{% if 'transform' in dataset -%}
+#
+# Data transformations
+#
+{% for transform in dataset['transform'] -%}
+    {% set ns.cur_input  = ns.cur_output -%}
+    {% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/transform_' + transform + '.csv' -%}
+rule {{ dataset['name'] }}_{{ transform }}_transform:
+    input: '{{ ns.cur_input }}'
+    output: '{{ ns.cur_output }}'
+    {% include 'transforms/' + transform + '.snakefile' %}
+
+{% endfor -%}
+{% endif -%}
+
 #
 # Saved cleaned dataset
 #
