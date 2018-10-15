@@ -25,7 +25,7 @@ rule read_{{ dataset_params['name'] | to_rule_name }}:
     run:
         # for now, assume that all input files are provided in csv format with a
         # head and a column for row ids
-        pd.read_csv(input[0]).to_csv(str(output[0]), index_label='{{ dataset_params["xid"] }}')
+        pd.read_csv(input[0], index_col=0).to_csv(output[0], index_label='{{ dataset_params["xid"] }}')
 
 {% if 'filter' in dataset_params -%}
 #
@@ -37,8 +37,8 @@ rule read_{{ dataset_params['name'] | to_rule_name }}:
 rule {{ dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-    {% include 'filters/' + filter_params['type'] + '.snakefile' %}
-{% endfor -%}
+{% include 'filters/' + filter_params['type'] + '.snakefile' %}
+{% endfor %}
 {% endif -%}
 
 {% if 'transform' in dataset_params -%}
@@ -51,16 +51,15 @@ rule {{ dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name }}:
 rule {{ dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-    {% include 'transforms/' + transform + '.snakefile' %}
-
-{% endfor -%}
+{% include 'transforms/' + transform + '.snakefile' %}
+{% endfor %}
 {% endif -%}
 
 #
 # Saved cleaned dataset
 #
 {% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dataset_params['name']) -%}
-rule {{ dataset_params['name'] | to_rule_name }}_cleaned:
+rule save_{{ dataset_params['name'] | to_rule_name }}_final:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'

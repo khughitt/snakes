@@ -32,8 +32,8 @@ import numpy as np
 import pandas as pd
 
 # load sample and response metadata
-sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}')
-response_metadata = pd.read_csv('{{ config["metadata"]["response"] }}')
+sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}', index_col=0)
+response_metadata = pd.read_csv('{{ config["metadata"]["response"] }}', index_col=0)
 
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
@@ -50,7 +50,7 @@ if not os.path.exists(output_dir):
 {#                                                                                           -#}
 {############################################################################################-#}
 {% for dataset_name, dataset_params in datasets.items() -%}
-    {% include 'data/' + dataset_params['name'] + '.snakefile' -%}
+{% include 'data/' + dataset_params['name'] + '.snakefile' -%}
 {% endfor -%}
 
 {############################################################################################-#}
@@ -61,27 +61,27 @@ if not os.path.exists(output_dir):
 {% for clust_method, clust_params in config['clustering'].items() -%}
 {% for dataset_name, dataset_params in datasets.items() -%}
 {% if dataset_params['role'] == 'feature' -%}
-    {% set cur_input = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_name) -%}
-    {% include 'aggregation/' + clust_method + '.snakefile' %}
+{% set cur_input = "%s/features/%s.csv" | format(output_dir, dataset_name) -%}
+{% include 'aggregation/' + clust_method + '.snakefile' %}
 {% endif -%}
-{% endfor -%}
+{% endfor %}
 {% endfor -%}
 
 {% for gene_set, gene_set_params in config['gene_sets'].items() -%}
 {% for dataset_name, dataset_params in datasets.items() -%}
 {% if dataset_params['role'] == 'feature' -%}
-    {% set cur_input = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_name) -%}
-    {% include 'aggregation/' + gene_set + '.snakefile' %}
+{% set cur_input = "%s/features/%s.csv" | format(output_dir, dataset_name) -%}
+{% include 'aggregation/' + gene_set + '.snakefile' %}
 {% endif -%}
 {% endfor -%}
 {% endfor -%}
 
-{############################################################################################-#}
-{#                                                                                           -#}
-{# Combine features                                                                          -#}
-{#                                                                                           -#}
-{############################################################################################-#}
+################################################################################
+#
+# Combine features
+#
+################################################################################
 rule combine_features:
-    input: "{{ config['output_dir'] }}/features/*.csv" 
-    output: "{{ config['output_dir'] }}/training_set.csv"
+    input: expand("{{ output_dir }}/features/{features}.csv", features=['foo'])
+    output: "{{ output_dir }}/training_set.csv"
 

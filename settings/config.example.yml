@@ -40,17 +40,6 @@ datasets:
 metadata:
   samples: 'tests/data/sample_metadata.csv'
   response: 'tests/data/drug_metadata.csv'
- 
-
-################################################################################
-#
-# Samples
-#
-################################################################################
-exclude_samples: 
-  - 'KMS21BM_JCRB'
-  - 'Karpas417_ECACC'
-  - 'SKMM1_PLB'
 
 ################################################################################
 #
@@ -62,12 +51,12 @@ filter:
     type: 'exclude_columns'
     column_id: 'sample_id'
     columns_to_exclude:
-      - 'KMS21BM_JCRB'
-      - 'Karpas417_ECACC'
-      - 'SKMM1_PLB'
+      - 'C'
+      - 'E'
   zero_variance:
     type: 'row_variances'
     cutoff_value: 0
+
 
 ################################################################################
 #
@@ -76,52 +65,10 @@ filter:
 ################################################################################
 clustering:
   hclust:
-    num_clusters: 100
-    fxns: ['median', 'sum', 'max', 'var']
+    num_clusters: 4
+    fxns: ['median', 'var']
 gene_sets:
-  msigdb:
+  other:
     gmts:
-      - '/path/to/h.v6.1.entrez.gmt'
-      - '/path/to/c2.v6.1.entrez.gmt'
-      - '/path/to/c6.v6.1.entrez.gmt'
-      - '/path/to/c7.v6.1.entrez.gmt'
-    fxns: ['median', 'sum', 'max', 'var']
-
-################################################################################
-#
-# Feature selection
-#
-################################################################################
-feature_selection:
-  enabled: true
-  balance_data: false
-  remove_correlated_features: true
-  max_feature_cor: 0.75
-  num_iterations: 15000
-  features_per_subsample: 2000
-  random_forest_ntree: 10000
-  random_forest_mtry: 4
-
-################################################################################
-#
-# Training set filters
-#
-################################################################################
-training_set_filters:
-  min_nonzero: 4
-
-################################################################################
-#
-# Machine learning
-#
-################################################################################
-machine_learning:
-  method: 'random_forest'
-
-################################################################################
-#
-# Software
-#
-################################################################################
-
-
+      - 'data/gene_sets.gmt'
+    fxns: ['max', 'sum']
