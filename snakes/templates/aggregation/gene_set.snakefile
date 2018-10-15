@@ -17,9 +17,9 @@ rule gene_set_{{dataset_name}}_{{ gene_set }}_{{ gmt_name }}:
     input: '{{ cur_input }}'
     output: expand("{{ output_path }}", fxns = {{ gene_set_params['fxns'] }})
     params:
-        gmt: '{{ gmt }}'
+        gmt = '{{ gmt }}'
     run:
-        # todo
+        pass
 
 {% endfor -%}
 

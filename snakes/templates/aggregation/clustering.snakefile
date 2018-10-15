@@ -15,5 +15,5 @@ rule cluster_{% block clust_rule %}{% endblock %}:
     input: '{{ cur_input }}'
     output: expand("{{ output_path }}", fxns = {{ clust_params['fxns'] }})
     run:
-        # todo
+        pass
 

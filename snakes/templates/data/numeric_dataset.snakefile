@@ -11,64 +11,44 @@
 {# modified in the scope of a jinja for loop.
 {############################################################################################-#}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dataset['path'] -%}
-{% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/raw.csv' -%}
+{% set ns.cur_input  =  dataset_params['path'] -%}
+{% set ns.cur_output =  '/'.join([output_dir, dataset_params['name'], 'raw.csv']) -%}
 #
 # Load raw data from one or more files
 #
 # Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
 # expression pointing to multiple plain-text files, each containing a single column.
 #
-rule read_{{ dataset['name'] }}:
+rule read_{{ dataset_params['name'] }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
-        # get path to input file(s)
-        input_files = glob.glob(input)
+        # for now, assume that all input files are provided in csv format with a
+        # head and a column for row ids
+        pd.read_csv(input[0]).to_csv(str(output[0]), index_label='{{ dataset_params["xid"] }}')
 
-        # if only one file, read in as-is
-        if len(input_files) == 1:
-            dat = pd.read_table(input_files[0])
-        else:
-            # otherwise, assume one file per sample and combine into a single dataset
-            cols = []
-            names = []
-
-            for input_file in input_files:
-                # cols.append(pd.read_table(input_file).ix[:, data_col])
-                cols.append(pd.read_table(input_file))
-
-                # use filename without extension as sample id
-                # names.append(sample_from_filename_func(input_file))
-                names.append(os.path.splitext(os.path.basename(x))[0])
-
-            dat = pd.concat(cols, axis=1)
-            dat.columns = names
-
-        dat.to_csv(str(output[0]), sep='\t', index_label='{{ dataset["xid"] }}')
-
-{% if 'filter' in dataset -%}
+{% if 'filter' in dataset_params -%}
 #
 # Data filtering
 #
-{% for filter_name, filter_params in dataset['filter'].items() -%}
+{% for filter_name, filter_params in dataset_params['filter'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/filter_' + filter_name + '.csv' -%}
-rule {{ dataset['name'] }}_filter_{{ filter_name }}:
+    {% set ns.cur_output =  config['output_dir'] + '/' + dataset_params['name'] + '/filter_' + filter_name + '.csv' -%}
+rule {{ dataset_params['name'] }}_filter_{{ filter_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'filters/' + filter_params['type'] + '.snakefile' %}
 {% endfor -%}
 {% endif -%}
 
-{% if 'transform' in dataset -%}
+{% if 'transform' in dataset_params -%}
 #
 # Data transformations
 #
-{% for transform in dataset['transform'] -%}
+{% for transform in dataset_params['transform'] -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  config['output_dir'] + '/' + dataset['name'] + '/transform_' + transform + '.csv' -%}
-rule {{ dataset['name'] }}_{{ transform }}_transform:
+    {% set ns.cur_output =  config['output_dir'] + '/' + dataset_params['name'] + '/transform_' + transform + '.csv' -%}
+rule {{ dataset_params['name'] }}_{{ transform }}_transform:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'transforms/' + transform + '.snakefile' %}
@@ -79,12 +59,12 @@ rule {{ dataset['name'] }}_{{ transform }}_transform:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset['name']) -%}
-rule {{ dataset['name'] }}_cleaned:
+{% set cleaned_file = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_params['name']) -%}
+rule {{ dataset_params['name'] }}_cleaned:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'
 
 {# add to list of features to be used in training set contruction -#}
-{% do training_set_features.append({dataset['name']: cleaned_file}) %}
+{% do training_set_features.append({dataset_params['name']: cleaned_file}) %}
 

@@ -9,6 +9,21 @@
 #
 # https://github.com/khughitt/snakes
 #
+{% set title_underline = '-' * (config['name'] | length + config['version'] | length + 1) -%}
+#  {{ config['name'] }} {{ config['version'] }}
+#  {{ title_underline }}
+#
+#  Config : {{ config['config_file'] }}
+#  Date   : {{ date_str }}
+#
+#  Data sources:
+{% for dataset_name, dataset_params in datasets.items() -%}
+#    - {{ dataset_name }}: {{ dataset_params['path'] }}
+{% endfor -%}
+#
+{% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) -%}
+#  Output dir: {{ output_dir }} 
+#    
 ################################################################################
 import glob
 import os
@@ -16,13 +31,15 @@ import yaml
 import numpy as np
 import pandas as pd
 
-#
-#  {{ config['name'] }} {{ config['version'] }}
-#
-
 # load sample and response metadata
-sample_metadata   = yaml.load(open('{{ config['metadata']['samples'] }}'))
-response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
+sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}')
+response_metadata = pd.read_csv('{{ config["metadata"]["response"] }}')
+
+# create output directory, if needed
+output_dir = '{{ output_dir }}' 
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir, mode=0o755)
 
 {# list used to keep track of different feature sources to use for training set construction -#}
 {% set training_set_features = [] -%}
@@ -32,8 +49,8 @@ response_metadata = yaml.load(open('{{ config['metadata']['response'] }}'))
 {# Load features                                                                             -#}
 {#                                                                                           -#}
 {############################################################################################-#}
-{% for key, dataset in datasets.items() -%}
-    {% include 'data/' + dataset['name'] + '.snakefile' -%}
+{% for dataset_name, dataset_params in datasets.items() -%}
+    {% include 'data/' + dataset_params['name'] + '.snakefile' -%}
 {% endfor -%}
 
 {############################################################################################-#}

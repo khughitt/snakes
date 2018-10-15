@@ -1,6 +1,7 @@
 """
 snakes template renderer
 """
+import datetime
 import functools
 import logging
 import os
@@ -49,19 +50,18 @@ class SnakefileRenderer(object):
         # If user specified a configuration filepath in uhe command, use that path
         if 'config' in cmdline_args:
             config_file = cmdline_args['config']
-
-            if not os.path.isfile(config_file):
-                logging.error("Invalid configuration path specified: %s" % config_file)
-                sys.exit()
-
-            logging.info("Using configuration: %s" % config_file)
-
-        # Check for configuration file specified in the SnakefileRenderer constructor.
         elif config_filepath is not None:
+            # otherwise use filepath specified in constructor, if specified
             config_file = config_filepath
-            if not os.path.isfile(config_file):
-                logging.error("Invalid configuration path specified: %s" % config_file)
-                sys.exit()
+        else:
+            # finally, check for config file in current working directory
+            config_file = 'config.yml'
+
+        if not os.path.isfile(config_file):
+            logging.error("Invalid configuration path specified: %s" % config_file)
+            sys.exit()
+
+        logging.info("Using configuration: %s" % config_file)
 
         # load main snakes configuration file
         with open(config_file) as fp:
@@ -72,6 +72,9 @@ class SnakefileRenderer(object):
 
         # Update with arguments specified to SnakefileRenderer constructor
         self.config.update(kwargs)
+
+        # Store filepath of config file used
+        self.config['config_file'] = os.path.abspath(config_file)
 
         # load dataset-specific config files
         for dataset_yaml in self.config['datasets']['features'] + self.config['datasets']['response']:
@@ -144,7 +147,8 @@ class SnakefileRenderer(object):
         template = env.get_template('Snakefile')
 
         # render template
-        snakefile = template.render(config=self.config, datasets=self.dataset_configs)
+        snakefile = template.render(config=self.config, datasets=self.dataset_configs, 
+                                    date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
         # save rendered snakefile to disk
         logging.info("Saving Snakefile to {}".format(self.output_file))

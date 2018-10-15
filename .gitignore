@@ -3,4 +3,7 @@ projects
 TODO
 config.yml
 __pycache__
+.snakemake
 /Snakefile
+/tests/Snakefile
+
