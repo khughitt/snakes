@@ -10,7 +10,7 @@ import sys
 import yaml
 from argparse import ArgumentParser
 from jinja2 import Environment, ChoiceLoader, PackageLoader
-from pkg_resources import resource_filename, Requirement
+from pkg_resources import resource_filename
 
 class SnakefileRenderer(object):
     """Base SnakefileRenderer class"""
@@ -162,9 +162,13 @@ class SnakefileRenderer(object):
         # get snakefile jinja2 template
         template = env.get_template('Snakefile')
 
+        # root snakes script directory 
+        script_dir = os.path.abspath(resource_filename(__name__, 'src'))
+
         # render template
         snakefile = template.render(config=self.config, datasets=self.dataset_configs, 
-                                    date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                                    date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    script_dir=script_dir)
 
         # save rendered snakefile to disk
         logging.info("Saving Snakefile to {}".format(self.output_file))

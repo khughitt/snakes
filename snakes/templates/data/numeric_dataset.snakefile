@@ -19,7 +19,9 @@
 # Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
 # expression pointing to multiple plain-text files, each containing a single column.
 #
-rule read_{{ dataset_params['name'] | to_rule_name }}:
+{% set rule_name = 'read_' ~ dataset_params['name'] | to_rule_name -%}
+{% do local_rules.append(rule_name) -%}
+rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
@@ -34,10 +36,13 @@ rule read_{{ dataset_params['name'] | to_rule_name }}:
 {% for filter_name, filter_params in dataset_params['filter'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
-rule {{ dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name }}:
+{% set rule_name = dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
+{% do local_rules.append(rule_name) -%}
+rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'filters/' + filter_params['type'] + '.snakefile' %}
+
 {% endfor %}
 {% endif -%}
 
@@ -48,10 +53,13 @@ rule {{ dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name }}:
 {% for transform in dataset_params['transform'] -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
-rule {{ dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name }}:
+{% set rule_name = dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}
+{% do local_rules.append(rule_name) -%}
+rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'transforms/' + transform + '.snakefile' %}
+
 {% endfor %}
 {% endif -%}
 
@@ -59,7 +67,9 @@ rule {{ dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name }
 # Saved cleaned dataset
 #
 {% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dataset_params['name']) -%}
-rule save_{{ dataset_params['name'] | to_rule_name }}_final:
+{% set rule_name = 'save_' ~ dataset_params['name'] | to_rule_name ~ '_final' -%}
+{% do local_rules.append(rule_name) -%}
+rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'

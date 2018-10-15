@@ -54,7 +54,7 @@ filter:
       - 'C'
       - 'E'
   zero_variance:
-    type: 'row_variances'
+    type: 'row_var_above'
     cutoff_value: 0
 
 

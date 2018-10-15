@@ -41,8 +41,16 @@ output_dir = '{{ output_dir }}'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir, mode=0o755)
 
+{############################################################################################-#}
+{#                                                                                           -#}
+{# Global variables                                                                          -#}
+{#                                                                                           -#}
+{############################################################################################-#}
 {# list used to keep track of different feature sources to use for training set construction -#}
 {% set training_set_features = [] -%}
+
+{# list used to keep track of simple rules that should not be run on a cluster               -#}
+{% set local_rules = [] -%}
 
 {############################################################################################-#}
 {#                                                                                           -#}
@@ -62,19 +70,19 @@ if not os.path.exists(output_dir):
 {% for dataset_name, dataset_params in datasets.items() -%}
 {% if dataset_params['role'] == 'feature' -%}
 {% set cur_input = "%s/features/%s.csv" | format(output_dir, dataset_name) -%}
-{% include 'aggregation/' + clust_method + '.snakefile' %}
+{% include 'aggregation/clustering_' + clust_method + '.snakefile' %}
 {% endif -%}
 {% endfor %}
-{% endfor -%}
+{% endfor %}
 
 {% for gene_set, gene_set_params in config['gene_sets'].items() -%}
 {% for dataset_name, dataset_params in datasets.items() -%}
 {% if dataset_params['role'] == 'feature' -%}
 {% set cur_input = "%s/features/%s.csv" | format(output_dir, dataset_name) -%}
-{% include 'aggregation/' + gene_set + '.snakefile' %}
+{% include 'aggregation/gene_set_' + gene_set + '.snakefile' %}
 {% endif -%}
-{% endfor -%}
-{% endfor -%}
+{% endfor %}
+{% endfor %}
 
 ################################################################################
 #
@@ -84,4 +92,13 @@ if not os.path.exists(output_dir):
 rule combine_features:
     input: expand("{{ output_dir }}/features/{features}.csv", features=['foo'])
     output: "{{ output_dir }}/training_set.csv"
+
+################################################################################
+#
+# Other settings
+#
+################################################################################
+{% set localrules_str = ', '.join(local_rules) -%}
+localrules: {{ localrules_str }}
+
 

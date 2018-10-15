@@ -19,14 +19,11 @@ path: 'data/rnaseq.csv'
 # Filtering
 filter:
   min_reads:
-    type: 'row_sums'
+    type: 'row_sum_above'
     cutoff_value: 20
   min_var:
-    type: 'row_variances'
+    type: 'row_var_above'
     cutoff_value: 0
-  coding_gene:
-    type: 'gene_biotype'
-    biotypes: ['protein_coding']
 
 # Transformations
 transform: ['cpm', 'log2']

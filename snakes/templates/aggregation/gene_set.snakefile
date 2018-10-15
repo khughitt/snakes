@@ -19,7 +19,7 @@ rule gene_set_{{ dataset_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }
     params:
         gmt = '{{ gmt }}'
     run:
-        pass
-
+        # load gmt file
+        
 {% endfor -%}
 

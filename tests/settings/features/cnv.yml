@@ -20,5 +20,5 @@ path: 'data/cnv.csv'
 filter:
   missing_data:
     type: 'max_nas'
-    cutoff_value: 0
+    max_na: 0
 

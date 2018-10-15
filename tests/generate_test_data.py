@@ -59,7 +59,8 @@ pd.DataFrame({'varA': np.random.choice(['A', 'B', 'C'], 5)},
 
 # Gene sets
 with open('data/gene_sets.gmt', 'w') as fp:
-    fp.write('\t'.join(['GENE_SET_1', 'description 1'] + random.sample(rnaseq_gene_ids, 10)))
-    fp.write('\t'.join(['GENE_SET_2', 'description 2'] + random.sample(rnaseq_gene_ids, 5)))
-    fp.write('\t'.join(['GENE_SET_2', 'description 2'] + random.sample(all_gene_ids, 20)))
+    gmt_entries = ['\t'.join(['GENE_SET_1', 'description 1'] + random.sample(rnaseq_gene_ids, 10)),
+                   '\t'.join(['GENE_SET_2', 'description 2'] + random.sample(rnaseq_gene_ids, 5)),
+                   '\t'.join(['GENE_SET_3', 'description 3'] + random.sample(all_gene_ids, 20))]
+    fp.write('\n'.join(gmt_entries))
 
