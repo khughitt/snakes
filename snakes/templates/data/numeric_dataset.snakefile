@@ -69,11 +69,9 @@ rule {{ rule_name }}:
 {% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dataset_params['name']) -%}
 {% set rule_name = 'save_' ~ dataset_params['name'] | to_rule_name ~ '_final' -%}
 {% do local_rules.append(rule_name) -%}
+{% do training_set_features.append(cleaned_file | basename) %}
 rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'
-
-{# add to list of features to be used in training set contruction -#}
-{% do training_set_features.append({dataset_params['name']: cleaned_file}) %}
 

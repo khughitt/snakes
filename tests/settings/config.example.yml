@@ -20,7 +20,7 @@ name: 'test pipeline'
 version: '1.0'
 
 # output directory
-output_dir: '/tmp/snakes'
+output_dir: 'output'
 
 # random seed
 random_seed: 1
@@ -32,14 +32,14 @@ random_seed: 1
 ################################################################################
 datasets:
   features:
-    - 'settings/features/rnaseq.yml'
-    - 'settings/features/cnv.yml'
+    - 'tests/settings/features/rnaseq.yml'
+    - 'tests/settings/features/cnv.yml'
   response:
-    - 'settings/response/drug_screen.yml'
+    - 'tests/settings/response/drug_screen.yml'
 
 metadata:
-  samples: 'data/sample_metadata.csv'
-  response: 'data/drug_metadata.csv'
+  samples: 'tests/data/sample_metadata.csv'
+  response: 'tests/data/drug_metadata.csv'
 
 ################################################################################
 #
@@ -69,6 +69,6 @@ clustering:
 gene_sets:
   other:
     gmts:
-      - 'data/gene_sets.gmt'
+      - 'tests/data/gene_sets.gmt'
     fxns: ['max', 'sum']
 

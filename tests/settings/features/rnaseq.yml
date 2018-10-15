@@ -14,7 +14,7 @@ yid: sample_id
 #
 # Path to RNA-Seq count data
 #
-path: 'data/rnaseq.csv'
+path: 'tests/data/rnaseq.csv'
 
 # Filtering
 filter:

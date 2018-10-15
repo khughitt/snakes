@@ -155,6 +155,7 @@ class SnakefileRenderer(object):
             with underscores"""
             return re.sub(r"[^\w]", "_", rule)
 
+        env.filters['basename']         = os.path.basename
         env.filters['basename_no_ext']  = basename_no_ext 
         env.filters['replace_filename'] = replace_filename 
         env.filters['to_rule_name']     = to_rule_name 

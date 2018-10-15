@@ -14,7 +14,7 @@ yid: sample
 #
 # Path to drug screen data
 #
-path: 'data/ac50.csv'
+path: 'tests/data/ac50.csv'
 
 # Filtering
 filter:
