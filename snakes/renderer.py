@@ -5,6 +5,7 @@ import datetime
 import functools
 import logging
 import os
+import re
 import sys
 import yaml
 from argparse import ArgumentParser
@@ -127,11 +128,6 @@ class SnakefileRenderer(object):
         """Renders snakefile"""
         logging.info("Generating Snakefile...")
 
-        # define custom jinja2 filters
-        def basename_no_ext(filepath):
-            """Strips directories and extension from a filepath"""
-            return os.path.basename(os.path.splitext(filepath)[0])
-
         # template search paths
         loaders = [PackageLoader('snakes', 'templates'), 
                    PackageLoader('snakes', 'templates/aggregation'),
@@ -140,10 +136,30 @@ class SnakefileRenderer(object):
                    PackageLoader('snakes', 'templates/transform'),
                    PackageLoader('snakes', 'templates/vis')]
 
-        # get snakefile jinja2 template
+        # get jinaj2 environment
         env = Environment(loader=ChoiceLoader(loaders), extensions = ['jinja2.ext.do'])
-        env.filters['basename_no_ext'] = basename_no_ext 
 
+        #
+        # define custom jinja2 filters
+        #
+        def basename_no_ext(filepath):
+            """Strips directories and extension from a filepath"""
+            return os.path.basename(os.path.splitext(filepath)[0])
+        
+        def replace_filename(filepath, filename):
+            """Repaces the filename portion of a filepath"""
+            return os.path.join(os.path.dirname(filepath), filename)
+
+        def to_rule_name(rule):
+            """Takes a string and replaces characters that aren't allowed in snakemake rule names
+            with underscores"""
+            return re.sub(r"[^\w]", "_", rule)
+
+        env.filters['basename_no_ext']  = basename_no_ext 
+        env.filters['replace_filename'] = replace_filename 
+        env.filters['to_rule_name']     = to_rule_name 
+
+        # get snakefile jinja2 template
         template = env.get_template('Snakefile')
 
         # render template

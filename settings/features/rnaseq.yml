@@ -19,7 +19,7 @@ yid: sample_id
 #  - multi sample count matrices
 #  - bioconductor expression sets (esets)
 #
-path: 'extra/example_data/rnaseq/*.txt'
+path: 'tests/data/rnaseq.csv'
 
 # Filtering
 filter:

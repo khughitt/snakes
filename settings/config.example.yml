@@ -34,13 +34,13 @@ datasets:
   features:
     - 'settings/features/rnaseq.yml'
     - 'settings/features/cnv.yml'
-    - 'settings/features/variants.yml'
   response:
     - 'settings/response/drug_screen.yml'
 
 metadata:
-  samples: 'extra/example_data/samples.csv'
-  response: 'extra/example_data/drugs.csv'
+  samples: 'tests/data/sample_metadata.csv'
+  response: 'tests/data/drug_metadata.csv'
+ 
 
 ################################################################################
 #

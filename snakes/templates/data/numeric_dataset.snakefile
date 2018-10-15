@@ -12,14 +12,14 @@
 {############################################################################################-#}
 {% set ns = namespace(found=false) %}
 {% set ns.cur_input  =  dataset_params['path'] -%}
-{% set ns.cur_output =  '/'.join([output_dir, dataset_params['name'], 'raw.csv']) -%}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dataset_params['name'], 'raw.csv']) -%}
 #
 # Load raw data from one or more files
 #
 # Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
 # expression pointing to multiple plain-text files, each containing a single column.
 #
-rule read_{{ dataset_params['name'] }}:
+rule read_{{ dataset_params['name'] | to_rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
@@ -33,8 +33,8 @@ rule read_{{ dataset_params['name'] }}:
 #
 {% for filter_name, filter_params in dataset_params['filter'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  config['output_dir'] + '/' + dataset_params['name'] + '/filter_' + filter_name + '.csv' -%}
-rule {{ dataset_params['name'] }}_filter_{{ filter_name }}:
+    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
+rule {{ dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'filters/' + filter_params['type'] + '.snakefile' %}
@@ -47,8 +47,8 @@ rule {{ dataset_params['name'] }}_filter_{{ filter_name }}:
 #
 {% for transform in dataset_params['transform'] -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  config['output_dir'] + '/' + dataset_params['name'] + '/transform_' + transform + '.csv' -%}
-rule {{ dataset_params['name'] }}_{{ transform }}_transform:
+    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
+rule {{ dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     {% include 'transforms/' + transform + '.snakefile' %}
@@ -59,8 +59,8 @@ rule {{ dataset_params['name'] }}_{{ transform }}_transform:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/features/%s_cleaned.csv" | format(config['output_dir'], dataset_params['name']) -%}
-rule {{ dataset_params['name'] }}_cleaned:
+{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dataset_params['name']) -%}
+rule {{ dataset_params['name'] | to_rule_name }}_cleaned:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
     shell: 'cp {input} {output}'
