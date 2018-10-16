@@ -54,5 +54,10 @@ rule gene_set_{{ dataset_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }
                 rows.append(tuple(df.filter(genes, axis=0).apply(getattr(np, fxn))))
 
             pd.DataFrame(rows, index=gene_sets.keys(), columns=df.columns).to_csv(output[i])
-{% endfor -%}
 
+{# add output filenames to list of expected features -#}
+{% for fxn in gene_set_params['fxns'] -%}
+    {% set output_file = "%s-%s-%s-%s.csv" | format(dataset_name, gene_set, gmt_name, fxn) -%}
+    {% do training_set_features.append(output_file) %}
+{% endfor %}
+{% endfor -%}
