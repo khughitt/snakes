@@ -3,5 +3,5 @@
 {% block clustering_body %}    params: 
         clust_params = {{ clust_params }} 
     script:
-        '{{ script_dir }}/aggegation/clustering_hclust.R' 
+        '{{ script_dir }}/aggregation/clustering_hclust.R' 
 {% endblock -%}
