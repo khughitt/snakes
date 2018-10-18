@@ -49,18 +49,21 @@ path: 'tests/data/drug_curves.csv'
 # Filtering
 filter:
   missing_ac50:
-    type: 'missing_field'
+    type: 'row_field_present'
     field: 'ac50'
   curve_slope:
     type: 'field_above'
     field: 'curve_slope'
     value: 0
   min_curves_remaining:
-    type: 'min_group_size'
-    field: 'drug_id'
+    type: 'row_min_group_stat'
+    group: 'drug_id'
+    field: 'sample_id'
+    stat: 'len'
     value: 35 
   min_variability:
-    type: 'min_group_stat'
+    type: 'row_min_group_stat'
+    group: 'drug_id'
     field: 'ac50'
     stat: 'mad'
     quantile: 0.95
