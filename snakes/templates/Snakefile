@@ -63,7 +63,7 @@ if not os.path.exists(output_dir):
 
 {############################################################################################-#}
 {#                                                                                           -#}
-{# Gene set aggregation                                                                      -#}
+{# Cluster aggregation                                                                       -#}
 {#                                                                                           -#}
 {############################################################################################-#}
 {% for clust_method, clust_params in config['clustering'].items() -%}

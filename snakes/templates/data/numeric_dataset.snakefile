@@ -14,11 +14,7 @@
 {% set ns.cur_input  =  dataset_params['path'] -%}
 {% set ns.cur_output =  '/'.join([output_dir, 'data', dataset_params['name'], 'raw.csv']) -%}
 #
-# Load raw data from one or more files
-#
-# Input must either be a valid filepath to a tab-delimited data matrix, or a wildcard (glob)
-# expression pointing to multiple plain-text files, each containing a single column.
-#
+# Load raw data
 {% set rule_name = 'read_' ~ dataset_params['name'] | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
@@ -26,7 +22,7 @@ rule {{ rule_name }}:
     output: '{{ ns.cur_output }}'
     run:
         # for now, assume that all input files are provided in csv format with a
-        # head and a column for row ids
+        # header and a column for row ids
         pd.read_csv(input[0], index_col=0).to_csv(output[0], index_label='{{ dataset_params["xid"] }}')
 
 {% if 'filter' in dataset_params -%}
