@@ -34,6 +34,7 @@ rule gene_set_{{ dataset_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }
         for entry in entries:
             # split line and retrieve gene set name and a list of genes in the set
             fields = entry.split('\t')
+
             gene_sets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
         # iterate over functions and create one output for each function
@@ -53,7 +54,10 @@ rule gene_set_{{ dataset_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }
             for gene_set, genes in gene_sets.items():
                 rows.append(tuple(df.filter(genes, axis=0).apply(getattr(np, fxn))))
 
-            pd.DataFrame(rows, index=gene_sets.keys(), columns=df.columns).to_csv(output[i])
+            # extend row id to include datatype, gmt, and aggregation fxn
+            gene_set_ids = ["_".join(['{{dataset_name}}', '{{gmt_name | to_rule_name}}', gene_set, fxn]) for gene_set in gene_sets.keys()]
+
+            pd.DataFrame(rows, index=gene_set_ids, columns=df.columns).to_csv(output[i], index_label='gene_set_id')
 
 {# add output filenames to list of expected features -#}
 {% for fxn in gene_set_params['fxns'] -%}

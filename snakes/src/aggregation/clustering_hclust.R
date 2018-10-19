@@ -28,18 +28,17 @@ cor_mat <- cor(t(mat))
 hc <- flashClust(as.dist(1 - abs(cor_mat)), method='average')
 
 # divide hierarchical clustering dendrogram into clusters
-clusters <- factor(as.numeric(cutree(hc, k=params$num_clusters)))
-
-cluster_ids <- sort(unique(clusters))
-
+clusters <- cutree(hc, k=params$num_clusters)
 
 # iterate over aggregation functions
 for (i in seq_along(params$fxns)) {
   # apply function cluster-wise to original data matrix
   fxn <- params$fxns[i]
 
-  res <- aggregate(mat, list(cluster = clusters), get(fxn))[, -1]
+  cluster_ids <- factor(sprintf('%s-hclust-%s-%03d', snakemake@params$dataset_name, fxn, clusters))
+
+  res <- aggregate(mat, list(cluster_id = cluster_ids), get(fxn))
 
   # save result
-  write.csv(res, file=snakemake@output[[i]], quote = FALSE)
+  write.csv(res, file=snakemake@output[[i]], quote = FALSE, row.names = FALSE)
 }

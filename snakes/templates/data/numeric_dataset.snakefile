@@ -69,5 +69,8 @@ rule {{ rule_name }}:
 rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
-    shell: 'cp {input} {output}'
+    run:
+        df = pd.read_csv(input[0], index_col=0)
+        df = df.rename(index={ind: '{{dataset_name}}_' + ind for ind in df.index})
+        df.to_csv(output[0])
 
