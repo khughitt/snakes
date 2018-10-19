@@ -17,7 +17,7 @@
 {# create a list of the columns that are used in the analysis -#}
 {% set required_fields = [dataset_params['sample_id'], dataset_params['compound_id']] -%}
 
-{% for filter_name, filter_params in dataset_params['filter'].items() -%}
+{% for filter_name, filter_params in dataset_params['filters'].items() -%}
 {% if 'field' in filter_params -%}
 {% do required_fields.append(filter_params['field']) -%}
 {% endif -%}

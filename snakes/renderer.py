@@ -88,7 +88,7 @@ class SnakefileRenderer(object):
         cfg = yaml.load(open(input_yaml))
 
         # combine global and dataset-specific settings
-        for param in ['filter', 'clustering', 'gene_sets']:
+        for param in ['filters', 'clustering', 'gene_sets']:
             if param in self.config:
                 # use dataset-specific settings, if specified
                 if param in cfg:
@@ -106,11 +106,11 @@ class SnakefileRenderer(object):
         # check filter settings
         for key, dataset_cfg in self.dataset_configs.items():
             # make sure filter type is specified
-            if 'filter' not in dataset_cfg:
+            if 'filters' not in dataset_cfg:
                 continue
 
-            for filter_name in dataset_cfg['filter']:
-                if 'type' not in dataset_cfg['filter'][filter_name]:
+            for filter_name in dataset_cfg['filters']:
+                if 'type' not in dataset_cfg['filters'][filter_name]:
                     msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
                     raise Exception(msg)
 

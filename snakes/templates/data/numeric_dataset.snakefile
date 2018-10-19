@@ -25,11 +25,11 @@ rule {{ rule_name }}:
         # header and a column for row ids
         pd.read_csv(input[0], index_col=0).to_csv(output[0], index_label='{{ dataset_params["xid"] }}')
 
-{% if 'filter' in dataset_params -%}
+{% if 'filters' in dataset_params -%}
 #
 # Data filtering
 #
-{% for filter_name, filter_params in dataset_params['filter'].items() -%}
+{% for filter_name, filter_params in dataset_params['filters'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
 {% set rule_name = dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
@@ -42,11 +42,11 @@ rule {{ rule_name }}:
 {% endfor %}
 {% endif -%}
 
-{% if 'transform' in dataset_params -%}
+{% if 'transforms' in dataset_params -%}
 #
 # Data transformations
 #
-{% for transform in dataset_params['transform'] -%}
+{% for transform in dataset_params['transforms'] -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
 {% set rule_name = dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}

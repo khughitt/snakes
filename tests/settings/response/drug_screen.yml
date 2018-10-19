@@ -47,9 +47,9 @@ compound_id : drug_id
 path: 'tests/data/drug_curves.csv'
 
 # Filtering
-filter:
+filters:
   missing_ac50:
-    type: 'row_field_present'
+    type: 'row_value_present'
     field: 'ac50'
   curve_slope:
     type: 'field_above'

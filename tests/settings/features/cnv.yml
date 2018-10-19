@@ -17,8 +17,8 @@ yid: sample_id
 path: 'tests/data/cnv.csv'
 
 # Filtering
-filter:
+filters:
   missing_data:
-    type: 'max_nas'
-    max_na: 0
+    type: 'row_num_null_below'
+    value: 0
 

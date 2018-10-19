@@ -17,14 +17,14 @@ yid: sample_id
 path: 'tests/data/rnaseq.csv'
 
 # Filtering
-filter:
+filters:
   min_reads:
     type: 'row_sum_above'
-    cutoff_value: 20
+    value: 20
   min_var:
     type: 'row_var_above'
-    cutoff_value: 0
+    value: 0
 
 # Transformations
-transform: ['cpm', 'log2']
+transforms: ['cpm', 'log2']
 

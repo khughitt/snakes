@@ -5,7 +5,7 @@
 # \__ \ | | | (_| |   <  __/\__ \
 # |___/_| |_|\__,_|_|\_\___||___/
 #                               
-# Test configuration
+# Example configuration
 #
 ################################################################################
 
@@ -46,16 +46,14 @@ metadata:
 # Global filters
 #
 ################################################################################
-filter:
+filters:
   exclude_columns:
     type: 'exclude_columns'
     column_id: 'sample_id'
-    columns_to_exclude:
-      - 'C'
-      - 'E'
+    columns_to_exclude: ['C', 'E']
   zero_variance:
     type: 'row_var_above'
-    cutoff_value: 0
+    value: 0
 
 ################################################################################
 #
