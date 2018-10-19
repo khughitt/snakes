@@ -19,6 +19,6 @@ path: 'tests/data/cnv.csv'
 # Filtering
 filters:
   missing_data:
-    type: 'row_num_null_below'
+    type: 'row_max_missing'
     value: 0
 

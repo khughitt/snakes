@@ -30,6 +30,7 @@ import os
 import yaml
 import numpy as np
 import pandas as pd
+from snakes import filters
 
 # load sample and response metadata
 sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}', index_col=0)
@@ -51,6 +52,14 @@ if not os.path.exists(output_dir):
 
 {# list used to keep track of simple rules that should not be run on a cluster               -#}
 {% set local_rules = [] -%}
+
+{############################################################################################-#}
+{#                                                                                           -#}
+{# Default target
+{#                                                                                           -#}
+{############################################################################################-#}
+rule all:
+    input: "{{ output_dir }}/training_set.csv"
 
 {############################################################################################-#}
 {#                                                                                           -#}
