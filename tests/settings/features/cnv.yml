@@ -14,7 +14,7 @@ yid: sample_id
 #
 # Path to CNV matrix
 #
-path: 'tests/data/cnv.csv'
+path: 'tests/data/features/cnv.csv'
 
 # Filtering
 filters:

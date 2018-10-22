@@ -44,7 +44,7 @@ compound_id : drug_id
 #
 # Path to drug screen data
 #
-path: 'tests/data/drug_curves.csv'
+path: 'tests/data/response/drug_curves.csv'
 
 # Filtering
 filters:

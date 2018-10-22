@@ -34,12 +34,13 @@ datasets:
   features:
     - 'tests/settings/features/rnaseq.yml'
     - 'tests/settings/features/cnv.yml'
+    - 'tests/settings/features/variants.yml'
   response:
     - 'tests/settings/response/drug_screen.yml'
 
 metadata:
-  samples: 'tests/data/sample_metadata.csv'
-  response: 'tests/data/drug_metadata.csv'
+  samples: 'tests/data/metadata/sample_metadata.csv'
+  response: 'tests/data/metadata/drug_metadata.csv'
 
 ################################################################################
 #
@@ -67,6 +68,6 @@ clustering:
 gene_sets:
   other:
     gmts:
-      - 'tests/data/gene_sets.gmt'
+      - 'tests/data/gene_sets/go.gmt'
     fxns: ['max', 'sum']
 

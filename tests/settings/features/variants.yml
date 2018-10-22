@@ -1,33 +1,27 @@
 ################################################################################
 #
-# RNA-Seq Example Configuration
+# Gene-level Variants Example Configuration
 #
 ################################################################################
 
 # General
-name: rnaseq
+name: variants
 type: numeric
 role: feature
 xid: gene_id
 yid: sample_id
 
 #
-# Path to RNA-Seq count data
+# Path to CNV matrix
 #
-path: 'tests/data/features/rnaseq.csv'
+path: 'tests/data/features/variants.csv'
 
 # Filtering
 filters:
   min_reads:
-    type: 'row_sum_above'
-    value: 20
+    type: 'row_min_nonzero'
+    value: 2
   min_var:
     type: 'row_var_above'
     value: 0
-  protein_coding:
-    type: 'gene_type'
-    include_gene_types: ['protein_coding']
-
-# Transformations
-transforms: ['cpm', 'log2']
 
