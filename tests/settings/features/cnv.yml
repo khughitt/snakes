@@ -8,7 +8,7 @@
 name: cnv
 type: numeric
 role: feature
-xid: gene_id
+xid: ensgene
 yid: sample_id
 
 #

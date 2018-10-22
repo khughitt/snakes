@@ -24,7 +24,7 @@ setup(
     author_email="keith.hughitt@nih.gov",
     classifiers=CLASSIFIERS,
     description="Dynamic snakefile generator for data integration and machine learning pipelines",
-    install_requires=['jinja2', 'numpy', 'pandas', 'PyYAML', 'setuptools-git', 'statsmodels'],
+    install_requires=['jinja2', 'numpy', 'pandas', 'PyYAML', 'rpy2', 'setuptools-git', 'statsmodels', 'tzlocal'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest>=3.0'],
     include_package_data=True,

@@ -13,7 +13,7 @@
 # h: Height to cut dendrogram.
 #
 ################################################################################
-library(flashClust)
+suppressMessages(library(flashClust))
 
 # parameters
 params <- snakemake@params[['clust_params']]
@@ -40,5 +40,5 @@ for (i in seq_along(params$fxns)) {
   res <- aggregate(mat, list(cluster_id = cluster_ids), get(fxn))
 
   # save result
-  write.csv(res, file=snakemake@output[[i]], quote = FALSE, row.names = FALSE)
+  write.csv(res, file=snakemake@output[[i]], quote = FALSE)
 }

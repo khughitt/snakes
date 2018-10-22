@@ -71,6 +71,6 @@ rule {{ rule_name }}:
     output: '{{cleaned_file}}'
     run:
         df = pd.read_csv(input[0], index_col=0)
-        df = df.rename(index={ind: '{{dataset_name}}_' + ind for ind in df.index})
+        #df = df.rename(index={ind: '{{dataset_name}}_' + ind for ind in df.index})
         df.to_csv(output[0])
 

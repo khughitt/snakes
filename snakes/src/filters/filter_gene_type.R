@@ -25,4 +25,4 @@ coding_genes <- genes[genes$gene_biotype %in% params['include_gene_types'], ]$en
 dat <- dat[rownames(dat) %in% coding_genes, ]
 
 # save result
-write.csv(dat, file=snakemake@output[[1]], quote = FALSE, row.names = FALSE)
+write.csv(dat, file=snakemake@output[[1]], quote = FALSE)

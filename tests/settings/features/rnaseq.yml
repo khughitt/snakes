@@ -8,7 +8,7 @@
 name: rnaseq
 type: numeric
 role: feature
-xid: gene_id
+xid: ensgene
 yid: sample_id
 
 #
@@ -29,5 +29,5 @@ filters:
     include_gene_types: ['protein_coding']
 
 # Transformations
-transforms: ['cpm', 'log2']
+transforms: ['cpm', 'log2p']
 
