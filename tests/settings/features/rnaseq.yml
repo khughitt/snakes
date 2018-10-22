@@ -24,6 +24,9 @@ filters:
   min_var:
     type: 'row_var_above'
     value: 0
+  protein_coding:
+    type: 'gene_type'
+    include_gene_types: ['protein_coding']
 
 # Transformations
 transforms: ['cpm', 'log2']

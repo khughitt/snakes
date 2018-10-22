@@ -39,6 +39,17 @@ class SnakefileRenderer(object):
 
         logging.info("Initializing snakes")
 
+    def _get_defaults(self):
+        """Returns a dictionary of default settings."""
+        return {
+            'software': {
+                'biomart': {
+                    'mart': 'ensembl',
+                    'dataset': 'hsapiens_gene_ensembl'
+                }
+            }
+        }
+
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
         # Load configuration
