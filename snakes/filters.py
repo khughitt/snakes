@@ -31,12 +31,20 @@ def row_var_above(df, value=None, quantile=None):
     return filter_rows(df=df, func=np.var, op=operator.gt, value=value, quantile=quantile)
 
 def row_max_missing(df, value=None, quantile=None):
-    """Filters dataset to rows with too many missing values"""
+    """Filters dataset to exclude rows with too many missing values"""
     # if quantile specified, find associated value
     if quantile is not None:
         value = df.quantile(quantile, axis=axis)
 
     return df[df.isnull().sum(axis=1) <= value]
+
+def row_min_nonzero(df, value=None, quantile=None):
+    """Filters dataset to exclude rows with too many zeros"""
+    # if quantile specified, find associated value
+    if quantile is not None:
+        value = df.quantile(quantile, axis=axis)
+
+    return df[(df != 0).sum(axis=1) >= value]
 
 def row_value_present(df, field):
     """Returns all rows for which a specific column is not null"""
