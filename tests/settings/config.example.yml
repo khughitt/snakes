@@ -64,11 +64,11 @@ filters:
 clustering:
   hclust:
     num_clusters: 4
-    fxns: ['sum', 'var']
+    funcs: ['sum', 'var']
 gene_sets:
   go:
     gene_id: 'entrez'
     gmts:
       - 'tests/data/gene_sets/go.gmt'
-    fxns: ['max', 'median']
+    funcs: ['max', 'median']
 

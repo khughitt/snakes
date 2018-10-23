@@ -57,21 +57,21 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
     # check to make sure supported function / statistic specified
     if func == 'len':
         # length
-        fxn = len
+        func = len
     elif func == 'mad':
         # median absolute deviation (mad)
         from statsmodels import robust
-        fxn = robust.mad
+        func = robust.mad
     else:
         raise("Invalid min_group_stat statistic specified!")
 
     # if quantile specified, determine value associated with that quantile
     if 'quantile' in filter_params:
-        df.apply(fxn)
-        cutoff_value = df.apply(fxn).quantile(filter_params['quantile'])
+        df.apply(func)
+        cutoff_value = df.apply(func).quantile(filter_params['quantile'])
     else:
         cutoff_value = filter_params['value']
 
     # apply stat to each group and filter results
-    df.filter(lambda x: fxn(x) >= cutoff_value).to_csv(output[0])
+    df.filter(lambda x: func(x) >= cutoff_value).to_csv(output[0])
 

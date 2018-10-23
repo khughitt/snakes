@@ -31,14 +31,14 @@ hc <- flashClust(as.dist(1 - abs(cor_mat)), method='average')
 clusters <- cutree(hc, k=params$num_clusters)
 
 # iterate over aggregation functions
-for (i in seq_along(params$fxns)) {
+for (i in seq_along(params$funcs)) {
   # apply function cluster-wise to original data matrix
-  fxn <- params$fxns[i]
+  func <- params$funcs[i]
 
-  cluster_ids <- factor(sprintf('%s-hclust-%s-%03d', snakemake@params$dataset_name, fxn, clusters))
+  cluster_ids <- factor(sprintf('%s-hclust-%s-%03d', snakemake@params$dataset_name, func, clusters))
 
-  res <- aggregate(mat, list(cluster_id = cluster_ids), get(fxn))
+  res <- aggregate(mat, list(cluster_id = cluster_ids), get(func))
 
   # save result
-  write.csv(res, file=snakemake@output[[i]], quote = FALSE)
+  write.csv(res, file=snakemake@output[[i]], quote = FALSE, row.names = FALSE)
 }

@@ -30,7 +30,7 @@ import os
 import yaml
 import numpy as np
 import pandas as pd
-from snakes import filters
+from snakes import aggregation, filters
 
 # load sample and response metadata
 sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}', index_col=0)
