@@ -15,7 +15,7 @@ from pkg_resources import resource_filename
 class SnakefileRenderer(object):
     """Base SnakefileRenderer class"""
     def __init__(self, config_filepath=None, **kwargs):
-        self.config = None
+        self.main_config = None
         self.dataset_configs = {}
 
         self.output_file = 'Snakefile'
@@ -77,19 +77,19 @@ class SnakefileRenderer(object):
 
         # load main snakes configuration file
         with open(config_file) as fp:
-            self.config = yaml.load(fp)
+            self.main_config = yaml.load(fp)
 
         # Update default arguments with user-specified settings
-        self.config.update(cmdline_args)
+        self.main_config.update(cmdline_args)
 
         # Update with arguments specified to SnakefileRenderer constructor
-        self.config.update(kwargs)
+        self.main_config.update(kwargs)
 
         # Store filepath of config file used
-        self.config['config_file'] = os.path.abspath(config_file)
+        self.main_config['config_file'] = os.path.abspath(config_file)
 
         # load dataset-specific config files
-        for dataset_yaml in self.config['datasets']['features'] + self.config['datasets']['response']:
+        for dataset_yaml in self.main_config['datasets']['features'] + self.main_config['datasets']['response']:
             self._load_dataset_config(dataset_yaml)
 
     def _load_dataset_config(self, input_yaml):
@@ -98,17 +98,20 @@ class SnakefileRenderer(object):
         # load dataset-specific config and filter
         cfg = yaml.load(open(input_yaml))
 
-        # combine global and dataset-specific settings
+        # each feature / response dataset carries its own settings; along with any global
+        # filtering, etc. settings specified in the parent config. In cases where a setting
+        # is specified in both the global config, and the dataset-specific one, the dataset-
+        # specific options take priority.
         for param in ['filters', 'clustering', 'gene_sets']:
-            if param in self.config:
+            if param in self.main_config:
                 # use dataset-specific settings, if specified
                 if param in cfg:
                     dataset_filters = cfg[param]
-                    cfg[param] = self.config[param].copy()
+                    cfg[param] = self.main_config[param].copy()
                     cfg[param].update(dataset_filters)
                 else:
                     # otherwise just use global config settings
-                    cfg[param] = self.config[param].copy()
+                    cfg[param] = self.main_config[param].copy()
 
         self.dataset_configs[cfg['name']] = cfg
 
@@ -178,7 +181,7 @@ class SnakefileRenderer(object):
         script_dir = os.path.abspath(resource_filename(__name__, 'src'))
 
         # render template
-        snakefile = template.render(config=self.config, datasets=self.dataset_configs, 
+        snakefile = template.render(config=self.main_config, datasets=self.dataset_configs, 
                                     date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                     script_dir=script_dir)
 

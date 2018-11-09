@@ -3,7 +3,9 @@ projects
 TODO
 config.yml
 __pycache__
+.eggs
 .snakemake
+*.egg-info
 /Snakefile
 /tests/Snakefile
 
