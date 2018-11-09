@@ -36,7 +36,7 @@ def gene_set_apply(df, gene_sets, func):
     matched_ids = []
 
     # iterate over gene sets and apply function
-    for gene_set, genes in gene_sets.items():
+    for gene_set, genes in sorted(gene_sets.items()):
         df_subset = df.filter(genes, axis=0)
 
         # check to make sure some genes overlap before applying function
