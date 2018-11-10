@@ -35,7 +35,7 @@ for (i in seq_along(params$funcs)) {
   # apply function cluster-wise to original data matrix
   func <- params$funcs[i]
 
-  cluster_ids <- factor(sprintf('%s-hclust-%s-%03d', snakemake@params$dataset_name, func, clusters))
+  cluster_ids <- factor(sprintf('%s-hclust-%s-%03d', snakemake@params$dat_name, func, clusters))
 
   res <- aggregate(mat, list(cluster_id = cluster_ids), get(func))
 

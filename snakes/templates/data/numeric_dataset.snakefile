@@ -11,28 +11,28 @@
 {# modified in the scope of a jinja for loop.
 {############################################################################################-#}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dataset_params['path'] -%}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', dataset_params['name'], 'raw.csv']) -%}
+{% set ns.cur_input  =  dat_cfg['path'] -%}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) -%}
 #
 # Load raw data
-{% set rule_name = 'read_' ~ dataset_params['name'] | to_rule_name -%}
+{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
-        # for now, assume that all input files are provided in csv format with a
+        # for now, assume that all input files are provided in csv or tsv format with a
         # header and a column for row ids
-        pd.read_csv(input[0], index_col=0).to_csv(output[0], index_label='{{ dataset_params["xid"] }}')
+        pd.read_table(input[0], sep='{{ dat_cfg["sep"] }}', index_col={{ dat_cfg['index_col'] }}).to_csv(output[0], index_label='{{ dat_cfg["xid"] }}')
 
-{% if 'filters' in dataset_params -%}
+{% if 'filters' in dat_cfg -%}
 #
 # Data filtering
 #
-{% for filter_name, filter_params in dataset_params['filters'].items() -%}
+{% for filter_name, filter_params in dat_cfg['filters'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
-{% set rule_name = dataset_params['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
+{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
@@ -41,14 +41,14 @@ rule {{ rule_name }}:
 {% endfor %}
 {% endif -%}
 
-{% if 'transforms' in dataset_params -%}
+{% if 'transforms' in dat_cfg -%}
 #
 # Data transformations
 #
-{% for transform in dataset_params['transforms'] -%}
+{% for transform in dat_cfg['transforms'] -%}
     {% set ns.cur_input  = ns.cur_output -%}
     {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
-{% set rule_name = dataset_params['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}
+{% set rule_name = dat_cfg['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
@@ -61,8 +61,8 @@ rule {{ rule_name }}:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dataset_params['name']) -%}
-{% set rule_name = 'save_' ~ dataset_params['name'] | to_rule_name ~ '_final' -%}
+{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dat_cfg['name']) -%}
+{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' -%}
 {% do local_rules.append(rule_name) -%}
 {% do training_set_features.append(cleaned_file | basename) -%}
 rule {{ rule_name }}:
@@ -70,6 +70,6 @@ rule {{ rule_name }}:
     output: '{{cleaned_file}}'
     run:
         df = pd.read_csv(input[0], index_col=0)
-        #df = df.rename(index={ind: '{{dataset_name}}_' + ind for ind in df.index})
+        #df = df.rename(index={ind: '{{dat_name}}_' + ind for ind in df.index})
         df.to_csv(output[0])
 

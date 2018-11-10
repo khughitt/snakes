@@ -50,6 +50,17 @@ class SnakefileRenderer(object):
             }
         }
 
+    def _get_default_dataset_args(self):
+        """Returns a dictionary of the default arguments associated with a dataset config entry"""
+        return {
+            'type': 'numeric',
+            'role': 'feature',
+            'xid': 'x',
+            'yid': 'y',
+            'sep': ',',
+            'index_col': 0
+        }
+
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
         # Load configuration
@@ -95,8 +106,11 @@ class SnakefileRenderer(object):
     def _load_dataset_config(self, input_yaml):
         """Loads a feature / response dataset config file and overides any global settings with
         dataset-specific ones."""
+        # default dataset settings
+        cfg = self._get_default_dataset_args()
+
         # load dataset-specific config and filter
-        cfg = yaml.load(open(input_yaml))
+        cfg.update(yaml.load(open(input_yaml)))
 
         # each feature / response dataset carries its own settings; along with any global
         # filtering, etc. settings specified in the parent config. In cases where a setting
@@ -117,16 +131,26 @@ class SnakefileRenderer(object):
 
     def _validate_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
-        # check filter settings
-        for key, dataset_cfg in self.dataset_configs.items():
-            # make sure filter type is specified
-            if 'filters' not in dataset_cfg:
-                continue
+        # check global settings
+        # TODO
 
-            for filter_name in dataset_cfg['filters']:
-                if 'type' not in dataset_cfg['filters'][filter_name]:
-                    msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
+        # required dataset parameters
+        dataset_required = ['name', 'path']
+    
+        # check dataset-specific settings
+        for key, dataset_cfg in self.dataset_configs.items():
+            # make sure required parameters have been specified
+            for param in dataset_required:
+                if param not in dataset_cfg:
+                    msg = "Invalid coniguration! Missing required parameter '{}' for dataset '{}'".format(param, key)
                     raise Exception(msg)
+
+            # for each filter, make sure filter type is specified
+            if 'filters' in dataset_cfg:
+                for filter_name in dataset_cfg['filters']:
+                    if 'type' not in dataset_cfg['filters'][filter_name]:
+                        msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
+                        raise Exception(msg)
 
     def _get_args(self):
         """Parses input and returns arguments"""

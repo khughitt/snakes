@@ -11,13 +11,13 @@
 {# modified in the scope of a jinja for loop.
 {############################################################################################-#}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dataset_params['path'] -%}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', dataset_params['name'], 'raw.csv']) -%}
+{% set ns.cur_input  =  dat_cfg['path'] -%}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) -%}
 
 {# create a list of the columns that are used in the analysis -#}
-{% set required_fields = [dataset_params['sample_id'], dataset_params['compound_id']] -%}
+{% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id']] -%}
 
-{% for filter_name, filter_params in dataset_params['filters'].items() -%}
+{% for filter_name, filter_params in dat_cfg['filters'].items() -%}
 {% if 'field' in filter_params -%}
 {% do required_fields.append(filter_params['field']) -%}
 {% endif -%}
@@ -26,7 +26,7 @@
 #
 # Load raw curve data
 #
-{% set rule_name = 'read_' ~ dataset_params['name'] | to_rule_name -%}
+{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
