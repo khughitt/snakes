@@ -2,17 +2,17 @@
 snakes template renderer
 """
 import datetime
-import functools
 import logging
 import os
 import re
 import sys
-import yaml
 from argparse import ArgumentParser
+
+import yaml
 from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename
 
-class SnakefileRenderer(object):
+class SnakefileRenderer():
     """Base SnakefileRenderer class"""
     def __init__(self, config_filepath=None, **kwargs):
         self.main_config = None
@@ -30,12 +30,12 @@ class SnakefileRenderer(object):
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
 
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('[%(levelname)s] (%(asctime)s) - %(message)s', 
+        log_handle = logging.StreamHandler(sys.stdout)
+        log_handle.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('[%(levelname)s] (%(asctime)s) - %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S')
-        ch.setFormatter(formatter)
-        root.addHandler(ch)
+        log_handle.setFormatter(formatter)
+        root.addHandler(log_handle)
 
         logging.info("Initializing snakes")
 
@@ -134,13 +134,23 @@ class SnakefileRenderer(object):
         # check global settings
         # TODO
 
-        # required dataset parameters
-        dataset_required = ['name', 'path']
-    
+        # required parameters for all data types
+        global_reqs = ['name', 'path']
+
+        # data type specific required params
+        type_specific_reqs = {
+            'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
+        }
+                
         # check dataset-specific settings
         for key, dataset_cfg in self.dataset_configs.items():
             # make sure required parameters have been specified
-            for param in dataset_required:
+            required_params = global_reqs
+
+            if key in type_specific_reqs.keys():
+                required_params = required_params + type_specific_reqs[key]
+            
+            for param in required_params:
                 if param not in dataset_cfg:
                     msg = "Invalid coniguration! Missing required parameter '{}' for dataset '{}'".format(param, key)
                     raise Exception(msg)
@@ -154,11 +164,12 @@ class SnakefileRenderer(object):
 
     def _get_args(self):
         """Parses input and returns arguments"""
-        parser = ArgumentParser(description='Dynamically generates Snakefiles for data integration and machine learning pipelines.')
+        parser = ArgumentParser(description='Dynamically generates Snakefiles for data '
+                                            'integration and machine learning pipelines.')
 
         parser.add_argument('-c', '--config',
-                            help=('Configuration filepath. (Will look for file named config.yml ' 
-                                 'in current working directory, if none specified.)'))
+                            help=('Configuration filepath. (Will look for file named config.yml '
+                                  'in current working directory, if none specified.)'))
 
         return parser
 
@@ -167,7 +178,7 @@ class SnakefileRenderer(object):
         logging.info("Generating Snakefile...")
 
         # template search paths
-        loaders = [PackageLoader('snakes', 'templates'), 
+        loaders = [PackageLoader('snakes', 'templates'),
                    PackageLoader('snakes', 'templates/aggregation'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/filters'),
@@ -175,7 +186,7 @@ class SnakefileRenderer(object):
                    PackageLoader('snakes', 'templates/vis')]
 
         # get jinaj2 environment
-        env = Environment(loader=ChoiceLoader(loaders), extensions = ['jinja2.ext.do'])
+        env = Environment(loader=ChoiceLoader(loaders), extensions= ['jinja2.ext.do'])
 
         #
         # define custom jinja2 filters
@@ -183,7 +194,7 @@ class SnakefileRenderer(object):
         def basename_no_ext(filepath):
             """Strips directories and extension from a filepath"""
             return os.path.basename(os.path.splitext(filepath)[0])
-        
+
         def replace_filename(filepath, filename):
             """Repaces the filename portion of a filepath"""
             return os.path.join(os.path.dirname(filepath), filename)
@@ -194,25 +205,24 @@ class SnakefileRenderer(object):
             return re.sub(r"[^\w]", "_", rule)
 
         env.filters['basename']         = os.path.basename
-        env.filters['basename_no_ext']  = basename_no_ext 
-        env.filters['replace_filename'] = replace_filename 
-        env.filters['to_rule_name']     = to_rule_name 
+        env.filters['basename_no_ext']  = basename_no_ext
+        env.filters['replace_filename'] = replace_filename
+        env.filters['to_rule_name']     = to_rule_name
 
         # get snakefile jinja2 template
         template = env.get_template('Snakefile')
 
-        # root snakes script directory 
+        # root snakes script directory
         script_dir = os.path.abspath(resource_filename(__name__, 'src'))
 
         # render template
-        snakefile = template.render(config=self.main_config, datasets=self.dataset_configs, 
+        snakefile = template.render(config=self.main_config, datasets=self.dataset_configs,
                                     date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                     script_dir=script_dir)
 
         # save rendered snakefile to disk
         logging.info("Saving Snakefile to {}".format(self.output_file))
-        
-        with open(self.output_file, 'w') as fp:
-            fp.write(snakefile)
 
+        with open(self.output_file, 'w') as file_handle:
+            file_handle.write(snakefile)
 
