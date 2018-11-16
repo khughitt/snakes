@@ -15,7 +15,7 @@
 {% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) -%}
 
 {# create a list of the columns that are used in the analysis -#}
-{% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id']] -%}
+{% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id'], dat_cfg['response_var']] -%}
 
 {% for filter_name, filter_params in dat_cfg['filters'].items() -%}
 {% if 'field' in filter_params -%}

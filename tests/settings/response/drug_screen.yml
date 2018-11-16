@@ -38,8 +38,9 @@
 name: dose_response_curves
 type: dataframe
 role: response
-sample_id   : sample_id
+sample_id   : cell_line
 compound_id : drug_id
+response_var: ac50
 
 #
 # Path to drug screen data
@@ -58,7 +59,7 @@ filters:
   min_curves_remaining:
     type: 'row_min_group_stat'
     group: 'drug_id'
-    field: 'sample_id'
+    field: 'cell_line'
     stat: 'len'
     value: 35 
   min_variability:
