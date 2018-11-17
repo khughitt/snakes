@@ -51,11 +51,13 @@ def row_value_present(df, field):
     return df[df[field].notnull()]
 
 def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quantile=None):
-    """Filters groups of rows based on some function applied for a column within each group"""
+    """
+    Filters groups of rows based on some function applied for a column within each group.
+
+    For example, this could be used to filter out all entries for drugs which have a low
+    variance of IC-50 scores across cell lines.
+    """
     print('[DEV] running filter_grouped_rows')
-
-    df = df.groupby(group)[field]
-
     # check to make sure supported function / statistic specified
     if func == 'len':
         # length
@@ -67,12 +69,16 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
     else:
         raise("Invalid min_group_stat statistic specified!")
 
+    # apply statistic within each group
+    group_stats = df.groupby(group)[field].apply(func)
+
     # if quantile specified, determine value associated with that quantile
     if quantile is not None:
-        cutoff_value = df.apply(func).quantile(quantile)
+        cutoff_value = group_stats.quantile(quantile)
     else:
         cutoff_value = value
 
-    # apply stat to each group and filter results
-    return df.filter(lambda x: func(x) >= cutoff_value)
+    # get ids of rows passing the cutoff
+    mask = group_stats.loc[group_stats > cutoff_value].index
 
+    return(df[df[group].isin(mask)])
