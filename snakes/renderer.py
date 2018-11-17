@@ -116,16 +116,25 @@ class SnakefileRenderer():
         # filtering, etc. settings specified in the parent config. In cases where a setting
         # is specified in both the global config, and the dataset-specific one, the dataset-
         # specific options take priority.
-        for param in ['filters', 'clustering', 'gene_sets']:
-            if param in self.main_config:
-                # use dataset-specific settings, if specified
-                if param in cfg:
-                    dataset_filters = cfg[param]
-                    cfg[param] = self.main_config[param].copy()
-                    cfg[param].update(dataset_filters)
-                else:
-                    # otherwise just use global config settings
-                    cfg[param] = self.main_config[param].copy()
+        if cfg['role'] == 'feature':
+            for param in ['filters', 'clustering', 'gene_sets']:
+                if param in self.main_config:
+                    # use dataset-specific settings, if specified
+                    if param in cfg:
+                        dataset_params = cfg[param]
+                        cfg[param] = self.main_config[param].copy()
+                        cfg[param].update(dataset_params)
+                    else:
+                        # otherwise just use global config settings
+                        cfg[param] = self.main_config[param].copy()
+
+        # set default quantile / value function args for filters
+        if 'filters' in cfg:
+            for filter_cfg in cfg['filters']: 
+                if 'quantile' not in cfg['filters'][filter_cfg]:
+                    cfg['filters'][filter_cfg]['quantile'] = None
+                if 'value' not in cfg['filters'][filter_cfg]:
+                    cfg['filters'][filter_cfg]['value'] = None
 
         self.dataset_configs[cfg['name']] = cfg
 

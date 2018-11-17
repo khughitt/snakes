@@ -52,6 +52,8 @@ def row_value_present(df, field):
 
 def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quantile=None):
     """Filters groups of rows based on some function applied for a column within each group"""
+    print('[DEV] running filter_grouped_rows')
+
     df = df.groupby(group)[field]
 
     # check to make sure supported function / statistic specified
@@ -66,12 +68,11 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
         raise("Invalid min_group_stat statistic specified!")
 
     # if quantile specified, determine value associated with that quantile
-    if 'quantile' in filter_params:
-        df.apply(func)
-        cutoff_value = df.apply(func).quantile(filter_params['quantile'])
+    if quantile is not None:
+        cutoff_value = df.apply(func).quantile(quantile)
     else:
-        cutoff_value = filter_params['value']
+        cutoff_value = value
 
     # apply stat to each group and filter results
-    df.filter(lambda x: func(x) >= cutoff_value).to_csv(output[0])
+    return df.filter(lambda x: func(x) >= cutoff_value)
 

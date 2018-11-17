@@ -1,13 +1,15 @@
+    params:
+        filter_params = {{ filter_params }} 
     run:
         df = pd.read_csv(input[0])
 
         # determine when absolute or relative cutoff specified
-        quantile = filter_params['quantile'] if 'quantile' in filter_params else None
-        value = filter_params['value'] if 'value' in filter_params else None
+        #quantile = params[0]['quantile'] if 'quantile' in params[0] else None
+        #value = params[0]['value'] if 'value' in params[0] else None
         
         # apply stat to each group and filter results
-        df = filters.filter_grouped_rows(df, 'filter_params["group"]', 'filter_params["field"]', 
-                                        filter_params['stat'], op=operator.ge, value=value,
-                                        quantile=quantile)
+        df = filters.filter_grouped_rows(df, params[0]["group"], params[0]["field"], 
+                                         params[0]["stat"], op=operator.ge, 
+                                         value=params[0]["value"], quantile=params[0]["quantile"])
         df.to_csv(output[0])
 
