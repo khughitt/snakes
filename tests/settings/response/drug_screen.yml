@@ -50,7 +50,7 @@ path: 'tests/data/response/drug_curves.csv'
 # Filtering
 filters:
   missing_ac50:
-    type: 'row_value_present'
+    type: 'row_val_not_missing'
     field: 'ac50'
   curve_slope:
     type: 'field_above'

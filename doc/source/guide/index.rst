@@ -117,9 +117,9 @@ The main required parameters are:
 - `output_dir` - the base output directory to save pipeline outputs to
 - `datasets` - locations of feature and response :ref:`dataset-specific config files <dataset-config>`.
 
-
 .. _dataset-config:
 
 Dataset configuration
 #####################
 
+TODO: describe expected format of data / options for specifying alternatives..

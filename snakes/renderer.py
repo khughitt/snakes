@@ -143,6 +143,9 @@ class SnakefileRenderer():
         # check global settings
         # TODO
 
+        # base template directory
+        template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
+
         # required parameters for all data types
         global_reqs = ['name', 'path']
 
@@ -167,8 +170,17 @@ class SnakefileRenderer():
             # for each filter, make sure filter type is specified
             if 'filters' in dataset_cfg:
                 for filter_name in dataset_cfg['filters']:
+                    # check for require parameter: type
                     if 'type' not in dataset_cfg['filters'][filter_name]:
                         msg = "Invalid coniguration! Missing 'type' for filter '{}'".format(filter_name)
+                        raise Exception(msg)
+
+                    # check to make sure a valid filter type is specified
+                    filter_type = dataset_cfg['filters'][filter_name]['type']
+                    template_filename = filter_type + '.snakefile'
+
+                    if template_filename not in os.listdir(os.path.join(template_dir, 'filters')):
+                        msg = "Invalid coniguration! Unknown filter type: '{}'".format(filter_type)
                         raise Exception(msg)
 
     def _get_args(self):
