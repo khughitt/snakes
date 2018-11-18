@@ -1,0 +1,227 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>User’s Guide &#8212; Snakes 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Snakes Documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="user-s-guide">
+<h1>User’s Guide<a class="headerlink" href="#user-s-guide" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-configuration">
+<h3>Main configuration<a class="headerlink" href="#main-configuration" title="Permalink to this headline">¶</a></h3>
+<p>In order to run <cite>snakes</cite>, a valid <a class="reference external" href="http://yaml.org/">YAML</a> configuration file must be provided.
+An example config file (<cite>config.example.yml</cite>) is provided in the <cite>tests/settings</cite> directory. This
+configuration file is used to specify the globa pipeline parameters to use as well as the locations
+of dataset-specific config files. Dataset-specific configuration is described later in the
+<a class="reference internal" href="#dataset-config"><span class="std std-ref">Dataset configuration</span></a> section.</p>
+<p>Below is an example <cite>config.yml</cite> which, in addition to including general settings and global
+filters and aggregation functions which should be applied to all features, also links to four
+additional dataset-specific config files.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1">################################################################################</span>
+<span class="c1">#                  _</span>
+<span class="c1">#  ___ _ __   __ _| | _____  ___</span>
+<span class="c1"># / __| &#39;_ \ / _` | |/ / _ \/ __|</span>
+<span class="c1"># \__ \ | | | (_| |   &lt;  __/\__ \</span>
+<span class="c1"># |___/_| |_|\__,_|_|\_\___||___/</span>
+<span class="c1">#</span>
+<span class="c1"># Example configuration</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># General settings</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+
+<span class="c1"># analysis name and version</span>
+<span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="s">&#39;test</span><span class="nv"> </span><span class="s">pipeline&#39;</span>
+<span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="s">&#39;1.0&#39;</span>
+
+<span class="c1"># output directory</span>
+<span class="l l-Scalar l-Scalar-Plain">output_dir</span><span class="p p-Indicator">:</span> <span class="s">&#39;output&#39;</span>
+
+<span class="c1"># random seed</span>
+<span class="l l-Scalar l-Scalar-Plain">random_seed</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># Data sources</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+<span class="l l-Scalar l-Scalar-Plain">datasets</span><span class="p p-Indicator">:</span>
+   <span class="l l-Scalar l-Scalar-Plain">features</span><span class="p p-Indicator">:</span>
+      <span class="p p-Indicator">-</span> <span class="s">&#39;tests/settings/features/rnaseq.yml&#39;</span>
+      <span class="p p-Indicator">-</span> <span class="s">&#39;tests/settings/features/cnv.yml&#39;</span>
+      <span class="p p-Indicator">-</span> <span class="s">&#39;tests/settings/features/variants.yml&#39;</span>
+   <span class="l l-Scalar l-Scalar-Plain">response</span><span class="p p-Indicator">:</span>
+      <span class="p p-Indicator">-</span> <span class="s">&#39;tests/settings/response/drug_screen.yml&#39;</span>
+
+<span class="l l-Scalar l-Scalar-Plain">metadata</span><span class="p p-Indicator">:</span>
+   <span class="l l-Scalar l-Scalar-Plain">samples</span><span class="p p-Indicator">:</span> <span class="s">&#39;tests/data/metadata/sample_metadata.csv&#39;</span>
+   <span class="l l-Scalar l-Scalar-Plain">response</span><span class="p p-Indicator">:</span> <span class="s">&#39;tests/data/metadata/drug_metadata.csv&#39;</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># Global filters</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+<span class="l l-Scalar l-Scalar-Plain">filters</span><span class="p p-Indicator">:</span>
+   <span class="l l-Scalar l-Scalar-Plain">exclude_columns</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="s">&#39;exclude_columns&#39;</span>
+      <span class="l l-Scalar l-Scalar-Plain">columns_to_exclude</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;KMS20_JCRB&#39;</span><span class="p p-Indicator">]</span>
+   <span class="l l-Scalar l-Scalar-Plain">zero_variance</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="s">&#39;row_var_above&#39;</span>
+      <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># Clustering</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+<span class="l l-Scalar l-Scalar-Plain">clustering</span><span class="p p-Indicator">:</span>
+   <span class="l l-Scalar l-Scalar-Plain">hclust</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">num_clusters</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+      <span class="l l-Scalar l-Scalar-Plain">funcs</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;sum&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;var&#39;</span><span class="p p-Indicator">]</span>
+
+<span class="c1">################################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># Gene sets</span>
+<span class="c1">#</span>
+<span class="c1">################################################################################</span>
+<span class="l l-Scalar l-Scalar-Plain">gene_sets</span><span class="p p-Indicator">:</span>
+   <span class="l l-Scalar l-Scalar-Plain">go</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">gene_id</span><span class="p p-Indicator">:</span> <span class="s">&#39;entrez&#39;</span>
+      <span class="l l-Scalar l-Scalar-Plain">gmts</span><span class="p p-Indicator">:</span>
+         <span class="p p-Indicator">-</span> <span class="s">&#39;tests/data/gene_sets/go.gmt&#39;</span>
+      <span class="l l-Scalar l-Scalar-Plain">funcs</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;max&#39;</span><span class="p p-Indicator">,</span> <span class="s">&#39;median&#39;</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>The main required parameters are:</p>
+<ul class="simple">
+<li><cite>name</cite> - name of the pipeline</li>
+<li><cite>version</cite> - a version string to be used to keep track of multiple versions of a pipeline</li>
+<li><cite>output_dir</cite> - the base output directory to save pipeline outputs to</li>
+<li><cite>datasets</cite> - locations of feature and response <a class="reference internal" href="#dataset-config"><span class="std std-ref">dataset-specific config files</span></a>.</li>
+</ul>
+</div>
+<div class="section" id="dataset-configuration">
+<span id="dataset-config"></span><h3>Dataset configuration<a class="headerlink" href="#dataset-configuration" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Snakes</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User’s Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">Snakes Documentation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, V. Keith Hughitt.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/guide/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
