@@ -58,16 +58,14 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
     variance of IC-50 scores across cell lines.
     """
     print('[DEV] running filter_grouped_rows')
-    # check to make sure supported function / statistic specified
-    if func == 'len':
-        # length
-        func = len
-    elif func == 'mad':
+    # determine which function to apply within each group
+    if func == 'mad':
         # median absolute deviation (mad)
         from statsmodels import robust
         func = robust.mad
     else:
-        raise("Invalid min_group_stat statistic specified!")
+        # otherwise assume function name or expression passed in as a string
+        func = eval(func)
 
     # apply statistic within each group
     group_stats = df.groupby(group)[field].apply(func)
