@@ -30,14 +30,13 @@ def row_sum_above(df, value=None, quantile=None):
 
 def row_var_above(df, value=None, quantile=None):
     """Filters dataset to exclude rows below a certain cutoff"""
-    # return df[df.var(axis=1) > value]
     return filter_rows(df=df, func=np.var, op=operator.gt, value=value, quantile=quantile)
 
 def row_max_missing(df, value=None, quantile=None):
     """Filters dataset to exclude rows with too many missing values"""
     # if quantile specified, find associated value
     if quantile is not None:
-        value = df.quantile(quantile, axis=axis)
+        value = df.quantile(quantile, axis=1)
 
     return df[df.isnull().sum(axis=1) <= value]
 
@@ -45,7 +44,7 @@ def row_min_nonzero(df, value=None, quantile=None):
     """Filters dataset to exclude rows with too many zeros"""
     # if quantile specified, find associated value
     if quantile is not None:
-        value = df.quantile(quantile, axis=axis)
+        value = df.quantile(quantile, axis=1)
 
     return df[(df != 0).sum(axis=1) >= value]
 
@@ -80,6 +79,6 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
         cutoff_value = value
 
     # get ids of rows passing the cutoff
-    mask = group_stats.loc[group_stats > cutoff_value].index
+    mask = group_stats.loc[op(group_stats, cutoff_value)].index
 
-    return(df[df[group].isin(mask)])
+    return df[df[group].isin(mask)]
