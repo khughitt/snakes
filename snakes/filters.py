@@ -6,12 +6,15 @@ import numpy as np
 
 def filter_data(df, func, axis=1, op=operator.gt, value=None, quantile=None):
     """Generalized function for filtering a dataset by rows or columns."""
+    # aply function along specified axis
+    vals = df.apply(func, axis=axis)
+
     # if quantile specified, find associated value
     if quantile is not None:
-        value = df.quantile(quantile, axis=axis)
+        value = vals.quantile(quantile, axis=axis)
 
     # apply function along rows or columns and return filtered result
-    return df[op(df.apply(func, axis=axis), value)]
+    return df[op(vals, value)]
 
 def filter_rows(df, func, op=operator.gt, value=None, quantile=None):
     """Filters rows from a dataset"""
