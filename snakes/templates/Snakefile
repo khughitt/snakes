@@ -97,11 +97,11 @@ rule all:
             {% for gmt in gene_set_params['gmts'] -%}
                 {% set gmt_name = gmt | basename_no_ext -%}
                 {% set preprocessed_gmt = "%s/gene_sets/%s-%s.gmt" | format(output_dir, gmt_name, dat_cfg['xid']) -%}
-                {% if preprocessed_gmt not in preproccesed_gmt_files -%}
+                {% if preprocessed_gmt not in preproccesed_gmt_files %}
 {% include 'annotations/load_gmt.snakefile' -%}
                     {% do preproccesed_gmt_files.append(preprocessed_gmt) -%}
                 {% endif -%}
-                {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) -%}
+                {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
 {% include 'aggregation/gene_set_' + gene_set + '.snakefile' %}
             {% endfor -%}
         {% endfor -%}

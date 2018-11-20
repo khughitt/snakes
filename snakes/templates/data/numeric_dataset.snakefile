@@ -45,15 +45,15 @@ rule {{ rule_name }}:
 #
 # Data transformations
 #
-{% for transform in dat_cfg['transforms'] -%}
+{% for transform_name, transform_params in dat_cfg['transforms'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform_name + '.csv') -%}
+{% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform_name ~ '_transform' | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'transforms/' + transform + '.snakefile' %}
+{% include 'transforms/' + transform_params['type'] + '.snakefile' %}
 
 {% endfor %}
 {% endif -%}

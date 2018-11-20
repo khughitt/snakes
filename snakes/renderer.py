@@ -25,7 +25,8 @@ class SnakefileRenderer():
         self._load_config(config_filepath, **kwargs)
         self._validate_config()
 
-    def _setup_logger(self):
+    @staticmethod
+    def _setup_logger():
         """Sets up logging environment"""
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
@@ -39,7 +40,8 @@ class SnakefileRenderer():
 
         logging.info("Initializing snakes")
 
-    def _get_defaults(self):
+    @staticmethod
+    def _get_default_config():
         """Returns a dictionary of default settings."""
         return {
             'software': {
@@ -50,7 +52,8 @@ class SnakefileRenderer():
             }
         }
 
-    def _get_default_dataset_args(self):
+    @staticmethod
+    def _get_default_dataset_args():
         """Returns a dictionary of the default arguments associated with a dataset config entry"""
         return {
             'type': 'numeric',
@@ -81,10 +84,10 @@ class SnakefileRenderer():
             config_file = 'config.yml'
 
         if not os.path.isfile(config_file):
-            logging.error("Invalid configuration path specified: %s" % config_file)
+            logging.error("Invalid configuration path specified: %s", config_file)
             sys.exit()
 
-        logging.info("Using configuration: %s" % config_file)
+        logging.info("Using configuration: %s", config_file)
 
         # load main snakes configuration file
         with open(config_file) as fp:
@@ -99,8 +102,17 @@ class SnakefileRenderer():
         # Store filepath of config file used
         self.main_config['config_file'] = os.path.abspath(config_file)
 
+        # check global settings
+        required_params = ['name', 'version', 'datasets']
+
+        for param in required_params:
+            if param not in self.main_config:
+                msg = "Invalid coniguration! Missing required parameter '{}'".format(param)
+                raise Exception(msg)
+
         # load dataset-specific config files
-        for dataset_yaml in self.main_config['datasets']['features'] + self.main_config['datasets']['response']:
+        for dataset_yaml in (self.main_config['datasets']['features'] + 
+                             self.main_config['datasets']['response']):
             self._load_dataset_config(dataset_yaml)
 
     def _load_dataset_config(self, input_yaml):
@@ -109,15 +121,15 @@ class SnakefileRenderer():
         # default dataset settings
         cfg = self._get_default_dataset_args()
 
-        # load dataset-specific config and filter
+        # load dataset-specific configuration
         cfg.update(yaml.load(open(input_yaml)))
 
-        # each feature / response dataset carries its own settings; along with any global
-        # filtering, etc. settings specified in the parent config. In cases where a setting
-        # is specified in both the global config, and the dataset-specific one, the dataset-
-        # specific options take priority.
+        # each feature dataset carries its own dataset-specific settings which get
+        # applied along with any global filtering, etc. settings specified in the parent config.
+        # In cases where a setting is specified in both the global config, and the dataset-specific
+        # one, the dataset-specific options take priority.
         if cfg['role'] == 'feature':
-            for param in ['filters', 'clustering', 'gene_sets']:
+            for param in ['filters', 'transforms', 'clustering', 'gene_sets']:
                 if param in self.main_config:
                     # use dataset-specific settings, if specified
                     if param in cfg:
@@ -130,7 +142,7 @@ class SnakefileRenderer():
 
         # set default quantile / value function args for filters
         if 'filters' in cfg:
-            for filter_cfg in cfg['filters']: 
+            for filter_cfg in cfg['filters']:
                 if 'quantile' not in cfg['filters'][filter_cfg]:
                     cfg['filters'][filter_cfg]['quantile'] = None
                 if 'value' not in cfg['filters'][filter_cfg]:
@@ -140,34 +152,31 @@ class SnakefileRenderer():
 
     def _validate_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
-        # check global settings
-        # TODO
-
         # base template directory
         template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
 
         # required parameters for all data types
-        global_reqs = ['name', 'path']
+        shared_dataset_reqs = ['name', 'path']
 
         # data type specific required params
-        type_specific_reqs = {
+        specific_dataset_reqs = {
             'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
         }
-                
+
         # check dataset-specific settings
         for key, dataset_cfg in self.dataset_configs.items():
             # make sure required parameters have been specified
-            required_params = global_reqs
+            required_params = shared_dataset_reqs
 
-            if key in type_specific_reqs.keys():
-                required_params = required_params + type_specific_reqs[key]
-            
+            if key in specific_dataset_reqs.keys():
+                required_params = required_params + specific_dataset_reqs[key]
+
             for param in required_params:
                 if param not in dataset_cfg:
                     msg = "Invalid coniguration! Missing required parameter '{}' for dataset '{}'".format(param, key)
                     raise Exception(msg)
 
-            # for each filter, make sure filter type is specified
+            # for each filter and transform, make sure a valid type is specified
             if 'filters' in dataset_cfg:
                 for filter_name in dataset_cfg['filters']:
                     # check for require parameter: type
@@ -181,6 +190,21 @@ class SnakefileRenderer():
 
                     if template_filename not in os.listdir(os.path.join(template_dir, 'filters')):
                         msg = "Invalid coniguration! Unknown filter type: '{}'".format(filter_type)
+                        raise Exception(msg)
+
+            if 'transforms' in dataset_cfg:
+                for transform_name in dataset_cfg['transforms']:
+                    # check for require parameter: type
+                    if 'type' not in dataset_cfg['transforms'][transform_name]:
+                        msg = "Invalid coniguration! Missing 'type' for transform '{}'".format(transform_name)
+                        raise Exception(msg)
+
+                    # check to make sure a valid transform type is specified
+                    transform_type = dataset_cfg['transforms'][transform_name]['type']
+                    template_filename = transform_type + '.snakefile'
+
+                    if template_filename not in os.listdir(os.path.join(template_dir, 'transforms')):
+                        msg = "Invalid coniguration! Unknown transform type: '{}'".format(transform_type)
                         raise Exception(msg)
 
     def _get_args(self):
@@ -242,7 +266,7 @@ class SnakefileRenderer():
                                     script_dir=script_dir)
 
         # save rendered snakefile to disk
-        logging.info("Saving Snakefile to {}".format(self.output_file))
+        logging.info("Saving Snakefile to %s", self.output_file)
 
         with open(self.output_file, 'w') as file_handle:
             file_handle.write(snakefile)

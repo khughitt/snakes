@@ -29,5 +29,9 @@ filters:
     include_gene_types: ['protein_coding']
 
 # Transformations
-transforms: ['cpm', 'log2p']
+transforms:
+  cpm:
+    type: 'cpm'
+  log:
+    type: 'log2p'
 
