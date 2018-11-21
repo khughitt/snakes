@@ -18,10 +18,8 @@ path: 'tests/data/features/variants.csv'
 
 # Filtering
 filters:
-  min_reads:
-    type: 'row_min_nonzero'
+  row_min_nonzero:
     value: 2
-  min_var:
-    type: 'row_var_above'
+  row_var_above:
     value: 0
 

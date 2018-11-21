@@ -18,20 +18,14 @@ path: 'tests/data/features/rnaseq.csv'
 
 # Filtering
 filters:
-  min_reads:
-    type: 'row_sum_above'
+  row_sum_above:
+    name: 'min_reads'
     value: 20
-  min_var:
-    type: 'row_var_above'
+  row_var_above:
     value: 0
-  protein_coding:
-    type: 'gene_type'
+  gene_type:
+    name: 'noncoding'
     include_gene_types: ['protein_coding']
 
 # Transformations
-transforms:
-  cpm:
-    type: 'cpm'
-  log:
-    type: 'log2p'
-
+transforms: ['cpm', 'log2p']

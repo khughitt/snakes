@@ -49,10 +49,9 @@ metadata:
 ################################################################################
 filters:
   exclude_columns:
-    type: 'exclude_columns'
     columns_to_exclude: ['KMS20_JCRB']
-  zero_variance:
-    type: 'row_var_above'
+  row_var_above:
+    name: 'exclude_zero_variance'
     value: 0
 
 ################################################################################

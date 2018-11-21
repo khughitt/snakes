@@ -79,15 +79,35 @@ class SnakefileRenderer():
         }
 
     @staticmethod
-    def _get_default_dataset_config():
-        """Returns a dictionary of the default arguments associated with a dataset config entry"""
+    def _get_default_feature_config():
+        """Returns a dictionary of the default arguments associated with a feature dataset config 
+           entry"""
         return {
             'type': 'numeric',
             'role': 'feature',
             'xid': 'x',
             'yid': 'y',
             'sep': ',',
-            'index_col': 0
+            'index_col': 0,
+            'filters': {},
+            'transforms': {},
+            'clustering': {},
+            'gene_sets': {}
+        }
+
+    @staticmethod
+    def _get_default_response_config():
+        """Returns a dictionary of the default arguments associated with a response dataset config
+           entry"""
+        return {
+            'type': 'numeric',
+            'role': 'response',
+            'xid': 'x',
+            'yid': 'y',
+            'sep': ',',
+            'index_col': 0,
+            'filters': {},
+            'transforms': {}
         }
 
     def _load_config(self, config_filepath, **kwargs):
@@ -137,45 +157,120 @@ class SnakefileRenderer():
         elif 'response' not in self.main_config['datasets']:
             raise Exception("Invalid coniguration! Missing required datasets parameter 'response'")
 
-        # load dataset-specific config files
-        for dataset_yaml in (self.main_config['datasets']['features'] +
-                             self.main_config['datasets']['response']):
-            self._load_dataset_config(dataset_yaml)
+        # parse feature and filter sections of main config
+        self.main_config['filters'] = self._parse_filter_config(self.main_config['filters'])
+        self.main_config['transforms'] = self._parse_transform_config(self.main_config['transforms'])
 
-    def _load_dataset_config(self, input_yaml):
+        # load feature dataset configs
+        for yml in self.main_config['datasets']['features']:
+            self._load_feature_config(yml)
+
+        # load response dataset config
+        self._load_response_config(yml)
+
+    def _load_feature_config(self, input_yaml):
         """Loads a feature / response dataset config file and overides any global settings with
         dataset-specific ones."""
         # default dataset settings
-        cfg = self._get_default_dataset_config()
+        cfg = self._get_default_feature_config()
 
         # load dataset-specific configuration
         cfg.update(yaml.load(open(input_yaml)))
+
+        # parse filter and transform sections of configs and set appropriate defaults
+        cfg['filters'] = self._parse_filter_config(cfg['filters'])
+        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
 
         # each feature dataset carries its own dataset-specific settings which get
         # applied along with any global filtering, etc. settings specified in the parent config.
         # In cases where a setting is specified in both the global config, and the dataset-specific
         # one, the dataset-specific options take priority.
-        if cfg['role'] == 'feature':
-            for param in ['filters', 'transforms', 'clustering', 'gene_sets']:
-                if param in self.main_config:
-                    # use dataset-specific settings, if specified
-                    if param in cfg:
-                        dataset_params = cfg[param]
-                        cfg[param] = self.main_config[param].copy()
-                        cfg[param].update(dataset_params)
-                    else:
-                        # otherwise just use global config settings
-                        cfg[param] = self.main_config[param].copy()
-
-        # set default quantile / value function args for filters
-        if 'filters' in cfg:
-            for filter_cfg in cfg['filters']:
-                if 'quantile' not in cfg['filters'][filter_cfg]:
-                    cfg['filters'][filter_cfg]['quantile'] = None
-                if 'value' not in cfg['filters'][filter_cfg]:
-                    cfg['filters'][filter_cfg]['value'] = None
+        for param in ['filters', 'transforms', 'clustering', 'gene_sets']:
+            if param in self.main_config:
+                dataset_params = cfg[param]
+                cfg[param] = self.main_config[param].copy()
+                cfg[param].update(dataset_params)
 
         self.dataset_configs[cfg['name']] = cfg
+
+    def _load_response_config(self, input_yaml):
+        """Loads a response dataset config file and overides any global settings with
+        dataset-specific ones."""
+        # default dataset settings
+        cfg = self._get_default_response_config()
+
+        # load dataset-specific configuration
+        cfg.update(yaml.load(open(input_yaml)))
+
+        # parse filter and transform sections of configs and set appropriate defaults
+        cfg['filters'] = self._parse_filter_config(cfg['filters'])
+        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
+
+        self.dataset_configs[cfg['name']] = cfg
+
+    def _parse_transform_config(self, transforms):
+        """Loads transforms section of global or dataset-specific config"""
+        # if transforms specified using a list, convert to dict
+        if isinstance(transforms, list):
+            transforms = {transform: {'name': transform} for transform in transforms}
+
+        # list to keep track of names used; if multiple versions of the same transform are applied,
+        # a number will be suffixed to the name to avoid rule collisions
+        used_names = []
+
+        # set default transform name parameter, if not specified
+        for transform in transforms:
+            # if no specific name has been given to the transform entry, default to the name of
+            # the transform itself
+            if 'name' not in transforms[transform]:
+                transforms[transform]['name'] = transform
+
+            # if type of transform has already been included, append a number to the name
+            if transforms[transform]['name'] in used_names:
+                # number of times transform has been used so far
+                i = len([x for x in used_names if x.startswith(transforms[transform]['name'])]) + 1
+
+                transforms[transform]['name'] = transforms[transform]['name'] + "_" + str(i)
+
+            # update used name list
+            used_names.append(transforms[transform]['name'])
+
+        return transforms
+
+    def _parse_filter_config(self, filters):
+        """Loads filters section of global or dataset-specific config"""
+        # if filters specified using a list, convert to dict
+        if isinstance(filters, list):
+            filters = {filter_: {'name': filter_} for filter_ in filters}
+
+        # list to keep track of names used; if multiple versions of the same filters are applied,
+        # a number will be suffixed to the name to avoid rule collisions
+        used_names = []
+
+        # set default filter name parameter, if not specified
+        for filter_ in filters:
+            # if no specific name has been given to the filter entry, default to the name of
+            # the filter itself
+            if 'name' not in filters[filter_]:
+                filters[filter_]['name'] = filter_
+
+            # if type of filter has already been included, append a number to the name
+            if filters[filter_]['name'] in used_names:
+                # number of times filter has been used so far
+                i = len([x for x in used_names if x.startswith(filters[filter_]['name'])]) + 1
+
+                filters[filter_]['name'] = filters[filter_]['name'] + "_" + str(i)
+
+            # update used name list
+            used_names.append(filters[filter_]['name'])
+
+            # set default filter value and quantile parameters, if not specified
+            if 'quantile' not in filters[filter_]:
+                filters[filter_]['quantile'] = None
+            if 'value' not in filters[filter_]:
+                filters[filter_]['value'] = None
+
+        return filters
 
     def _validate_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
@@ -191,10 +286,10 @@ class SnakefileRenderer():
 
     def _validate_dataset_configs(self):
         """Validate dataset-specific configurations"""
-        # required parameters for all dataset configuration
+        # required parameters for all types of data
         shared_dataset_reqs = ['name', 'path']
 
-        # data type specific required params
+        # data type-specific required parameters
         specific_dataset_reqs = {
             'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
         }
@@ -224,41 +319,23 @@ class SnakefileRenderer():
 
     def _validate_transform_config(self, transforms, template_dir):
         """Validates transformations portion snakes config"""
-        for transform_name in transforms:
-            # check for require parameter: type
-            if 'type' not in transforms[transform_name]:
-                msg = ("Invalid coniguration! Missing 'type' for transform "
-                       "'{}'").format(transform_name)
-                raise Exception(msg)
-
+        for transform in transforms:
             # check to make sure a valid transform type is specified
-            transform_type = transforms[transform_name]['type']
-            template_filename = transform_type + '.snakefile'
+            template = transform + '.snakefile'
 
-            if template_filename not in os.listdir(os.path.join(template_dir,
-                                                                'transforms')):
-                msg = ("Invalid coniguration! Unknown transform type: "
-                       "'{}'").format(transform_type)
+            if template not in os.listdir(os.path.join(template_dir, 'transforms')):
+                msg = "Invalid coniguration! Unknown transform type: '{}'".format(transform)
                 raise Exception(msg)
 
     def _validate_filter_config(self, filters, template_dir):
         """Validates filters portion of snakes config"""
         # for each filter and transform, make sure a valid type is specified
-        for filter_name in filters:
-            # check for require parameter: type
-            if 'type' not in filters[filter_name]:
-                msg = ("Invalid coniguration! Missing 'type' for filter "
-                       "'{}'").format(filter_name)
-                raise Exception(msg)
-
+        for filter_ in filters:
             # check to make sure a valid filter type is specified
-            filter_type = filters[filter_name]['type']
-            template_filename = filter_type + '.snakefile'
+            template = filter_ + '.snakefile'
 
-            if template_filename not in os.listdir(os.path.join(template_dir, 'filters')):
-                msg = "Invalid coniguration! Unknown filter type: '{}'".format(filter_type)
-                raise Exception(msg)
-
+            if template not in os.listdir(os.path.join(template_dir, 'filters')):
+                raise Exception("Invalid coniguration! Unknown filter type: '{}'".format(filter_))
 
     def _get_args(self):
         """Parses input and returns arguments"""

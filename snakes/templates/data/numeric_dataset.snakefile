@@ -29,15 +29,15 @@ rule {{ rule_name }}:
 #
 # Data filtering
 #
-{% for filter_name, filter_params in dat_cfg['filters'].items() -%}
+{% for filter, filter_params in dat_cfg['filters'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') -%}
+{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'filters/' + filter_params['type'] + '.snakefile' %}
+{% include 'filters/' + filter + '.snakefile' %}
 {% endfor %}
 {% endif -%}
 
@@ -45,15 +45,15 @@ rule {{ rule_name }}:
 #
 # Data transformations
 #
-{% for transform_name, transform_params in dat_cfg['transforms'].items() -%}
+{% for transform, transform_params in dat_cfg['transforms'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform_name + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform_name ~ '_transform' | to_rule_name -%}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
+{% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'transforms/' + transform_params['type'] + '.snakefile' %}
+{% include 'transforms/' + transform + '.snakefile' %}
 
 {% endfor %}
 {% endif -%}

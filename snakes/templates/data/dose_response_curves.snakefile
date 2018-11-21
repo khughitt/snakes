@@ -17,7 +17,7 @@
 {# create a list of the columns that are used in the analysis -#}
 {% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id'], dat_cfg['response_var']] -%}
 
-{% for filter_name, filter_params in dat_cfg['filters'].items() -%}
+{% for filter, filter_params in dat_cfg['filters'].items() -%}
 {% if 'field' in filter_params -%}
 {% do required_fields.append(filter_params['field']) -%}
 {% endif -%}
@@ -43,10 +43,10 @@ rule {{ rule_name }}:
 #
 # Data filtering
 #
-{% for filter_name, filter_params in dat_cfg['filters'].items() -%}
+{% for filter, filter_params in dat_cfg['filters'].items() -%}
     {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter_name + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter_name | to_rule_name -%}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') -%}
+{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name -%}
 {% do local_rules.append(rule_name) -%}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
