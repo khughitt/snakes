@@ -361,7 +361,8 @@ class SnakefileRenderer():
                    PackageLoader('snakes', 'templates/vis')]
 
         # get jinaj2 environment
-        env = Environment(loader=ChoiceLoader(loaders), extensions=['jinja2.ext.do'])
+        env = Environment(loader=ChoiceLoader(loaders), trim_blocks=True, lstrip_blocks=True,
+                          extensions=['jinja2.ext.do'])
 
         #
         # define custom jinja2 filters

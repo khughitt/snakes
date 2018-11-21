@@ -11,23 +11,23 @@
 {# modified in the scope of a jinja for loop.
 {############################################################################################-#}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dat_cfg['path'] -%}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) -%}
+{% set ns.cur_input  =  dat_cfg['path'] %}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) %}
 
 {# create a list of the columns that are used in the analysis -#}
-{% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id'], dat_cfg['response_var']] -%}
+{% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id'], dat_cfg['response_var']] %}
 
-{% for filter, filter_params in dat_cfg['filters'].items() -%}
-{% if 'field' in filter_params -%}
-{% do required_fields.append(filter_params['field']) -%}
-{% endif -%}
-{% endfor -%}
+{% for filter, filter_params in dat_cfg['filters'].items() %}
+{% if 'field' in filter_params %}
+{% do required_fields.append(filter_params['field']) %}
+{% endif %}
+{% endfor %}
 
 #
 # Load raw curve data
 #
-{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
@@ -39,45 +39,45 @@ rule {{ rule_name }}:
         # header and a column for row ids
         pd.read_csv(input[0])[fields_to_keep].to_csv(output[0])
 
-{% if 'filters' in dat_cfg -%}
+{% if 'filters' in dat_cfg %}
 #
 # Data filtering
 #
-{% for filter, filter_params in dat_cfg['filters'].items() -%}
-    {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+{% for filter, filter_params in dat_cfg['filters'].items() %}
+    {% set ns.cur_input  = ns.cur_output %}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') %}
+{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'filters/' + filter_params['type'] + '.snakefile' %}
 {% endfor %}
-{% endif -%}
+{% endif %}
 
-{% if 'transforms' in dat_cfg -%}
+{% if 'transforms' in dat_cfg %}
 #
 # Data transformations
 #
-{% for transform in dat_cfg['transforms'] -%}
-    {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+{% for transform in dat_cfg['transforms'] %}
+    {% set ns.cur_input  = ns.cur_output %}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') %}
+{% set rule_name = dat_cfg['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'transforms/' + transform + '.snakefile' %}
 
 {% endfor %}
-{% endif -%}
+{% endif %}
 
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/response/%s.csv" | format(output_dir, dat_cfg['name']) -%}
-{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' -%}
-{% do local_rules.append(rule_name) -%}
+{% set cleaned_file = "%s/response/%s.csv" | format(output_dir, dat_cfg['name']) %}
+{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'

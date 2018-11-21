@@ -5,18 +5,19 @@
 # {% endblock %}
 #
 ################################################################################
-{############################################################################################-#}
+{#############################################################################################}
 {# Below we define a custom namespace which is used to keep track of the most recent rule
 {# included for the dataset. The namespace approach is required so that variables can be
 {# modified in the scope of a jinja for loop.
-{############################################################################################-#}
+{#############################################################################################}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dat_cfg['path'] -%}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) -%}
+{% set ns.cur_input  =  dat_cfg['path'] %}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) %}
 #
 # Load raw data
-{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+#
+{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
@@ -25,46 +26,45 @@ rule {{ rule_name }}:
         # header and a column for row ids
         pd.read_table(input[0], sep='{{ dat_cfg["sep"] }}', index_col={{ dat_cfg['index_col'] }}).to_csv(output[0], index_label='{{ dat_cfg["xid"] }}')
 
-{% if 'filters' in dat_cfg -%}
+{% if 'filters' in dat_cfg and dat_cfg['filters'] | length > 0 %}
 #
 # Data filtering
 #
-{% for filter, filter_params in dat_cfg['filters'].items() -%}
-    {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+{% for filter, filter_params in dat_cfg['filters'].items() %}
+    {% set ns.cur_input  = ns.cur_output %}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') %}
+    {% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name %}
+    {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'filters/' + filter + '.snakefile' %}
 {% endfor %}
-{% endif -%}
+{% endif %}
 
-{% if 'transforms' in dat_cfg -%}
+{% if 'transforms' in dat_cfg and dat_cfg['transforms'] | length > 0 %}
 #
 # Data transformations
 #
-{% for transform, transform_params in dat_cfg['transforms'].items() -%}
-    {% set ns.cur_input  = ns.cur_output -%}
-    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') -%}
-{% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform | to_rule_name -%}
-{% do local_rules.append(rule_name) -%}
+{% for transform, transform_params in dat_cfg['transforms'].items() %}
+    {% set ns.cur_input  = ns.cur_output %}
+    {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') %}
+    {% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform | to_rule_name %}
+    {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
 {% include 'transforms/' + transform + '.snakefile' %}
-
 {% endfor %}
-{% endif -%}
+{% endif %}
 
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dat_cfg['name']) -%}
-{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' -%}
-{% do local_rules.append(rule_name) -%}
-{% do training_set_features.append(cleaned_file | basename) -%}
+{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dat_cfg['name']) %}
+{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' %}
+{% do local_rules.append(rule_name) %}
+{% do training_set_features.append(cleaned_file | basename) %}
 rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
@@ -72,4 +72,5 @@ rule {{ rule_name }}:
         df = pd.read_csv(input[0], index_col=0)
         #df = df.rename(index={ind: '{{dat_name}}_' + ind for ind in df.index})
         df.to_csv(output[0])
+
 

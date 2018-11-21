@@ -9,7 +9,7 @@
 # Aggregates gene features into pre-defined gene sets and applies one more functions to derive
 # new features.
 #
-{% set output_path = "%s/features/%s-%s-%s-{funcs}.csv" | format(output_dir, dat_name, gene_set, gmt_name) -%}
+{% set output_path = "%s/features/%s-%s-%s-{funcs}.csv" | format(output_dir, dat_name, gene_set, gmt_name) %}
 
 rule gene_set_{{ dat_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }}:
     input: '{{ cur_input }}',
@@ -53,8 +53,8 @@ rule gene_set_{{ dat_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }}:
 
             gset_df.to_csv(output[i], index_label='gene_set_id')
 
-{# add output filenames to list of expected features -#}
-{% for func in gene_set_params['funcs'] -%}
-    {% set output_file = "%s-%s-%s-%s.csv" | format(dat_name, gene_set, gmt_name, func) -%}
+{#- add output filenames to list of expected features -#}
+{% for func in gene_set_params['funcs'] %}
+    {% set output_file = "%s-%s-%s-%s.csv" | format(dat_name, gene_set, gmt_name, func) %}
     {% do training_set_features.append(output_file) %}
 {% endfor %}

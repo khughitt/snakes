@@ -9,7 +9,7 @@
 #
 # https://github.com/khughitt/snakes
 #
-{% set title_underline = '-' * (config['name'] | length + config['version'] | length + 1) -%}
+{% set title_underline = '-' * (config['name'] | length + config['version'] | length + 1) %}
 #  {{ config['name'] }} {{ config['version'] }}
 #  {{ title_underline }}
 #
@@ -17,11 +17,11 @@
 #  Date   : {{ date_str }}
 #
 #  Data sources:
-{% for dat_name, dat_cfg in datasets.items() -%}
+{% for dat_name, dat_cfg in datasets.items() %}
 #    - {{ dat_name }}: {{ dat_cfg['path'] }}
-{% endfor -%}
+{% endfor %}
 #
-{% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) -%}
+{% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) %}
 #  Output dir: {{ output_dir }} 
 #    
 ################################################################################
@@ -43,69 +43,69 @@ output_dir = '{{ output_dir }}'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir, mode=0o755)
 
-{############################################################################################-#}
-{#                                                                                           -#}
-{# Global variables                                                                          -#}
-{#                                                                                           -#}
-{############################################################################################-#}
-{# list used to keep track of different feature sources to use for training set construction -#}
+{#############################################################################################}
+{#                                                                                           #}
+{# Global variables                                                                          #}
+{#                                                                                           #}
+{#############################################################################################}
+{# list used to keep track of different feature sources to use for training set construction #}
 {% set training_set_features = [] -%}
 
-{# list used to keep track of simple rules that should not be run on a cluster               -#}
+{# list used to keep track of simple rules that should not be run on a cluster               #}
 {% set local_rules = [] -%}
 
-{############################################################################################-#}
-{#                                                                                           -#}
+{#############################################################################################}
+{#                                                                                           #}
 {# Default target
-{#                                                                                           -#}
-{############################################################################################-#}
+{#                                                                                           #}
+{#############################################################################################}
 rule all:
     input: "{{ output_dir }}/training_set.csv"
 
-{############################################################################################-#}
-{#                                                                                           -#}
-{# Load features                                                                             -#}
-{#                                                                                           -#}
-{############################################################################################-#}
-{% for dat_name, dat_cfg in datasets.items() -%}
-{% include 'data/' + dat_cfg['name'] + '.snakefile' -%}
-{% endfor -%}
+{#############################################################################################}
+{#                                                                                           #}
+{# Load features                                                                             #}
+{#                                                                                           #}
+{#############################################################################################}
+{% for dat_name, dat_cfg in datasets.items() %}
+{% include 'data/' + dat_cfg['name'] + '.snakefile' %}
+{% endfor %}
 
-{############################################################################################-#}
-{#                                                                                           -#}
-{# Cluster aggregation                                                                       -#}
-{#                                                                                           -#}
-{############################################################################################-#}
-{% for dat_name, dat_cfg in datasets.items() -%}
-{% if dat_cfg['role'] == 'feature' and 'clustering' in  dat_cfg -%}
-{% for clust_method, clust_params in dat_cfg['clustering'].items() -%}
-{% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) -%}
+{#############################################################################################}
+{#                                                                                           #}
+{# Cluster aggregation                                                                       #}
+{#                                                                                           #}
+{#############################################################################################}
+{% for dat_name, dat_cfg in datasets.items() %}
+{% if dat_cfg['role'] == 'feature' and 'clustering' in  dat_cfg %}
+{% for clust_method, clust_params in dat_cfg['clustering'].items() %}
+{% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
 {% include 'aggregation/clustering_' + clust_method + '.snakefile' %}
-{% endfor -%}
-{% endif -%}
-{% endfor -%}
+{% endfor %}
+{% endif %}
+{% endfor %}
 
-{############################################################################################-#}
-{#                                                                                           -#}
-{# Gene set aggregation                                                                      -#}
-{#                                                                                           -#}
-{############################################################################################-#}
-{% set preproccesed_gmt_files = [] -%}
-{% for dat_name, dat_cfg in datasets.items() -%}
-    {% if dat_cfg['role'] == 'feature' and 'gene_sets' in  dat_cfg -%}
-        {% for gene_set, gene_set_params in config['gene_sets'].items() -%}
-            {% for gmt in gene_set_params['gmts'] -%}
-                {% set gmt_name = gmt | basename_no_ext -%}
-                {% set preprocessed_gmt = "%s/gene_sets/%s-%s.gmt" | format(output_dir, gmt_name, dat_cfg['xid']) -%}
+{#############################################################################################}
+{#                                                                                           #}
+{# Gene set aggregation                                                                      #}
+{#                                                                                           #}
+{#############################################################################################}
+{% set preproccesed_gmt_files = [] %}
+{% for dat_name, dat_cfg in datasets.items() %}
+    {% if dat_cfg['role'] == 'feature' and 'gene_sets' in  dat_cfg %}
+        {% for gene_set, gene_set_params in config['gene_sets'].items() %}
+            {% for gmt in gene_set_params['gmts'] %}
+                {% set gmt_name = gmt | basename_no_ext %}
+                {% set preprocessed_gmt = "%s/gene_sets/%s%s.gmt" | format(output_dir, gmt_name, dat_cfg['xid']) %}
                 {% if preprocessed_gmt not in preproccesed_gmt_files %}
-{% include 'annotations/load_gmt.snakefile' -%}
-                    {% do preproccesed_gmt_files.append(preprocessed_gmt) -%}
-                {% endif -%}
+{% include 'annotations/load_gmt.snakefile' %}
+                    {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
+                {% endif %}
                 {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
 {% include 'aggregation/gene_set_' + gene_set + '.snakefile' %}
-            {% endfor -%}
-        {% endfor -%}
-    {% endif -%}
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
 {% endfor %}
 
 ################################################################################
@@ -126,7 +126,7 @@ rule combine_features:
 # Other settings
 #
 ################################################################################
-{% set localrules_str = ', '.join(local_rules) -%}
+{% set localrules_str = ', '.join(local_rules) %}
 localrules: {{ localrules_str }}
 
 

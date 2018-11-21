@@ -14,11 +14,11 @@
 rule cluster_{{ dat_name ~ "_" ~ clust_method | to_rule_name }}:
     input: '{{ cur_input }}'
     output: expand("{{ output_path }}", funcs = {{ clust_params['funcs'] }})
-{% block clustering_body -%}{% endblock -%}
+{% block clustering_body %}{% endblock %}
 
 {# add output filenames to list of expected features -#}
-{% for func in clust_params['funcs'] -%}
-    {% set output_file = "%s-%s-%s.csv" | format(dat_name, clust_method, func) -%}
-    {% do training_set_features.append(output_file) -%}
-{% endfor -%}
+{% for func in clust_params['funcs'] %}
+    {% set output_file = "%s-%s-%s.csv" | format(dat_name, clust_method, func) %}
+    {% do training_set_features.append(output_file) %}
+{% endfor %}
 
