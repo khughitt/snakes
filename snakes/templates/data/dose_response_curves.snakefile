@@ -51,7 +51,7 @@ rule {{ rule_name }}:
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'filters/' + filter_params['type'] + '.snakefile' %}
+{% include 'filters/' + filter + '.snakefile' %}
 {% endfor %}
 {% endif %}
 

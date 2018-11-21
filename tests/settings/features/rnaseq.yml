@@ -21,8 +21,6 @@ filters:
   row_sum_above:
     name: 'min_reads'
     value: 20
-  row_var_above:
-    value: 0
   gene_type:
     name: 'noncoding'
     include_gene_types: ['protein_coding']

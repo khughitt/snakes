@@ -20,6 +20,3 @@ path: 'tests/data/features/variants.csv'
 filters:
   row_min_nonzero:
     value: 2
-  row_var_above:
-    value: 0
-

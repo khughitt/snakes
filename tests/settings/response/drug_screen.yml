@@ -52,7 +52,7 @@ filters:
   row_val_not_missing:
     name: 'missing_ac50'
     field: 'ac50'
-  field_above:
+  row_field_above:
     name: 'curve_slope'
     field: 'curve_slope'
     value: 0

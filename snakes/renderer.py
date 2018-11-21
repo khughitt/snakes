@@ -166,7 +166,8 @@ class SnakefileRenderer():
             self._load_feature_config(yml)
 
         # load response dataset config
-        self._load_response_config(yml)
+        for yml in self.main_config['datasets']['response']:
+            self._load_response_config(yml)
 
     def _load_feature_config(self, input_yaml):
         """Loads a feature / response dataset config file and overides any global settings with

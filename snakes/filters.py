@@ -24,12 +24,19 @@ def filter_cols(df, func, op=operator.gt, value=None, quantile=None):
     """Filters columns from a dataset"""
     return filter_data(df=df, func=func, axis=2, op=op, value=value, quantile=quantile)
 
+def row_field_above(df, field=None, value=None, quantile=None):
+    """Filters dataset to exclude rows for which a specified field falls below a certain cutoff"""
+    if quantile is not None:
+        value = df[field].quantile(quantile)
+
+    return df[df[field] > value]
+
 def row_sum_above(df, value=None, quantile=None):
-    """Filters dataset to exclude rows below a certain cutoff"""
+    """Filters dataset to exclude rows whose sum falls below a certain cutoff"""
     return filter_rows(df=df, func=np.sum, op=operator.gt, value=value, quantile=quantile)
 
 def row_var_above(df, value=None, quantile=None):
-    """Filters dataset to exclude rows below a certain cutoff"""
+    """Filters dataset to exclude rows whose variance falls below a certain cutoff"""
     return filter_rows(df=df, func=np.var, op=operator.gt, value=value, quantile=quantile)
 
 def row_max_missing(df, value=None, quantile=None):
