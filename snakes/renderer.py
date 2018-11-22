@@ -80,7 +80,7 @@ class SnakefileRenderer():
 
     @staticmethod
     def _get_default_feature_config():
-        """Returns a dictionary of the default arguments associated with a feature dataset config 
+        """Returns a dictionary of the default arguments associated with a feature dataset config
            entry"""
         return {
             'type': 'numeric',
@@ -159,7 +159,8 @@ class SnakefileRenderer():
 
         # parse feature and filter sections of main config
         self.main_config['filters'] = self._parse_filter_config(self.main_config['filters'])
-        self.main_config['transforms'] = self._parse_transform_config(self.main_config['transforms'])
+        self.main_config['transforms'] = self._parse_transform_config(
+            self.main_config['transforms'])
 
         # load feature dataset configs
         for yml in self.main_config['datasets']['features']:
@@ -283,60 +284,93 @@ class SnakefileRenderer():
                 msg = "Invalid coniguration! Missing required parameter '{}'".format(param)
                 raise Exception(msg)
 
-            self._validate_dataset_configs()
+        self._validate_dataset_configs()
+
+    @staticmethod
+    def _required_dataset_params():
+        """Returns a dictionary of dataset required config parameters for various config sections"""
+        return {
+            'main': {
+                'shared': ['name', 'path'],
+                'specific': {
+                    'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
+                }
+            },
+            'filters': {
+                'shared': [],
+                'specific': []
+            },
+            'transforms': {
+                'shared': [],
+                'specific': []
+            },
+            'gene_sets': {
+                'shared': [],
+                'specific': []
+            },
+            'clustering': {
+                'shared': ['num_clusters', 'funcs'],
+                'specific': {}
+            }
+        }
 
     def _validate_dataset_configs(self):
         """Validate dataset-specific configurations"""
-        # required parameters for all types of data
-        shared_dataset_reqs = ['name', 'path']
+        # get a dict of required parameters
+        required_params = self._required_dataset_params()
 
-        # data type-specific required parameters
-        specific_dataset_reqs = {
-            'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
-        }
-
-        # base template directory
-        template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
-
+        # required parameters for dataset configs
         # check dataset-specific settings
         for key, dataset_cfg in self.dataset_configs.items():
-            # make sure required parameters have been specified
-            required_params = shared_dataset_reqs
+            # check main dataset configuration options
+            reqs = required_params['main']['shared'].copy()
 
-            if key in specific_dataset_reqs.keys():
-                required_params = required_params + specific_dataset_reqs[key]
+            # add any data type-specific required parameters
+            if key in required_params['main']['specific']:
+                reqs = reqs + required_params['main']['specific'][key]
 
-            for param in required_params:
+            # check for required parameters
+            for param in reqs:
                 if param not in dataset_cfg:
                     msg = ("Invalid coniguration! Missing required parameter '{}' "
                            "for dataset '{}'").format(param, key)
                     raise Exception(msg)
 
-            if 'filters' in dataset_cfg:
-                self._validate_filter_config(dataset_cfg['filters'], template_dir)
+            # check config subsections
+            for subsection in ['filters', 'transforms', 'gene_sets', 'clustering']:
+                # some sections are only expected for features and not response datasets
+                if subsection in dataset_cfg:
+                    self._validate_config_section(dataset_cfg[subsection], subsection,
+                                                required_params[subsection])
 
-            if 'transforms' in dataset_cfg:
-                self._validate_transform_config(dataset_cfg['transforms'], template_dir)
+    def _validate_config_section(self, config_subsection, config_type, required_params):
+        """Checks for existence of necessary template and required config parameters for a dataset
+           config file subsection."""
+        # base template directory
+        template_dir = os.path.join(os.path.abspath(resource_filename(__name__, 'templates')),
+                                    config_type)
 
-    def _validate_transform_config(self, transforms, template_dir):
-        """Validates transformations portion snakes config"""
-        for transform in transforms:
-            # check to make sure a valid transform type is specified
-            template = transform + '.snakefile'
+        # iterate over subsection entries and validate
+        for key, subsection_cfg in config_subsection.items():
+            # check to make sure template exists
+            template_filename = key + '.snakefile'
 
-            if template not in os.listdir(os.path.join(template_dir, 'transforms')):
-                msg = "Invalid coniguration! Unknown transform type: '{}'".format(transform)
+            if template_filename not in os.listdir(template_dir):
+                msg = "Invalid coniguration! Unknown {} entry: '{}'".format(config_type, key)
                 raise Exception(msg)
 
-    def _validate_filter_config(self, filters, template_dir):
-        """Validates filters portion of snakes config"""
-        # for each filter and transform, make sure a valid type is specified
-        for filter_ in filters:
-            # check to make sure a valid filter type is specified
-            template = filter_ + '.snakefile'
+            # check main dataset configuration options
+            reqs = required_params['shared'].copy()
 
-            if template not in os.listdir(os.path.join(template_dir, 'filters')):
-                raise Exception("Invalid coniguration! Unknown filter type: '{}'".format(filter_))
+            # add any data type-specific required parameters
+            if key in required_params['specific']:
+                reqs = reqs + required_params['specific'][key]
+
+            # check for required parameters
+            for param in reqs:
+                if param not in subsection_cfg:
+                    raise Exception("Missing required {} {} parameter '{}'".format(config_type,
+                                                                                   key, param))
 
     def _get_args(self):
         """Parses input and returns arguments"""
@@ -355,9 +389,10 @@ class SnakefileRenderer():
 
         # template search paths
         loaders = [PackageLoader('snakes', 'templates'),
-                   PackageLoader('snakes', 'templates/aggregation'),
+                   PackageLoader('snakes', 'templates/clustering'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/filters'),
+                   PackageLoader('snakes', 'templates/gene_sets'),
                    PackageLoader('snakes', 'templates/transform'),
                    PackageLoader('snakes', 'templates/vis')]
 

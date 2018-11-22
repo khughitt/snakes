@@ -1,5 +1,5 @@
 """
-Snakes aggregation related functionality.
+Snakes gene set aggregation functionality
 """
 import numpy as np
 import pandas as pd

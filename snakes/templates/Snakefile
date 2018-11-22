@@ -31,11 +31,12 @@ import os
 import yaml
 import numpy as np
 import pandas as pd
-from snakes import aggregation, filters
+from snakes import gene_sets, filters
 
-# load sample and response metadata
-sample_metadata   = pd.read_csv('{{ config["metadata"]["samples"] }}', index_col=0)
-response_metadata = pd.read_csv('{{ config["metadata"]["response"] }}', index_col=0)
+# load metadata
+metadata = {
+    key: pd.read_csv(filepath, index_col=0) for key, filepath in {{ config["metadata"].items() | list }}
+}
 
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
@@ -73,17 +74,18 @@ rule all:
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Cluster aggregation                                                                       #}
+{# Cluster aggregation
 {#                                                                                           #}
 {#############################################################################################}
 {% for dat_name, dat_cfg in datasets.items() %}
 {% if dat_cfg['role'] == 'feature' and 'clustering' in  dat_cfg %}
 {% for clust_method, clust_params in dat_cfg['clustering'].items() %}
 {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
-{% include 'aggregation/clustering_' + clust_method + '.snakefile' %}
+{% include 'clustering/' + clust_method + '.snakefile' %}
 {% endfor %}
 {% endif %}
 {% endfor %}
+
 
 {#############################################################################################}
 {#                                                                                           #}
@@ -102,7 +104,7 @@ rule all:
                     {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
                 {% endif %}
                 {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
-{% include 'aggregation/gene_set_' + gene_set + '.snakefile' %}
+{% include 'gene_sets/' + gene_set + '.snakefile' %}
             {% endfor %}
         {% endfor %}
     {% endif %}
@@ -129,4 +131,5 @@ rule combine_features:
 {% set localrules_str = ', '.join(local_rules) %}
 localrules: {{ localrules_str }}
 
-
+{# vim: set filetype=jinja: #}
+# vim: set filetype=snakemake: 
