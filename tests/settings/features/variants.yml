@@ -5,8 +5,7 @@
 ################################################################################
 
 # General
-name: variants
-type: numeric
+type: variants
 role: feature
 xid: ensgene
 yid: sample_id
