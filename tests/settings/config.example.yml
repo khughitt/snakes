@@ -25,6 +25,9 @@ output_dir: 'output'
 # random seed
 random_seed: 1
 
+# output verbosity
+verbose: true
+
 ################################################################################
 #
 # Data sources

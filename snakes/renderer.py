@@ -3,6 +3,7 @@ snakes template renderer
 """
 import datetime
 import logging
+import pprint
 import os
 import re
 import sys
@@ -29,10 +30,10 @@ class SnakefileRenderer():
     def _setup_logger():
         """Sets up logging environment"""
         root = logging.getLogger()
-        root.setLevel(logging.DEBUG)
+        root.setLevel(logging.INFO)
 
         log_handle = logging.StreamHandler(sys.stdout)
-        log_handle.setLevel(logging.DEBUG)
+        # log_handle.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s) - %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S')
         log_handle.setFormatter(formatter)
@@ -48,6 +49,7 @@ class SnakefileRenderer():
             'output_dir': 'output',
 
             # development mode options
+            'verbose': False,
             'dev_mode': False,
             'dev_mode_subsample_ratio': 0.05,
 
@@ -149,6 +151,10 @@ class SnakefileRenderer():
         # Store filepath of config file used
         self.main_config['config_file'] = os.path.abspath(config_file)
 
+        # Update logging level if 'verbose' option is enabled
+        if self.main_config['verbose']:
+            logging.getLogger().setLevel(logging.DEBUG)
+
         # check to make sure require dataset elements have been specified
         if 'datasets' not in self.main_config:
             raise Exception("Invalid coniguration! Missing required parameter 'datasets'")
@@ -195,6 +201,9 @@ class SnakefileRenderer():
 
         self.dataset_configs[cfg['name']] = cfg
 
+        logging.debug("Loaded feature config '%s':", cfg['name'])  
+        logging.debug(pprint.pformat(cfg))
+
     def _load_response_config(self, input_yaml):
         """Loads a response dataset config file and overides any global settings with
         dataset-specific ones."""
@@ -209,6 +218,9 @@ class SnakefileRenderer():
         cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
 
         self.dataset_configs[cfg['name']] = cfg
+
+        logging.debug("Loaded response config '%s':", cfg['name'])  
+        logging.debug(pprint.pformat(cfg))
 
     def _parse_transform_config(self, transforms):
         """Loads transforms section of global or dataset-specific config"""
@@ -341,7 +353,7 @@ class SnakefileRenderer():
                 # some sections are only expected for features and not response datasets
                 if subsection in dataset_cfg:
                     self._validate_config_section(dataset_cfg[subsection], subsection,
-                                                required_params[subsection])
+                                                  required_params[subsection])
 
     def _validate_config_section(self, config_subsection, config_type, required_params):
         """Checks for existence of necessary template and required config parameters for a dataset
