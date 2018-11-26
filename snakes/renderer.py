@@ -107,6 +107,7 @@ class SnakefileRenderer():
         # default organization mirror reqs ....
         return {
             'type': 'numeric',
+            'name': 'response',
             'role': 'response',
             'sample_id'   : 'cell_line',
             'compound_id' : 'drug_id',
