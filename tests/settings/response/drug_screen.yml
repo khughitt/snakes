@@ -36,7 +36,7 @@
 
 # General
 name: ac50
-type: dose_response_curves
+type: dose_response_dataframe
 role: response
 sample_id : cell_line
 compound_id : drug_id

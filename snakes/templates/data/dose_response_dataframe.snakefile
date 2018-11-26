@@ -32,13 +32,16 @@ rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
-        # create a list of the relevant fields to keep
-        fields_to_keep = {{ required_fields | unique | list }}
-
         # for now, assume that all input files are provided in csv format with a
         # header and a column for row ids
         dat = pd.read_table(input[0], sep='{{ dat_cfg["sep"] }}', index_col={{ dat_cfg['index_col'] }})
-        dat[fields_to_keep].to_csv(output[0], index_label='{{ dat_cfg["compound_id"] }}')
+
+        # create a list of the relevant fields to keep
+        fields_to_keep = {{ required_fields | unique | list }}
+        fields_to_keep = [x for x in fields_to_keep if x != dat.index.name]
+
+        # drop unneeded fields and store result
+        dat[fields_to_keep].to_csv(output[0])
 
 {% if 'filters' in dat_cfg and dat_cfg['filters'] | length > 0 %}
 #

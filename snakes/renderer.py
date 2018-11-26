@@ -342,7 +342,7 @@ class SnakefileRenderer():
             'main': {
                 'shared': ['name', 'path'],
                 'specific': {
-                    'dose_response_curves': ['sample_id', 'compound_id', 'response_var']
+                    'dose_response_dataframe': ['sample_id', 'compound_id', 'response_var']
                 }
             },
             'filters': {
