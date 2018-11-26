@@ -6,7 +6,7 @@
 
 # General
 name: rnaseq
-type: numeric
+type: rnaseq
 role: feature
 xid: ensgene
 yid: sample_id

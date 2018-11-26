@@ -24,7 +24,8 @@ class SnakefileRenderer():
         self._setup_logger()
 
         self._load_config(config_filepath, **kwargs)
-        self._validate_config()
+        self._validate_main_config()
+        self._validate_dataset_configs()
 
     @staticmethod
     def _setup_logger():
@@ -33,7 +34,6 @@ class SnakefileRenderer():
         root.setLevel(logging.INFO)
 
         log_handle = logging.StreamHandler(sys.stdout)
-        # log_handle.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s) - %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S')
         log_handle.setFormatter(formatter)
@@ -87,6 +87,8 @@ class SnakefileRenderer():
         return {
             'type': 'numeric',
             'role': 'feature',
+            'path': '',
+            'name': '',
             'xid': 'x',
             'yid': 'y',
             'sep': ',',
@@ -101,11 +103,16 @@ class SnakefileRenderer():
     def _get_default_response_config():
         """Returns a dictionary of the default arguments associated with a response dataset config
            entry"""
+        # TODO 2018-11-25: move defaults/reqs to external yaml files and have
+        # default organization mirror reqs ....
         return {
             'type': 'numeric',
             'role': 'response',
-            'xid': 'x',
-            'yid': 'y',
+            'sample_id'   : 'cell_line',
+            'compound_id' : 'drug_id',
+            'path': '',
+            'name': '',
+            'response_var': '',
             'sep': ',',
             'index_col': 0,
             'filters': {},
@@ -156,12 +163,7 @@ class SnakefileRenderer():
             logging.getLogger().setLevel(logging.DEBUG)
 
         # check to make sure require dataset elements have been specified
-        if 'datasets' not in self.main_config:
-            raise Exception("Invalid coniguration! Missing required parameter 'datasets'")
-        elif 'features' not in self.main_config['datasets']:
-            raise Exception("Invalid coniguration! Missing required datasets parameter 'features'")
-        elif 'response' not in self.main_config['datasets']:
-            raise Exception("Invalid coniguration! Missing required datasets parameter 'response'")
+        self._validate_main_config()
 
         # parse feature and filter sections of main config
         self.main_config['filters'] = self._parse_filter_config(self.main_config['filters'])
@@ -182,8 +184,20 @@ class SnakefileRenderer():
         # default dataset settings
         cfg = self._get_default_feature_config()
 
+        # check for unexpected settings
+        user_cfg = yaml.load(open(input_yaml))
+        unknown_opts = [x for x in user_cfg.keys() if x not in cfg.keys()]
+
+        if unknown_opts:
+            msg = "Unexpected configuration options encountered in {}: {}"
+            raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
+
         # load dataset-specific configuration
-        cfg.update(yaml.load(open(input_yaml)))
+        cfg.update(user_cfg)
+
+        # if no name specified, default to dataset type
+        if 'name' not in cfg:
+            cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
         cfg['filters'] = self._parse_filter_config(cfg['filters'])
@@ -199,9 +213,12 @@ class SnakefileRenderer():
                 cfg[param] = self.main_config[param].copy()
                 cfg[param].update(dataset_params)
 
+        # Store filepath of config file used
+        cfg['config_file'] = os.path.abspath(input_yaml)
+
         self.dataset_configs[cfg['name']] = cfg
 
-        logging.debug("Loaded feature config '%s':", cfg['name'])  
+        logging.debug("Loaded feature config '%s':", cfg['name'])
         logging.debug(pprint.pformat(cfg))
 
     def _load_response_config(self, input_yaml):
@@ -210,16 +227,31 @@ class SnakefileRenderer():
         # default dataset settings
         cfg = self._get_default_response_config()
 
+        # check for unexpected settings
+        user_cfg = yaml.load(open(input_yaml))
+        unknown_opts = [x for x in user_cfg.keys() if x not in cfg.keys()]
+
+        if unknown_opts:
+            msg = "Unexpected configuration options encountered in {}: {}"
+            raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
+
         # load dataset-specific configuration
-        cfg.update(yaml.load(open(input_yaml)))
+        cfg.update(user_cfg)
+
+        # if no name specified, default to dataset type
+        if 'name' not in cfg:
+            cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
         cfg['filters'] = self._parse_filter_config(cfg['filters'])
         cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
 
+        # Store filepath of config file used
+        cfg['config_file'] = os.path.abspath(input_yaml)
+
         self.dataset_configs[cfg['name']] = cfg
 
-        logging.debug("Loaded response config '%s':", cfg['name'])  
+        logging.debug("Loaded response config '%s':", cfg['name'])
         logging.debug(pprint.pformat(cfg))
 
     def _parse_transform_config(self, transforms):
@@ -286,17 +318,21 @@ class SnakefileRenderer():
 
         return filters
 
-    def _validate_config(self):
+    def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
-        #  check for required parameters in main config
-        required_params = ['name', 'version', 'datasets']
+        #  check for required top-level parameters in main config
+        for param in ['name', 'version', 'datasets']:
+            if param not in self.main_config or not self.main_config[param]:
+                msg = "Missing required configuration parameter in {}: '{}'"
+                config_file = os.path.basename(self.main_config['config_file'])
+                raise Exception(msg.format(config_file, param))
 
-        for param in required_params:
-            if param not in self.main_config:
-                msg = "Invalid coniguration! Missing required parameter '{}'".format(param)
-                raise Exception(msg)
-
-        self._validate_dataset_configs()
+        # check to make sure both feature and response dataset entries have been defined
+        for param in ['features', 'response']:
+            if param not in self.main_config['datasets'] or not self.main_config['datasets'][param]:
+                msg = "Missing required configuration parameter in {}: \"datasets['{}']\""
+                config_file = os.path.basename(self.main_config['config_file'])
+                raise Exception(msg.format(config_file, param))
 
     @staticmethod
     def _required_dataset_params():
@@ -343,10 +379,9 @@ class SnakefileRenderer():
 
             # check for required parameters
             for param in reqs:
-                if param not in dataset_cfg:
-                    msg = ("Invalid coniguration! Missing required parameter '{}' "
-                           "for dataset '{}'").format(param, key)
-                    raise Exception(msg)
+                if param not in dataset_cfg or not dataset_cfg[param]:
+                    msg = "Missing required configuration parameter in {}: '{}'"
+                    raise Exception(msg.format(os.path.basename(dataset_cfg['config_file']), param))
 
             # check config subsections
             for subsection in ['filters', 'transforms', 'gene_sets', 'clustering']:
@@ -380,7 +415,7 @@ class SnakefileRenderer():
 
             # check for required parameters
             for param in reqs:
-                if param not in subsection_cfg:
+                if param not in subsection_cfg or not subsection_cfg[param]:
                     raise Exception("Missing required {} {} parameter '{}'".format(config_type,
                                                                                    key, param))
 

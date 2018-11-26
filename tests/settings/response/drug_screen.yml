@@ -35,10 +35,10 @@
 ################################################################################
 
 # General
-name: dose_response_curves
-type: dataframe
+name: ac50
+type: dose_response_curves
 role: response
-sample_id   : cell_line
+sample_id : cell_line
 compound_id : drug_id
 response_var: ac50
 

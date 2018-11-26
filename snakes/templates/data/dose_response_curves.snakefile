@@ -37,17 +37,18 @@ rule {{ rule_name }}:
 
         # for now, assume that all input files are provided in csv format with a
         # header and a column for row ids
-        pd.read_csv(input[0])[fields_to_keep].to_csv(output[0])
+        dat = pd.read_table(input[0], sep='{{ dat_cfg["sep"] }}', index_col={{ dat_cfg['index_col'] }})
+        dat[fields_to_keep].to_csv(output[0], index_label='{{ dat_cfg["compound_id"] }}')
 
-{% if 'filters' in dat_cfg %}
+{% if 'filters' in dat_cfg and dat_cfg['filters'] | length > 0 %}
 #
 # Data filtering
 #
 {% for filter, filter_params in dat_cfg['filters'].items() %}
     {% set ns.cur_input  = ns.cur_output %}
     {% set ns.cur_output =  ns.cur_input | replace_filename('filter_' + filter + '.csv') %}
-{% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name %}
-{% do local_rules.append(rule_name) %}
+    {% set rule_name = dat_cfg['name'] ~ '_filter_' ~ filter | to_rule_name %}
+    {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
@@ -55,15 +56,15 @@ rule {{ rule_name }}:
 {% endfor %}
 {% endif %}
 
-{% if 'transforms' in dat_cfg %}
+{% if 'transforms' in dat_cfg and dat_cfg['transforms'] | length > 0 %}
 #
 # Data transformations
 #
-{% for transform in dat_cfg['transforms'] %}
+{% for transform, transform_params in dat_cfg['transforms'].items() %}
     {% set ns.cur_input  = ns.cur_output %}
     {% set ns.cur_output =  ns.cur_input | replace_filename('transform_' + transform + '.csv') %}
-{% set rule_name = dat_cfg['name'] ~ '_' ~ transform ~ '_transform' | to_rule_name %}
-{% do local_rules.append(rule_name) %}
+    {% set rule_name = dat_cfg['name'] ~ '_transform_' ~ transform | to_rule_name %}
+    {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'

@@ -30,7 +30,7 @@ hc <- flashClust(as.dist(1 - abs(cor_mat)), method='average')
 # divide hierarchical clustering dendrogram into clusters
 clusters <- cutree(hc, k=params$num_clusters)
 
-# iterate over aggregation functions
+# iterate over functions/statistics to be applied to each cluster 
 for (i in seq_along(params$funcs)) {
   # apply function cluster-wise to original data matrix
   func <- params$funcs[i]

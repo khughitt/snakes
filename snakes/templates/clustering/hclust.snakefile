@@ -5,5 +5,5 @@
         clust_params = {{ clust_params }},
         dat_name = '{{ dat_name }}'
     script:
-        '{{ script_dir }}/clustering/clustering_hclust.R' 
+        '{{ script_dir }}/clustering/hclust.R' 
 {% endblock %}

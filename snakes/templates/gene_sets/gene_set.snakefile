@@ -28,13 +28,13 @@ rule gene_set_{{ dat_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }}:
 
         # iterate of gmt entries and construct a dictionary mapping from gene set names to lists
         # the genes they contain
-        gene_sets = {}
+        gsets = {}
 
         for entry in entries:
             # split line and retrieve gene set name and a list of genes in the set
             fields = entry.split('\t')
 
-            gene_sets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
+            gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
         # gene set row id prefix
         gset_id_prefix = '{{ dat_name }}_{{ gmt_name | to_rule_name }}'
@@ -46,7 +46,7 @@ rule gene_set_{{ dat_name ~ "_" ~ gene_set ~ "_" ~ gmt_name | to_rule_name }}:
             func = funcs[i]
 
             # apply function along gene sets and save output
-            gset_df = gene_sets.gene_set_apply(df, gene_sets, func)
+            gset_df = gene_sets.gene_set_apply(df, gsets, func)
 
             # update row names to include dataset, gene set, and function applied
             gset_df.index = ["_".join([gset_id_prefix, gene_set, func]) for gene_set in gset_df.index]
