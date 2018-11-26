@@ -1,4 +1,4 @@
-rule prepare_{{ gmt_name | to_rule_name }}_{{ dat_cfg['xid'] | to_rule_name }}_gmt:
+rule prepare_{{ gene_set_name | to_rule_name }}_{{ dat_cfg['xid'] | to_rule_name }}_gmt:
     input: '{{ gmt }}'
     output: '{{ preprocessed_gmt }}'
 {% if dat_cfg['xid'] == gene_set_params['gene_id'] %}
