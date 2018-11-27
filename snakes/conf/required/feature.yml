@@ -1,0 +1,14 @@
+#
+# shared feature requirements
+#
+shared:
+  name: 'str'
+  path: 'str'
+  transforms: 'list'
+  gene_sets: 'list'
+  clustering:
+    - num_clusters: int
+    - funcs: 'list'
+#
+# feature-specific options
+#

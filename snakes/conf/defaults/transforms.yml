@@ -1,0 +1,52 @@
+shared:
+  name: ''
+  type: ''
+filter_exclude_columns:
+  quantile: null
+  value: null
+  columns_to_exclude: []
+filter_gene_type:
+  include_gene_types: []
+filter_include_columns:
+  quantile: null
+  value: null
+  columns_to_include: []
+filter_numeric_cutoff:
+  quantile: null
+  value: null
+  group: null
+  field: null
+  stat: null
+filter_row_field_above:
+  quantile: null
+  value: null
+  field: null
+filter_row_max_group_stat:
+  quantile: null
+  value: null
+  group: null
+  field: null
+  stat: null
+filter_row_max_missing:
+  quantile: null
+  value: null
+filter_row_min_group_stat:
+  quantile: null
+  value: null
+  group: null
+  field: null
+  stat: null
+filter_row_min_nonzero:
+  quantile: null
+  value: null
+filter_row_sum_above:
+  quantile: null
+  value: null
+filter_row_val_not_missing:
+  quantile: null
+  value: null
+filter_row_var_above:
+  quantile: null
+  value: null
+transform_impute_knn:
+  k: 5

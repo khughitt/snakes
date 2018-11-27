@@ -1,10 +1,10 @@
 ################################################################################
-#                  _             
+#          _       
 #  ___ _ __   __ _| | _____  ___ 
 # / __| '_ \ / _` | |/ / _ \/ __|
 # \__ \ | | | (_| |   <  __/\__ \
 # |___/_| |_|\__,_|_|\_\___||___/
-#                               
+#                 
 # Data integration and machine learning pipeline built on Snakemake
 #
 # https://github.com/khughitt/snakes
@@ -17,13 +17,14 @@
 #  Date   : {{ date_str }}
 #
 #  Data sources:
-{% for dat_name, dat_cfg in datasets.items() %}
-#    - {{ dat_name }}: {{ dat_cfg['path'] }}
+{% for dat_name, dat_cfg in features.items() %}
+#  - {{ dat_name }}: {{ dat_cfg['path'] }}
 {% endfor %}
+#  - {{ response['name'] }}: {{ response['path'] }}
 #
 {% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) %}
 #  Output dir: {{ output_dir }} 
-#    
+#
 ################################################################################
 import glob
 import operator
@@ -52,12 +53,12 @@ if not os.path.exists(output_dir):
 {# list used to keep track of different feature sources to use for training set construction #}
 {% set training_set_features = [] -%}
 
-{# list used to keep track of simple rules that should not be run on a cluster               #}
+{# list used to keep track of simple rules that should not be run on a cluster #}
 {% set local_rules = [] -%}
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Default target
+{# Default target                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
 rule all:
@@ -65,25 +66,33 @@ rule all:
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Load feature and response data                                                                             #}
+{# Load features                                                                             #}
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in datasets.items() %}
+{% for dat_name, dat_cfg in features.items() %}
 {% include 'data/' + dat_cfg['type'] + '.snakefile' %}
 {% endfor %}
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Cluster aggregation
+{# Load responses                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in datasets.items() %}
-{% if dat_cfg['role'] == 'feature' and 'clustering' in  dat_cfg %}
-{% for clust_method, clust_params in dat_cfg['clustering'].items() %}
-{% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
+{% set dat_name = response['name'] %}
+{% set dat_cfg = response %}
+{% include 'data/' + dat_cfg['type'] + '.snakefile' %}
+
+{#############################################################################################}
+{#                                                                                           #}
+{# Cluster aggregation                                                                       #}
+{#                                                                                           #}
+{#############################################################################################}
+{% for dat_name, dat_cfg in features.items() %}
+  {% for clust_params in dat_cfg['clustering'] %}
+    {% set clust_method = clust_params['type'] %}
+    {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
 {% include 'clustering/' + clust_method + '.snakefile' %}
-{% endfor %}
-{% endif %}
+  {% endfor %}
 {% endfor %}
 
 
@@ -93,58 +102,57 @@ rule all:
 {#                                                                                           #}
 {#############################################################################################}
 {% set preproccesed_gmt_files = [] %}
-{% for dat_name, dat_cfg in datasets.items() %}
-    {% if dat_cfg['role'] == 'feature' and 'gene_sets' in  dat_cfg %}
-        {% for gene_set, gene_set_params in config['gene_sets'].items() %}
-            {% for gmt in gene_set_params['gmts'] %}
-                {# if multiple gmt files exist for the same gene set, include gmt in rule #}
-                {# and filenames                                                          #}
-                {% if gene_set_params['gmts'] | length > 1 %}
-                    {% set gene_set_name = gene_set ~ gmt | basename_no_ext %}
-                {% else %}
-                    {% set gene_set_name = gene_set %}
-                {% endif %}
-                {# if this is the first time the gene set is being used, include logic for #}
-                {# parsing gmt file                                                        #}
-                {% set preprocessed_gmt = "%s/gene_sets/%s_%s.gmt" | format(output_dir, gene_set_name, dat_cfg['xid']) %}
-                {% if preprocessed_gmt not in preproccesed_gmt_files %}
+{% for dat_name, dat_cfg in features.items() %}
+  {% for gene_set_params in dat_cfg['gene_sets'] %}
+    {% set gene_set = gene_set_params['type'] %}
+    {% for gmt in gene_set_params['gmts'] %}
+      {# if multiple gmt files exist for the same gene set, include gmt in rule #}
+      {# and filenames                                                          #}
+      {% if gene_set_params['gmts'] | length > 1 %}
+        {% set gene_set_name = gene_set ~ gmt | basename_no_ext %}
+      {% else %}
+        {% set gene_set_name = gene_set %}
+      {% endif %}
+      {# if this is the first time the gene set is being used, include logic for #}
+      {# parsing gmt file                                                        #}
+      {% set preprocessed_gmt = "%s/gene_sets/%s_%s.gmt" | format(output_dir, gene_set_name, dat_cfg['xid']) %}
+      {% if preprocessed_gmt not in preproccesed_gmt_files %}
 {% include 'annotations/load_gmt.snakefile' %}
-                    {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
-                {% endif %}
-                {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
+        {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
+      {% endif %}
+      {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
 {% include 'gene_sets/' + gene_set + '.snakefile' %}
-            {% endfor %}
-        {% endfor %}
-    {% endif %}
+    {% endfor %}
+  {% endfor %}
 {% endfor %}
 
-################################################################################
-#
-# Combine features
-#
-################################################################################
+{#############################################################################################}
+{#                                                                                           #}
+{# Combine features                                                                          #}
+{#                                                                                           #}
+{#############################################################################################}
 rule combine_features:
     input: expand("{{ output_dir }}/features/{features}", features={{ training_set_features }})
     output: "{{ output_dir }}/training_set.csv"
     run:
         # load_feature = lambda x: pd.read_csv(x, index_col=0).T
         def load_feature(filepath):
-            """Loads a single feature dataset and prepares it to be added to training set"""
-            dat = pd.read_csv(filepath, index_col=0).T
-            feature_name = os.path.basename(filepath).replace('.csv', '')
-            dat.columns = feature_name + "_" + dat.columns
-            return dat
-        
+          """Loads a single feature dataset and prepares it to be added to training set"""
+          dat = pd.read_csv(filepath, index_col=0).T
+          dat_name = os.path.basename(filepath).replace('.csv', '')
+          dat.columns = dat_name + "_" + dat.columns
+          return dat
+    
         # combine features into a unified <sample> x <feature> dataframe
         pd.concat(map(load_feature, input), axis=1).to_csv(output[0], index_label='sample_id')
 
-################################################################################
-#
-# Other settings
-#
-################################################################################
+{#############################################################################################}
+{#                                                                                           #}
+{# Other settings                                                                            #}
+{#                                                                                           #}
+{#############################################################################################}
 {% set localrules_str = ', '.join(local_rules) %}
 localrules: {{ localrules_str }}
 
-{# vim: set filetype=jinja: #}
+{# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=jinja: #}
 # vim: set filetype=snakemake: 

@@ -16,7 +16,7 @@ yid: sample_id
 #
 path: 'tests/data/features/variants.csv'
 
-# Filtering
-filters:
-  row_min_nonzero:
+# Filters and transformations
+transforms:
+  - type: 'filter_row_min_nonzero'
     value: 2

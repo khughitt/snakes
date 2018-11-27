@@ -1,0 +1,15 @@
+#
+# shared response options
+#
+shared:
+  name: 'str'
+  path: 'str'
+  transforms: 'list'
+
+#
+# response-specific options
+#
+dose_response_dataframe:
+  sample_id: 'str'
+  compound_id: 'str'
+  response_var: 'str'

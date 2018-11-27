@@ -1,5 +1,5 @@
     params:
-        filter_params = {{ filter_params }} 
+        transform_params = {{ transform }} 
     run:
         df = pd.read_csv(input[0], index_col=0)
 

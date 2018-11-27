@@ -16,9 +16,9 @@ yid: sample_id
 #
 path: 'tests/data/features/cnv.csv'
 
-# Filtering
-filters:
-  row_max_missing:
-    name: 'missing_data'
+# Filters and transformations
+transforms:
+  - type: 'filter_row_max_missing'
+    name: 'remove_missing_data'
     value: 0
 

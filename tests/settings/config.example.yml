@@ -33,13 +33,12 @@ verbose: true
 # Data sources
 #
 ################################################################################
-datasets:
-  features:
-    - 'tests/settings/features/rnaseq.yml'
-    - 'tests/settings/features/cnv.yml'
-    - 'tests/settings/features/variants.yml'
-  response:
-    - 'tests/settings/response/drug_screen.yml'
+features:
+  - 'tests/settings/features/rnaseq.yml'
+  - 'tests/settings/features/cnv.yml'
+  - 'tests/settings/features/variants.yml'
+response:
+  - 'tests/settings/response/drug_screen.yml'
 
 metadata:
   samples: 'tests/data/metadata/sample_metadata.csv'
@@ -47,13 +46,13 @@ metadata:
 
 ################################################################################
 #
-# Global filters
+# Transformations
 #
 ################################################################################
-filters:
-  exclude_columns:
+transforms:
+  - type: 'filter_exclude_columns'
     columns_to_exclude: ['KMS20_JCRB']
-  row_var_above:
+  - type: 'filter_row_var_above'
     name: 'exclude_zero_variance'
     value: 0
 
@@ -63,7 +62,7 @@ filters:
 #
 ################################################################################
 clustering:
-  hclust:
+  - type: 'hclust'
     num_clusters: 4
     funcs: ['sum', 'var']
 
@@ -73,7 +72,7 @@ clustering:
 #
 ################################################################################
 gene_sets:
-  go:
+  - type: 'go'
     gene_id: 'entrez'
     gmts:
       - 'tests/data/gene_sets/go.gmt'

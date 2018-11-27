@@ -1,0 +1,16 @@
+#
+# shared feature defaults
+#
+shared:
+  type: 'numeric'
+  role: 'feature'
+  path: ''
+  name: ''
+  xid: 'x'
+  yid: 'y'
+  sep: ''
+  index_col: 0
+  transforms: []
+  clustering: []
+  gene_sets: []
+

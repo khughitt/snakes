@@ -17,15 +17,17 @@ class SnakefileRenderer():
     """Base SnakefileRenderer class"""
     def __init__(self, config_filepath=None, **kwargs):
         self.main_config = None
-        self.dataset_configs = {}
+        self.feature_configs = {}
+        self.response_config = None
 
         self.output_file = 'Snakefile'
 
         self._setup_logger()
 
+        self._conf_dir = os.path.abspath(resource_filename(__name__, 'conf'))
+        self._template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
+
         self._load_config(config_filepath, **kwargs)
-        self._validate_main_config()
-        self._validate_dataset_configs()
 
     @staticmethod
     def _setup_logger():
@@ -41,83 +43,41 @@ class SnakefileRenderer():
 
         logging.info("Initializing snakes")
 
-    @staticmethod
-    def _get_default_config():
-        """Returns a dictionary of default settings."""
-        return {
-            # general
-            'output_dir': 'output',
+    def _get_settings(self, which='defaults', section='main', target=None):
+        """Returns a dictionary of default or required settings for a specified config section"""
+        # load default/required settings
+        infile = os.path.join(self._conf_dir, which, section + ".yml")
+        settings = yaml.load(open(infile))
 
-            # development mode options
-            'verbose': False,
-            'dev_mode': False,
-            'dev_mode_subsample_ratio': 0.05,
+        # get global / shared settings
+        if section == 'main':
+            cfg = settings
+        else:
+            cfg = settings['shared']
 
-            # random seed
-            'random_seed': 1,
+        # if a specific type or subsection is specified, include relevant settings
+        if target is not None and target in settings:
+            cfg.update(settings[target])
 
-            # metadata
-            'metadata': {},
+        return cfg
 
-            # dataset filters
-            'filters': {},
-
-            # dataset transforms
-            'transforms': {},
-
-            # clustering
-            'clustering': {},
-
-            # gene sets
-            'gene_sets': {},
-
-            # software settings
-            'software': {
-                'biomart': {
-                    'mart': 'ensembl',
-                    'dataset': 'hsapiens_gene_ensembl'
-                }
-            }
-        }
-
-    @staticmethod
-    def _get_default_feature_config():
+    def _get_default_feature_config(self):
         """Returns a dictionary of the default arguments associated with a feature dataset config
            entry"""
-        return {
-            'type': 'numeric',
-            'role': 'feature',
-            'path': '',
-            'name': '',
-            'xid': 'x',
-            'yid': 'y',
-            'sep': ',',
-            'index_col': 0,
-            'filters': {},
-            'transforms': {},
-            'clustering': {},
-            'gene_sets': {}
-        }
+        infile = os.path.join(self._conf_dir, 'defaults', 'feature.yml')
+        return yaml.load(open(infile))
 
-    @staticmethod
-    def _get_default_response_config():
+    def _get_default_transform_config(self):
+        """Returns a dictionary of the default arguments associated with each supported
+        transformation"""
+        infile = os.path.join(self._conf_dir, 'defaults', 'transforms.yml')
+        return yaml.load(open(infile))
+
+    def _get_default_response_config(self):
         """Returns a dictionary of the default arguments associated with a response dataset config
            entry"""
-        # TODO 2018-11-25: move defaults/reqs to external yaml files and have
-        # default organization mirror reqs ....
-        return {
-            'type': 'numeric',
-            'role': 'response',
-            'sample_id'   : 'cell_line',
-            'compound_id' : 'drug_id',
-            'path': '',
-            'name': '',
-            'response_var': '',
-            'sep': ',',
-            'index_col': 0,
-            'filters': {},
-            'transforms': {}
-        }
+        infile = os.path.join(self._conf_dir, 'defaults', 'response.yml')
+        return yaml.load(open(infile))
 
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
@@ -143,7 +103,7 @@ class SnakefileRenderer():
         logging.info("Using configuration: %s", config_file)
 
         # get default configuration options
-        self.main_config = self._get_default_config()
+        self.main_config = self._get_settings()
 
         # load main snakes configuration file
         with open(config_file) as fp:
@@ -165,58 +125,53 @@ class SnakefileRenderer():
         # check to make sure require dataset elements have been specified
         self._validate_main_config()
 
-        # parse feature and filter sections of main config
-        self.main_config['filters'] = self._parse_filter_config(self.main_config['filters'])
+        # parse feature and transform sections of main config
         self.main_config['transforms'] = self._parse_transform_config(
             self.main_config['transforms'])
 
         # load feature dataset configs
-        for yml in self.main_config['datasets']['features']:
+        for yml in self.main_config['features']:
             self._load_feature_config(yml)
 
         # load response dataset config
-        for yml in self.main_config['datasets']['response']:
+        for yml in self.main_config['response']:
             self._load_response_config(yml)
+
+        # validate feature/response dataset configs
+        self._validate_dataset_configs()
 
     def _load_feature_config(self, input_yaml):
         """Loads a feature / response dataset config file and overides any global settings with
         dataset-specific ones."""
-        # default dataset settings
-        cfg = self._get_default_feature_config()
+        # load user config
+        user_cfg = yaml.load(open(input_yaml))
+
+        # load default feature options
+        cfg = self._get_settings('defaults', 'feature', user_cfg['type'])
 
         # check for unexpected settings
-        user_cfg = yaml.load(open(input_yaml))
-        unknown_opts = [x for x in user_cfg.keys() if x not in cfg.keys()]
-
-        if unknown_opts:
-            msg = "Unexpected configuration options encountered in {}: {}"
-            raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
+        self._detect_unknown_settings(cfg, user_cfg, input_yaml)
 
         # load dataset-specific configuration
         cfg.update(user_cfg)
 
-        # if no name specified, default to dataset type
-        if 'name' not in cfg:
+        # if no name specified, default to dataset type (e.g. 'rnaseq')
+        if not cfg['name']:
             cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
-        cfg['filters'] = self._parse_filter_config(cfg['filters'])
         cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
 
-        # each feature dataset carries its own dataset-specific settings which get
-        # applied along with any global filtering, etc. settings specified in the parent config.
-        # In cases where a setting is specified in both the global config, and the dataset-specific
-        # one, the dataset-specific options take priority.
-        for param in ['filters', 'transforms', 'clustering', 'gene_sets']:
+        # in addition to feature-specific settings, any transforms, etc. specified
+        # in the main config file are also applied
+        for param in ['transforms', 'clustering', 'gene_sets']:
             if param in self.main_config:
-                dataset_params = cfg[param]
-                cfg[param] = self.main_config[param].copy()
-                cfg[param].update(dataset_params)
+                cfg[param] = cfg[param] + self.main_config[param].copy()
 
-        # Store filepath of config file used
+        # store filepath of config file used
         cfg['config_file'] = os.path.abspath(input_yaml)
 
-        self.dataset_configs[cfg['name']] = cfg
+        self.feature_configs[cfg['name']] = cfg
 
         logging.debug("Loaded feature config '%s':", cfg['name'])
         logging.debug(pprint.pformat(cfg))
@@ -224,200 +179,172 @@ class SnakefileRenderer():
     def _load_response_config(self, input_yaml):
         """Loads a response dataset config file and overides any global settings with
         dataset-specific ones."""
-        # default dataset settings
-        cfg = self._get_default_response_config()
+        # load user config
+        user_cfg = yaml.load(open(input_yaml))
+
+        # load default response options
+        cfg = self._get_settings('defaults', 'response', user_cfg['type'])
 
         # check for unexpected settings
-        user_cfg = yaml.load(open(input_yaml))
+        self._detect_unknown_settings(cfg, user_cfg, input_yaml)
+
+        # load dataset-specific configuration
+        cfg.update(user_cfg)
+
+        # if no name specified, default to dataset type (e.g. 'rnaseq')
+        if not cfg['name']:
+            cfg['name'] = cfg['type']
+
+        # parse filter and transform sections of configs and set appropriate defaults
+        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
+
+        # store filepath of config file used
+        cfg['config_file'] = os.path.abspath(input_yaml)
+
+        self.response_config = cfg
+
+        logging.debug("Loaded response config '%s':", cfg['name'])
+        logging.debug(pprint.pformat(cfg))
+
+    def _detect_unknown_settings(self, cfg, user_cfg, input_yaml):
+        """Checks to see if use configuration contains any unrecognized parameters, and if so,
+        raises and exception."""
         unknown_opts = [x for x in user_cfg.keys() if x not in cfg.keys()]
 
         if unknown_opts:
             msg = "Unexpected configuration options encountered in {}: {}"
             raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
 
-        # load dataset-specific configuration
-        cfg.update(user_cfg)
-
-        # if no name specified, default to dataset type
-        if 'name' not in cfg:
-            cfg['name'] = cfg['type']
-
-        # parse filter and transform sections of configs and set appropriate defaults
-        cfg['filters'] = self._parse_filter_config(cfg['filters'])
-        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
-
-        # Store filepath of config file used
-        cfg['config_file'] = os.path.abspath(input_yaml)
-
-        self.dataset_configs[cfg['name']] = cfg
-
-        logging.debug("Loaded response config '%s':", cfg['name'])
-        logging.debug(pprint.pformat(cfg))
-
     def _parse_transform_config(self, transforms):
-        """Loads transforms section of global or dataset-specific config"""
-        # if transforms specified using a list, convert to dict
-        if isinstance(transforms, list):
-            transforms = {transform: {'name': transform} for transform in transforms}
+        """
+        Loads transforms section of global or dataset-specific config.
 
-        # list to keep track of names used; if multiple versions of the same transform are applied,
-        # a number will be suffixed to the name to avoid rule collisions
+        Dataset transformations can be specified as a list in one or more of the snakes config
+        files. Each entry in the list must be either a single string, indicating the type of
+        transformation to be applied (e.g. 'log2'), or a dictionary including the type of
+        transformation along with any relevants parameters.
+        """
+        # if transforms specified using a list, convert to dict
+        # if isinstance(transforms, list):
+        #     transforms = {transform: {'name': transform} for transform in transforms}
+
+        # load transform default settings
+        default_params = self._get_default_transform_config()
+
+        # list to keep track of names used; if multiple versions of the same transforms are applied,
+        # a number will be added to the end of the name to avoid rule collisions
         used_names = []
 
-        # set default transform name parameter, if not specified
-        for transform in transforms:
+        # iterate over transforms
+        for i, transform in enumerate(transforms):
+            # if transform is specified as a simple string, convert to a dict with default settings
+            if isinstance(transform, str):
+                transform = {'type': transform}
+
+            # start with transform default options
+            cfg = default_params['shared'].copy()
+
+            if transform['type'] in default_params:
+                cfg.update(default_params[transform['type']])
+
+            # overide with user-specified values
+            cfg.update(transform)
+
             # if no specific name has been given to the transform entry, default to the name of
             # the transform itself
-            if 'name' not in transforms[transform]:
-                transforms[transform]['name'] = transform
+            if not cfg['name']:
+                cfg['name'] = cfg['type']
 
-            # if type of transform has already been included, append a number to the name
-            if transforms[transform]['name'] in used_names:
+            # add a number to non-unique transform names
+            if cfg['name'] in used_names:
                 # number of times transform has been used so far
-                i = len([x for x in used_names if x.startswith(transforms[transform]['name'])]) + 1
+                times_used = len([x for x in used_names if x.startswith(cfg['name'])]) + 1
 
-                transforms[transform]['name'] = transforms[transform]['name'] + "_" + str(i)
+                cfg['name'] = cfg['name'] + "_" + str(times_used)
 
             # update used name list
-            used_names.append(transforms[transform]['name'])
+            used_names.append(cfg['name'])
+
+            # store updated transform settings
+            transforms[i] = cfg
 
         return transforms
-
-    def _parse_filter_config(self, filters):
-        """Loads filters section of global or dataset-specific config"""
-        # if filters specified using a list, convert to dict
-        if isinstance(filters, list):
-            filters = {filter_: {'name': filter_} for filter_ in filters}
-
-        # list to keep track of names used; if multiple versions of the same filters are applied,
-        # a number will be suffixed to the name to avoid rule collisions
-        used_names = []
-
-        # set default filter name parameter, if not specified
-        for filter_ in filters:
-            # if no specific name has been given to the filter entry, default to the name of
-            # the filter itself
-            if 'name' not in filters[filter_]:
-                filters[filter_]['name'] = filter_
-
-            # if type of filter has already been included, append a number to the name
-            if filters[filter_]['name'] in used_names:
-                # number of times filter has been used so far
-                i = len([x for x in used_names if x.startswith(filters[filter_]['name'])]) + 1
-
-                filters[filter_]['name'] = filters[filter_]['name'] + "_" + str(i)
-
-            # update used name list
-            used_names.append(filters[filter_]['name'])
-
-            # set default filter value and quantile parameters, if not specified
-            if 'quantile' not in filters[filter_]:
-                filters[filter_]['quantile'] = None
-            if 'value' not in filters[filter_]:
-                filters[filter_]['value'] = None
-
-        return filters
 
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
-        for param in ['name', 'version', 'datasets']:
+        reqs = self._get_settings('required')
+
+        for param in reqs:
             if param not in self.main_config or not self.main_config[param]:
                 msg = "Missing required configuration parameter in {}: '{}'"
                 config_file = os.path.basename(self.main_config['config_file'])
                 raise Exception(msg.format(config_file, param))
 
-        # check to make sure both feature and response dataset entries have been defined
-        for param in ['features', 'response']:
-            if param not in self.main_config['datasets'] or not self.main_config['datasets'][param]:
-                msg = "Missing required configuration parameter in {}: \"datasets['{}']\""
-                config_file = os.path.basename(self.main_config['config_file'])
-                raise Exception(msg.format(config_file, param))
-
-    @staticmethod
-    def _required_dataset_params():
-        """Returns a dictionary of dataset required config parameters for various config sections"""
-        return {
-            'main': {
-                'shared': ['name', 'path'],
-                'specific': {
-                    'dose_response_dataframe': ['sample_id', 'compound_id', 'response_var']
-                }
-            },
-            'filters': {
-                'shared': [],
-                'specific': []
-            },
-            'transforms': {
-                'shared': [],
-                'specific': []
-            },
-            'gene_sets': {
-                'shared': [],
-                'specific': []
-            },
-            'clustering': {
-                'shared': ['num_clusters', 'funcs'],
-                'specific': {}
-            }
-        }
-
     def _validate_dataset_configs(self):
         """Validate dataset-specific configurations"""
-        # get a dict of required parameters
-        required_params = self._required_dataset_params()
-
-        # required parameters for dataset configs
-        # check dataset-specific settings
-        for key, dataset_cfg in self.dataset_configs.items():
+        # validate feature configs
+        for feature_cfg in self.feature_configs.values():
             # check main dataset configuration options
-            reqs = required_params['main']['shared'].copy()
-
-            # add any data type-specific required parameters
-            if key in required_params['main']['specific']:
-                reqs = reqs + required_params['main']['specific'][key]
+            reqs = self._get_settings('required', 'feature', feature_cfg['type'])
 
             # check for required parameters
             for param in reqs:
-                if param not in dataset_cfg or not dataset_cfg[param]:
+                if param not in feature_cfg or not feature_cfg[param]:
                     msg = "Missing required configuration parameter in {}: '{}'"
-                    raise Exception(msg.format(os.path.basename(dataset_cfg['config_file']), param))
+                    raise Exception(msg.format(os.path.basename(feature_cfg['config_file']), param))
 
-            # check config subsections
-            for subsection in ['filters', 'transforms', 'gene_sets', 'clustering']:
-                # some sections are only expected for features and not response datasets
-                if subsection in dataset_cfg:
-                    self._validate_config_section(dataset_cfg[subsection], subsection,
-                                                  required_params[subsection])
+            # check feature config sub-sections
+            for config_section in ['transforms', 'gene_sets', 'clustering']:
+                self._validate_config_section(feature_cfg[config_section], config_section)
 
-    def _validate_config_section(self, config_subsection, config_type, required_params):
-        """Checks for existence of necessary template and required config parameters for a dataset
-           config file subsection."""
+        # validate response config
+        # check main dataset configuration options
+        reqs = self._get_settings('required', 'response', self.response_config['type'])
+
+        # check for required parameters
+        for param in reqs:
+            if param not in self.response_config or not self.response_config[param]:
+                msg = "Missing required configuration parameter in {}: '{}'"
+                config_filename = os.path.basename(self.response_config['config_file'])
+                raise Exception(msg.format(config_filename, param))
+
+        # check response transforms section
+        self._validate_config_section(self.response_config['transforms'], 'transforms')
+
+    def _validate_config_section(self, config_section, config_section_type):
+        """
+        Checks for existence of necessary template and required config parameters for a dataset
+        config file subsection.
+
+        Arguments
+        ---------
+        config_section: list
+            List of dicts representing a single section in a config file
+        config_section_type: str
+            Type of config section being processed (e.g. 'feature' or 'transforms')
+        """
         # base template directory
-        template_dir = os.path.join(os.path.abspath(resource_filename(__name__, 'templates')),
-                                    config_type)
+        template_dir = os.path.join(self._template_dir, config_section_type)
 
         # iterate over subsection entries and validate
-        for key, subsection_cfg in config_subsection.items():
+        for entry in config_section:
             # check to make sure template exists
-            template_filename = key + '.snakefile'
+            template_filename = entry['type'] + '.snakefile'
 
             if template_filename not in os.listdir(template_dir):
-                msg = "Invalid coniguration! Unknown {} entry: '{}'".format(config_type, key)
+                msg = "Invalid coniguration! Unknown {} entry: '{}'".format(config_section_type,
+                                                                            entry['type'])
                 raise Exception(msg)
 
             # check main dataset configuration options
-            reqs = required_params['shared'].copy()
-
-            # add any data type-specific required parameters
-            if key in required_params['specific']:
-                reqs = reqs + required_params['specific'][key]
+            reqs = self._get_settings('required', config_section_type, entry['type'])
 
             # check for required parameters
             for param in reqs:
-                if param not in subsection_cfg or not subsection_cfg[param]:
-                    raise Exception("Missing required {} {} parameter '{}'".format(config_type,
-                                                                                   key, param))
+                if param not in entry or not entry[param]:
+                    msg = "Missing required {} {} parameter '{}'"
+                    raise Exception(msg.format(config_section_type, entry['type'], param))
 
     def _get_args(self):
         """Parses input and returns arguments"""
@@ -438,9 +365,8 @@ class SnakefileRenderer():
         loaders = [PackageLoader('snakes', 'templates'),
                    PackageLoader('snakes', 'templates/clustering'),
                    PackageLoader('snakes', 'templates/data'),
-                   PackageLoader('snakes', 'templates/filters'),
                    PackageLoader('snakes', 'templates/gene_sets'),
-                   PackageLoader('snakes', 'templates/transform'),
+                   PackageLoader('snakes', 'templates/transforms'),
                    PackageLoader('snakes', 'templates/vis')]
 
         # get jinaj2 environment
@@ -475,7 +401,9 @@ class SnakefileRenderer():
         script_dir = os.path.abspath(resource_filename(__name__, 'src'))
 
         # render template
-        snakefile = template.render(config=self.main_config, datasets=self.dataset_configs,
+        snakefile = template.render(config=self.main_config,
+                                    features=self.feature_configs,
+                                    response=self.response_config,
                                     date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                     script_dir=script_dir)
 

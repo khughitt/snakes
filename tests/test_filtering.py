@@ -7,7 +7,7 @@ from pandas.testing import assert_frame_equal
 from snakes import filters
 
 #
-# test datasets
+# test dataframes
 #
 
 # 1. a simple numeric dataframe

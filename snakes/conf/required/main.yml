@@ -1,0 +1,7 @@
+#
+# required top-level parameters for all snakes configs
+#
+name: 'str'
+version: 'str'
+features: 'list'
+response: 'list'

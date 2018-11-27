@@ -16,14 +16,14 @@ yid: sample_id
 #
 path: 'tests/data/features/rnaseq.csv'
 
-# Filtering
-filters:
-  row_sum_above:
-    name: 'min_reads'
+# Filters and transformations
+transforms:
+  - type: 'filter_row_sum_above'
+    name: 'filter_min_reads'
     value: 20
-  gene_type:
-    name: 'noncoding'
+  - type: 'filter_gene_type'
+    name: 'filter_by_gene_type'
     include_gene_types: ['protein_coding']
+  - transform_cpm
+  - transform_log2p
 
-# Transformations
-transforms: ['cpm', 'log2p']
