@@ -9,7 +9,7 @@ shared:
   sample_id: 'cell_line'
   compound_id: 'drug_id'
   response_var: ''
-  sep: ''
+  sep: ','
   index_col: 0
   transforms: []
 
