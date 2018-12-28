@@ -48,5 +48,5 @@ filter_row_val_not_missing:
 filter_row_var_above:
   quantile: null
   value: null
-transform_impute_knn:
+impute_knn:
   k: 5
