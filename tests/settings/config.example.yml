@@ -76,5 +76,5 @@ gene_sets:
     gene_id: 'entrez'
     gmts:
       - 'tests/data/gene_sets/go.gmt'
-    funcs: ['max', 'median']
+    funcs: ['max', 'median', 'ratio_nonzero']
 
