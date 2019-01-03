@@ -26,4 +26,7 @@ transforms:
     include_gene_types: ['protein_coding']
   - transform_cpm
   - transform_log2p
+  - type: 'transform_zscore'
+    name: 'transform_row_zscores'
+    axis: 1
 
