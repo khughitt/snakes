@@ -12,6 +12,8 @@ Installation
 
 TODO
 
+- Add note about non-standard `R_LIBS_USER` locations.
+
 Configuration
 -------------
 

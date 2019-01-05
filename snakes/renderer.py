@@ -330,7 +330,12 @@ class SnakefileRenderer():
         # iterate over subsection entries and validate
         for entry in config_section:
             # check to make sure template exists
-            template_filename = entry['type'] + '.snakefile'
+            if config_section_type == 'clustering':
+                # clustering methods currently all use the same template
+                template_filename = 'clustering.snakefile'
+            else:
+                # gene set, etc. section each have their own separate templates
+                template_filename = entry['type'] + '.snakefile'
 
             if template_filename not in os.listdir(template_dir):
                 msg = "Invalid coniguration! Unknown {} entry: '{}'".format(config_section_type,
@@ -387,7 +392,10 @@ class SnakefileRenderer():
         def to_rule_name(rule):
             """Takes a string and replaces characters that aren't allowed in snakemake rule names
             with underscores"""
-            return re.sub(r"[^\w]", "_", rule)
+            try:
+                return re.sub(r"[^\w]", "_", rule)
+            except:
+                import pdb; pdb.set_trace()
 
         env.filters['basename']         = os.path.basename
         env.filters['basename_no_ext']  = basename_no_ext

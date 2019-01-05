@@ -32,7 +32,7 @@ import os
 import yaml
 import numpy as np
 import pandas as pd
-from snakes import gene_sets, filters
+from snakes import clustering, filters, gene_sets 
 
 # load metadata
 metadata = {
@@ -91,7 +91,7 @@ rule all:
   {% for clust_params in dat_cfg['clustering'] %}
     {% set clust_method = clust_params['type'] %}
     {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
-{% include 'clustering/' + clust_method + '.snakefile' %}
+{% include 'clustering/clustering.snakefile' %}
   {% endfor %}
 {% endfor %}
 
