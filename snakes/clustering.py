@@ -29,8 +29,8 @@ def cluster(df, method, n_clusters):
     if method == 'hclust':
         from sklearn.cluster import AgglomerativeClustering
         hclust = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
-                                          linkage='average')
-        clusters = hclust.fit_predict(df.T)
+                                         linkage='average')
+        clusters = hclust.fit_predict(df)
     else:
         # if not valid cluster method was specified, raise an error
         raise Exception("Invalid clustering method specified: {}".format(method))
@@ -71,7 +71,7 @@ def cluster_apply(df, clusters, func):
         raise Exception("Invalid gene set aggegration function specified!")
 
     # transpose dat and add cluster column
-    df = pd.concat([pd.DataFrame({'cluster': clusters}), df.T], axis = 1)
+    df = pd.concat([pd.DataFrame({'cluster': clusters}), df.reset_index(drop=True)], axis = 1)
 
     # apply function to elements in each cluster and revert to original orientation
-    return df.groupby('cluster').agg(func).T
+    return df.groupby('cluster').agg(func)
