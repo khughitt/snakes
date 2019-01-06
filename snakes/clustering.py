@@ -28,12 +28,15 @@ def cluster(df, method, n_clusters):
     # hierarchical clustering (agglomerative)
     if method == 'hclust':
         from sklearn.cluster import AgglomerativeClustering
-        res = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
+        hclust = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
                                           linkage='average')
-        return res.fit_predict(df)
+        clusters = hclust.fit_predict(df.T)
+    else:
+        # if not valid cluster method was specified, raise an error
+        raise Exception("Invalid clustering method specified: {}".format(method))
 
-    # if not valid cluster method was specified, raise an error
-    raise Exception("Invalid clustering method specified: {}".format(method))
+    # convert numeric cluster ids to strings and return
+    return ['cluster_{}'.format(i) for i in clusters]
 
 def cluster_apply(df, clusters, func):
     """
@@ -67,16 +70,8 @@ def cluster_apply(df, clusters, func):
     else:
         raise Exception("Invalid gene set aggegration function specified!")
 
-    # list to store aggegration result tuples; will be used to construct a DataFrame
-    rows = []
+    # transpose dat and add cluster column
+    df = pd.concat([pd.DataFrame({'cluster': clusters}), df.T], axis = 1)
 
-    # iterate over gene sets and apply function
-    for i in range(len(clusters)):
-        df_subset = df[clusters == i]
-
-        # otherwise, if gene set is non-empty, apply function and store new row and gene set id
-        rows.append(tuple(df_subset.apply(func)))
-
-    cluster_labels = ['cluster_{}'.format(i) for i in range(len(clusters))]
-
-    return pd.DataFrame(rows, index=cluster_labels, columns=df.columns)
+    # apply function to elements in each cluster and revert to original orientation
+    return df.groupby('cluster').agg(func).T
