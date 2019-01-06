@@ -16,10 +16,13 @@ rule cluster_{{ dat_name }}_{{ clust_method | to_rule_name }}:
         # load dataset
         df = pd.read_csv(input[0], index_col=0)
 
+        # cluster dataset
+        clusters = clustering.cluster(df, '{{ clust_method }}', {{ clust_params['num_clusters'] }})
+
         # iterate over aggregation functions
         for i, func in enumerate({{ clust_params['funcs'] }}):
             # for each function, cluster the dataset and apply function to each cluster
-            res = clustering.cluster_apply(df, '{{ clust_method }}', {{ clust_params['num_clusters'] }}, func)
+            res = clustering.cluster_apply(df, clusters, func)
             res.to_csv(output[i], index_label='cluster_id')
 
 {# add output filenames to list of expected features #}
