@@ -25,18 +25,8 @@ def gene_set_apply(df, gene_sets, func):
     pandas.DataFrame
         A gene set by sample DataFrame containing the aggregated values.
     """
-    # find appropriate function to use
-    if hasattr(pd.DataFrame, func):
-        # pandas (e.g. mad)
-        pass
-    elif hasattr(np, func):
-        # numpy (e.g. min, max, median, sum, std, var, etc.)
-        func = getattr(np, func)
-    elif hasattr(aggregation, func):
-        # custom aggregation functions (e.g. num_positive, abs_sum, etc.)
-        func = getattr(aggregation, func)
-    else:
-        raise Exception("Invalid gene set aggegration function specified!")
+    # parse aggregation function
+    func = aggregation.get_agg_func(func)
 
     # list to store aggegration result tuples; will be used to construct a DataFrame
     rows = []

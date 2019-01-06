@@ -57,18 +57,8 @@ def cluster_apply(df, clusters, func):
     pandas.DataFrame
         A gene set by sample DataFrame containing the aggregated values.
     """
-    # find appropriate function to use
-    if hasattr(pd.DataFrame, func):
-        # pandas (e.g. mad)
-        pass
-    elif hasattr(np, func):
-        # numpy (e.g. min, max, median, sum, std, var, etc.)
-        func = getattr(np, func)
-    elif hasattr(aggregation, func):
-        # custom aggregation functions (e.g. num_positive, abs_sum, etc.)
-        func = getattr(aggregation, func)
-    else:
-        raise Exception("Invalid gene set aggegration function specified!")
+    # parse aggregation function
+    func = aggregation.get_agg_func(func)
 
     # transpose dat and add cluster column
     df = pd.concat([pd.DataFrame({'cluster': clusters}), df.reset_index(drop=True)], axis = 1)
