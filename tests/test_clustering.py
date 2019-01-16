@@ -21,8 +21,8 @@ HCLUST = AgglomerativeClustering(n_clusters=N_CLUSTERS, affinity='euclidean', li
 HCLUST_CLUSTERS = ['cluster_{}'.format(i) for i in HCLUST.fit_predict(INPUT)]
 
 # add cluster column to original data
-HCLUST_DF = pd.concat([pd.DataFrame({'cluster': HCLUST_CLUSTERS}), INPUT.reset_index(drop=True)], 
-                      axis = 1)
+HCLUST_DF = pd.concat([pd.DataFrame({'cluster': HCLUST_CLUSTERS}), 
+                       INPUT.reset_index(drop=True)],  axis = 1)
 
 # test a few of the aggregation functions; others are tested more exhaustively
 # in the gene set test code

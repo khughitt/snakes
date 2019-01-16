@@ -4,6 +4,9 @@ Functions for filtering datasets by row, column, or group.
 import operator
 import numpy as np
 
+#
+# Generalized filter functions
+#
 def filter_data(df, func, axis=1, op=operator.gt, value=None, quantile=None):
     """Generalized function for filtering a dataset by rows or columns."""
     # aply function along specified axis
@@ -13,8 +16,16 @@ def filter_data(df, func, axis=1, op=operator.gt, value=None, quantile=None):
     if quantile is not None:
         value = vals.quantile(quantile, axis=axis)
 
+    # apply operator
+    mask = op(vals, value)
+
     # apply function along rows or columns and return filtered result
-    return df[op(vals, value)]
+    if axis == 1:
+        # rows
+        return df[mask]
+    else:
+        # columns
+        return df[mask.index[mask]]
 
 def filter_rows(df, func, op=operator.gt, value=None, quantile=None):
     """Filters rows from a dataset"""
@@ -22,8 +33,42 @@ def filter_rows(df, func, op=operator.gt, value=None, quantile=None):
 
 def filter_cols(df, func, op=operator.gt, value=None, quantile=None):
     """Filters columns from a dataset"""
-    return filter_data(df=df, func=func, axis=2, op=op, value=value, quantile=quantile)
+    return filter_data(df=df, func=func, axis=0, op=op, value=value, quantile=quantile)
 
+#
+# Column-wise filter functions
+#
+def col_sum_above(df, value=None, quantile=None):
+    """Filters dataset to exclude columns whose sum falls below a certain cutoff"""
+    return filter_cols(df=df, func=np.sum, op=operator.gt, value=value, quantile=quantile)
+
+def col_var_above(df, value=None, quantile=None):
+    """Filters dataset to exclude columns whose variance falls below a certain cutoff"""
+    return filter_cols(df=df, func=np.var, op=operator.gt, value=value, quantile=quantile)
+
+def col_max_missing(df, value=None, quantile=None):
+    """Filters dataset to exclude columns with too many missing values"""
+    # if quantile specified, find associated value
+    if quantile is not None:
+        value = df.quantile(quantile, axis=1)
+
+    return df[df.isnull().sum(axis=1) <= value]
+
+def col_min_nonzero(df, value=None, quantile=None):
+    """Filters dataset to exclude columns with too many zeros"""
+    # if quantile specified, find associated value
+    if quantile is not None:
+        value = df.quantile(quantile, axis=1)
+
+    return df[(df != 0).sum(axis=1) >= value]
+
+def col_value_present(df, field):
+    """Returns all columns for which a specific column is not null"""
+    return df[df[field].notnull()]
+
+#
+# Row-wise filter functions
+#
 def row_field_above(df, field=None, value=None, quantile=None):
     """Filters dataset to exclude rows for which a specified field falls below a certain cutoff"""
     if quantile is not None:
