@@ -17,6 +17,6 @@ yid: sample_id
 path: 'tests/data/features/variants.csv'
 
 # Filters and transformations
-transforms:
+pipeline:
   - type: 'filter_row_min_nonzero'
     value: 2

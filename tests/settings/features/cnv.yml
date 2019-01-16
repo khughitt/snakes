@@ -17,7 +17,7 @@ yid: sample_id
 path: 'tests/data/features/cnv.csv'
 
 # Filters and transformations
-transforms:
+pipeline:
   - type: 'filter_row_max_missing'
     name: 'remove_missing_data'
     value: 0

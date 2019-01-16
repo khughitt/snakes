@@ -12,8 +12,8 @@ random_seed: 1
 # metadata
 metadata: {}
 
-# dataset transforms
-transforms: []
+# pipeline steps
+pipeline: []
 
 # clustering
 clustering: {}

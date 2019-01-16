@@ -46,10 +46,10 @@ metadata:
 
 ################################################################################
 #
-# Transformations
+# Pipeline
 #
 ################################################################################
-transforms:
+pipeline:
   - type: 'filter_exclude_columns'
     columns_to_exclude: ['KMS20_JCRB']
   - type: 'filter_row_var_above'

@@ -17,7 +17,7 @@
 {# create a list of the columns that are used in the analysis -#}
 {% set required_fields = [dat_cfg['sample_id'], dat_cfg['compound_id'], dat_cfg['response_var']] %}
 
-{% for transform in dat_cfg['transforms'] %}
+{% for transform in dat_cfg['pipeline'] %}
 {% if 'field' in transform %}
 {% do required_fields.append(transform['field']) %}
 {% endif %}
@@ -43,11 +43,11 @@ rule {{ rule_name }}:
         # drop unneeded fields and store result
         dat[fields_to_keep].to_csv(output[0])
 
-{% if dat_cfg['transforms'] | length > 0 %}
+{% if dat_cfg['pipeline'] | length > 0 %}
 #
 # Data transformations and filters
 #
-{% for transform in dat_cfg['transforms'] %}
+{% for transform in dat_cfg['pipeline'] %}
     {% set ns.cur_input  = ns.cur_output %}
     {% set ns.cur_output =  ns.cur_input | replace_filename(transform['name'] + '.csv') %}
     {% set rule_name = dat_cfg['name'] ~ "_" ~ transform['name'] | to_rule_name %}
@@ -55,7 +55,7 @@ rule {{ rule_name }}:
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'transforms/' + transform['type'] + '.snakefile' %}
+{% include 'pipeline/' + transform['type'] + '.snakefile' %}
 
 {% endfor %}
 {% endif %}

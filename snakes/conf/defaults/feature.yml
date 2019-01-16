@@ -10,7 +10,7 @@ shared:
   yid: 'y'
   sep: ','
   index_col: 0
-  transforms: []
+  pipeline: []
   clustering: []
   gene_sets: []
 

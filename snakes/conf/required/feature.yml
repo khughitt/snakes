@@ -4,7 +4,7 @@
 shared:
   name: 'str'
   path: 'str'
-  transforms: 'list'
+  pipeline: 'list'
   gene_sets: 'list'
   clustering:
     - num_clusters: int

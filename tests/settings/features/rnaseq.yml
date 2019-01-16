@@ -17,7 +17,7 @@ yid: sample_id
 path: 'tests/data/features/rnaseq.csv'
 
 # Filters and transformations
-transforms:
+pipeline:
   - type: 'filter_row_sum_above'
     name: 'filter_min_reads'
     value: 20

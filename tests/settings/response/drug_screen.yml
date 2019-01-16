@@ -49,7 +49,7 @@ path: 'tests/data/response/drug_curves.csv'
 
 
 # Filtering and transformations
-transforms:
+pipeline:
   - type: 'filter_row_val_not_missing'
     name: 'filter_missing_ac50'
     field: 'ac50'

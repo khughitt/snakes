@@ -70,7 +70,7 @@ class SnakefileRenderer():
     def _get_default_transform_config(self):
         """Returns a dictionary of the default arguments associated with each supported
         transformation"""
-        infile = os.path.join(self._conf_dir, 'defaults', 'transforms.yml')
+        infile = os.path.join(self._conf_dir, 'defaults', 'pipeline.yml')
         return yaml.load(open(infile))
 
     def _get_default_response_config(self):
@@ -126,8 +126,8 @@ class SnakefileRenderer():
         self._validate_main_config()
 
         # parse feature and transform sections of main config
-        self.main_config['transforms'] = self._parse_transform_config(
-            self.main_config['transforms'])
+        self.main_config['pipeline'] = self._parse_transform_config(
+            self.main_config['pipeline'])
 
         # load feature dataset configs
         for yml in self.main_config['features']:
@@ -160,11 +160,11 @@ class SnakefileRenderer():
             cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
-        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
+        cfg['pipeline'] = self._parse_transform_config(cfg['pipeline'])
 
         # in addition to feature-specific settings, any transforms, etc. specified
         # in the main config file are also applied
-        for param in ['transforms', 'clustering', 'gene_sets']:
+        for param in ['pipeline', 'clustering', 'gene_sets']:
             if param in self.main_config:
                 cfg[param] = cfg[param] + self.main_config[param].copy()
 
@@ -196,7 +196,7 @@ class SnakefileRenderer():
             cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
-        cfg['transforms'] = self._parse_transform_config(cfg['transforms'])
+        cfg['pipeline'] = self._parse_transform_config(cfg['pipeline'])
 
         # store filepath of config file used
         cfg['config_file'] = os.path.abspath(input_yaml)
@@ -215,28 +215,28 @@ class SnakefileRenderer():
             msg = "Unexpected configuration options encountered in {}: {}"
             raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
 
-    def _parse_transform_config(self, transforms):
+    def _parse_transform_config(self, pipeline):
         """
-        Loads transforms section of global or dataset-specific config.
+        Loads pipeline section of global or dataset-specific config.
 
         Dataset transformations can be specified as a list in one or more of the snakes config
         files. Each entry in the list must be either a single string, indicating the type of
         transformation to be applied (e.g. 'log2'), or a dictionary including the type of
         transformation along with any relevants parameters.
         """
-        # if transforms specified using a list, convert to dict
-        # if isinstance(transforms, list):
-        #     transforms = {transform: {'name': transform} for transform in transforms}
+        # if pipeline specified using a list, convert to dict
+        # if isinstance(pipeline, list):
+        #     pipeline = {transform: {'name': transform} for transform in pipeline}
 
         # load transform default settings
         default_params = self._get_default_transform_config()
 
-        # list to keep track of names used; if multiple versions of the same transforms are applied,
+        # list to keep track of names used; if multiple versions of the same pipeline are applied,
         # a number will be added to the end of the name to avoid rule collisions
         used_names = []
 
-        # iterate over transforms
-        for i, transform in enumerate(transforms):
+        # iterate over pipeline steps
+        for i, transform in enumerate(pipeline):
             # if transform is specified as a simple string, convert to a dict with default settings
             if isinstance(transform, str):
                 transform = {'type': transform}
@@ -266,9 +266,9 @@ class SnakefileRenderer():
             used_names.append(cfg['name'])
 
             # store updated transform settings
-            transforms[i] = cfg
+            pipeline[i] = cfg
 
-        return transforms
+        return pipeline
 
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
@@ -295,7 +295,7 @@ class SnakefileRenderer():
                     raise Exception(msg.format(os.path.basename(feature_cfg['config_file']), param))
 
             # check feature config sub-sections
-            for config_section in ['transforms', 'gene_sets', 'clustering']:
+            for config_section in ['pipeline', 'gene_sets', 'clustering']:
                 self._validate_config_section(feature_cfg[config_section], config_section)
 
         # validate response config
@@ -309,8 +309,8 @@ class SnakefileRenderer():
                 config_filename = os.path.basename(self.response_config['config_file'])
                 raise Exception(msg.format(config_filename, param))
 
-        # check response transforms section
-        self._validate_config_section(self.response_config['transforms'], 'transforms')
+        # check response pipeline section
+        self._validate_config_section(self.response_config['pipeline'], 'pipeline')
 
     def _validate_config_section(self, config_section, config_section_type):
         """
@@ -322,7 +322,7 @@ class SnakefileRenderer():
         config_section: list
             List of dicts representing a single section in a config file
         config_section_type: str
-            Type of config section being processed (e.g. 'feature' or 'transforms')
+            Type of config section being processed (e.g. 'feature' or 'pipeline')
         """
         # base template directory
         template_dir = os.path.join(self._template_dir, config_section_type)
@@ -371,7 +371,7 @@ class SnakefileRenderer():
                    PackageLoader('snakes', 'templates/clustering'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/gene_sets'),
-                   PackageLoader('snakes', 'templates/transforms'),
+                   PackageLoader('snakes', 'templates/pipeline'),
                    PackageLoader('snakes', 'templates/vis')]
 
         # get jinaj2 environment
