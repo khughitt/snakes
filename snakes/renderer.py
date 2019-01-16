@@ -67,7 +67,7 @@ class SnakefileRenderer():
         infile = os.path.join(self._conf_dir, 'defaults', 'feature.yml')
         return yaml.load(open(infile))
 
-    def _get_default_transform_config(self):
+    def _get_default_pipeline_action_config(self):
         """Returns a dictionary of the default arguments associated with each supported
         transformation"""
         infile = os.path.join(self._conf_dir, 'defaults', 'pipeline.yml')
@@ -125,8 +125,8 @@ class SnakefileRenderer():
         # check to make sure require dataset elements have been specified
         self._validate_main_config()
 
-        # parse feature and transform sections of main config
-        self.main_config['pipeline'] = self._parse_transform_config(
+        # parse main pipeline section of config
+        self.main_config['pipeline'] = self._parse_pipeline_config(
             self.main_config['pipeline'])
 
         # load feature dataset configs
@@ -160,7 +160,7 @@ class SnakefileRenderer():
             cfg['name'] = cfg['type']
 
         # parse filter and transform sections of configs and set appropriate defaults
-        cfg['pipeline'] = self._parse_transform_config(cfg['pipeline'])
+        cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'])
 
         # in addition to feature-specific settings, any transforms, etc. specified
         # in the main config file are also applied
@@ -195,8 +195,8 @@ class SnakefileRenderer():
         if not cfg['name']:
             cfg['name'] = cfg['type']
 
-        # parse filter and transform sections of configs and set appropriate defaults
-        cfg['pipeline'] = self._parse_transform_config(cfg['pipeline'])
+        # parse pipeline section of configs and set appropriate defaults
+        cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'])
 
         # store filepath of config file used
         cfg['config_file'] = os.path.abspath(input_yaml)
@@ -215,49 +215,49 @@ class SnakefileRenderer():
             msg = "Unexpected configuration options encountered in {}: {}"
             raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
 
-    def _parse_transform_config(self, pipeline):
+    def _parse_pipeline_config(self, pipeline):
         """
         Loads pipeline section of global or dataset-specific config.
 
-        Dataset transformations can be specified as a list in one or more of the snakes config
-        files. Each entry in the list must be either a single string, indicating the type of
-        transformation to be applied (e.g. 'log2'), or a dictionary including the type of
-        transformation along with any relevants parameters.
+        Pipeline actions (data transformations, etc.) can be specified as a list in one or more of
+        the snakes config files. Each entry in the list must be either a single string, indicating
+        the type of transformation to be applied (e.g. 'log2'), or a dictionary including the type
+        of transformation along with any relevants parameters.
         """
         # if pipeline specified using a list, convert to dict
         # if isinstance(pipeline, list):
-        #     pipeline = {transform: {'name': transform} for transform in pipeline}
+        #     pipeline = {pipeline: {'name': action} for action in pipeline}
 
-        # load transform default settings
-        default_params = self._get_default_transform_config()
+        # load pipeline entry default settings
+        default_params = self._get_default_pipeline_action_config()
 
         # list to keep track of names used; if multiple versions of the same pipeline are applied,
         # a number will be added to the end of the name to avoid rule collisions
         used_names = []
 
         # iterate over pipeline steps
-        for i, transform in enumerate(pipeline):
-            # if transform is specified as a simple string, convert to a dict with default settings
-            if isinstance(transform, str):
-                transform = {'type': transform}
+        for i, action in enumerate(pipeline):
+            # if action is specified as a simple string, convert to a dict with default settings
+            if isinstance(action, str):
+                action = {'type': action}
 
-            # start with transform default options
+            # start with action default options
             cfg = default_params['shared'].copy()
 
-            if transform['type'] in default_params:
-                cfg.update(default_params[transform['type']])
+            if action['type'] in default_params:
+                cfg.update(default_params[action['type']])
 
             # overide with user-specified values
-            cfg.update(transform)
+            cfg.update(action)
 
-            # if no specific name has been given to the transform entry, default to the name of
-            # the transform itself
+            # if no specific name has been given to the action entry, default to the name of
+            # the action itself
             if not cfg['name']:
                 cfg['name'] = cfg['type']
 
-            # add a number to non-unique transform names
+            # add a number to non-unique action names
             if cfg['name'] in used_names:
-                # number of times transform has been used so far
+                # number of times action has been used so far
                 times_used = len([x for x in used_names if x.startswith(cfg['name'])]) + 1
 
                 cfg['name'] = cfg['name'] + "_" + str(times_used)
@@ -265,7 +265,7 @@ class SnakefileRenderer():
             # update used name list
             used_names.append(cfg['name'])
 
-            # store updated transform settings
+            # store updated action settings
             pipeline[i] = cfg
 
         return pipeline

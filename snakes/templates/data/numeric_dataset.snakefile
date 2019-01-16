@@ -30,15 +30,15 @@ rule {{ rule_name }}:
 #
 # Data transformations and filters
 #
-{% for transform in dat_cfg['pipeline'] %}
+{% for cfg in dat_cfg['pipeline'] %}
     {% set ns.cur_input  = ns.cur_output %}
-    {% set ns.cur_output =  ns.cur_input | replace_filename(transform['type'] + '.csv') %}
-    {% set rule_name = dat_cfg['name'] ~ "_" ~ transform['name'] | to_rule_name %}
+    {% set ns.cur_output =  ns.cur_input | replace_filename(cfg['type'] + '.csv') %}
+    {% set rule_name = dat_cfg['name'] ~ "_" ~ cfg['name'] | to_rule_name %}
     {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'pipeline/' + transform['type'] + '.snakefile' %}
+{% include 'pipeline/' + cfg['type'] + '.snakefile' %}
 {% endfor %}
 {% endif %}
 
