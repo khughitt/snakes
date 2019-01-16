@@ -69,3 +69,10 @@ pipeline:
     field: 'ac50'
     stat: 'mad'
     quantile: 0.95
+  - type: 'fork'
+    pipeline: 
+      - type: 'dim_reduce_pca'
+        target: 'rows'
+        num_pcs: 5
+      - type: 'correlate_pearson'
+        id: 'ac50_sample_pca_cormat'

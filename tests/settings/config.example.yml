@@ -78,3 +78,15 @@ gene_sets:
       - 'tests/data/gene_sets/go.gmt'
     funcs: ['max', 'median', 'ratio_nonzero']
 
+################################################################################
+#
+# Data integration
+#
+################################################################################
+data_integration:
+  - type: 'correlation'
+    datasets:
+        - 'rnaseq_sample_pca_cormat'
+        - 'ac50_sample_pca_cormat'
+    method: 'pearson'
+

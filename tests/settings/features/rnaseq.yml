@@ -24,6 +24,13 @@ pipeline:
   - type: 'filter_gene_type'
     name: 'filter_by_gene_type'
     include_gene_types: ['protein_coding']
+  - type: 'fork'
+    pipeline: 
+      - type: 'dim_reduce_pca'
+        target: 'rows'
+        num_pcs: 10
+      - type: 'correlate_pearson'
+        id: 'rnaseq_sample_pca_cormat'
   - transform_cpm
   - transform_log2p
   - type: 'transform_zscore'
