@@ -7,7 +7,6 @@
 # General
 name: cnv
 type: cnv
-role: feature
 xid: ensgene
 yid: sample_id
 

@@ -7,7 +7,6 @@
 # General
 name: variants
 type: variants
-role: feature
 xid: ensgene
 yid: sample_id
 

@@ -33,16 +33,15 @@ verbose: true
 # Data sources
 #
 ################################################################################
-features:
+data_sources:
   - 'tests/settings/features/rnaseq.yml'
   - 'tests/settings/features/cnv.yml'
   - 'tests/settings/features/variants.yml'
-response:
   - 'tests/settings/response/drug_screen.yml'
 
-metadata:
-  samples: 'tests/data/metadata/sample_metadata.csv'
-  response: 'tests/data/metadata/drug_metadata.csv'
+# todo:
+# - 'tests/data/metadata/sample_metadata.csv'
+# - 'tests/data/metadata/drug_metadata.csv'
 
 ################################################################################
 #

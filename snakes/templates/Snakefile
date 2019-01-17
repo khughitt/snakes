@@ -17,10 +17,9 @@
 #  Date   : {{ date_str }}
 #
 #  Data sources:
-{% for dat_name, dat_cfg in features.items() %}
+{% for dat_name, dat_cfg in data_sources.items() %}
 #  - {{ dat_name }}: {{ dat_cfg['path'] }}
 {% endfor %}
-#  - {{ response['name'] }}: {{ response['path'] }}
 #
 {% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) %}
 #  Output dir: {{ output_dir }} 
@@ -50,8 +49,8 @@ if not os.path.exists(output_dir):
 {# Global variables                                                                          #}
 {#                                                                                           #}
 {#############################################################################################}
-{# list used to keep track of different feature sources to use for training set construction #}
-{% set training_set_features = [] -%}
+{# list used to keep track of different data sources to use for training set construction #}
+{% set training_set_inputs = [] -%}
 
 {# list used to keep track of simple rules that should not be run on a cluster #}
 {% set local_rules = [] -%}
@@ -66,31 +65,22 @@ rule all:
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Load features                                                                             #}
+{# Load data
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in features.items() %}
+{% for dat_name, dat_cfg in data_sources.items() %}
 {% include 'data/' + dat_cfg['type'] + '.snakefile' %}
 {% endfor %}
-
-{#############################################################################################}
-{#                                                                                           #}
-{# Load responses                                                                            #}
-{#                                                                                           #}
-{#############################################################################################}
-{% set dat_name = response['name'] %}
-{% set dat_cfg = response %}
-{% include 'data/' + dat_cfg['type'] + '.snakefile' %}
 
 {#############################################################################################}
 {#                                                                                           #}
 {# Cluster aggregation                                                                       #}
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in features.items() %}
+{% for dat_name, dat_cfg in data_sources.items() %}
   {% for clust_params in dat_cfg['clustering'] %}
     {% set clust_method = clust_params['type'] %}
-    {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
+    {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
 {% include 'clustering/clustering.snakefile' %}
   {% endfor %}
 {% endfor %}
@@ -102,7 +92,7 @@ rule all:
 {#                                                                                           #}
 {#############################################################################################}
 {% set preproccesed_gmt_files = [] %}
-{% for dat_name, dat_cfg in features.items() %}
+{% for dat_name, dat_cfg in data_sources.items() %}
   {% for gene_set_params in dat_cfg['gene_sets'] %}
     {% set gene_set = gene_set_params['type'] %}
     {% for gmt in gene_set_params['gmts'] %}
@@ -120,7 +110,7 @@ rule all:
 {% include 'annotations/load_gmt.snakefile' %}
         {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
       {% endif %}
-      {% set cur_input = "%s/features/%s.csv" | format(output_dir, dat_name) %}
+      {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
 {% include 'gene_sets/' + gene_set + '.snakefile' %}
     {% endfor %}
   {% endfor %}
@@ -128,23 +118,23 @@ rule all:
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Combine features                                                                          #}
+{# Combine datasets
 {#                                                                                           #}
 {#############################################################################################}
-rule combine_features:
-    input: expand("{{ output_dir }}/features/{features}", features={{ training_set_features }})
+rule combine_datasets:
+    input: expand("{{ output_dir }}/data/{processed_datasets}", processed_datasets={{ training_set_inputs }})
     output: "{{ output_dir }}/training_set.csv"
     run:
         # load_feature = lambda x: pd.read_csv(x, index_col=0).T
-        def load_feature(filepath):
-          """Loads a single feature dataset and prepares it to be added to training set"""
+        def load_processed_dataset(filepath):
+          """Loads a single processed dataset and prepares it to be added to training set"""
           dat = pd.read_csv(filepath, index_col=0).T
           dat_name = os.path.basename(filepath).replace('.csv', '')
           dat.columns = dat_name + "_" + dat.columns
           return dat
     
-        # combine features into a unified <sample> x <feature> dataframe
-        pd.concat(map(load_feature, input), axis=1).to_csv(output[0], index_label='sample_id')
+        # combine datasets into a unified <sample> x <variable> dataframe
+        pd.concat(map(load_processed_dataset, input), axis=1).to_csv(output[0], index_label='sample_id')
 
 {#############################################################################################}
 {#                                                                                           #}

@@ -63,7 +63,7 @@ rule {{ rule_name }}:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/response/%s.csv" | format(output_dir, dat_cfg['name']) %}
+{% set cleaned_file = "%s/data/%s.csv" | format(output_dir, dat_cfg['name']) %}
 {% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' %}
 {% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:

@@ -1,0 +1,80 @@
+################################################################################
+#
+# Snakes required configuration options (shared)
+#
+################################################################################
+shared:
+
+  ###################
+  #
+  # main
+  # 
+  ###################
+  main:
+    name: 'str'
+    version: 'str'
+    data_sources: 'list'
+
+  ###################
+  #
+  # pipeline
+  # 
+  ###################
+  pipeline:
+    type: 'str'
+
+  ###################
+  #
+  # data_source
+  # 
+  ###################
+  data_source:
+    name: 'str'
+    path: 'str'
+    pipeline: 'list'
+
+################################################################################
+#
+# Snakes required configuration options (custom)
+#
+################################################################################
+custom:
+
+  ###################
+  #
+  # data_source
+  # 
+  ###################
+  data_source:
+    dose_response_dataframe:
+      sample_id: 'str'
+      compound_id: 'str'
+      response_var: 'str'
+
+  ###################
+  #
+  # pipeline
+  # 
+  ###################
+  pipeline:
+    filter_exclude_columns:
+      columns_to_exclude: 'list'
+    filter_gene_type:
+      include_gene_types: 'list'
+    filter_include_columns:
+      columns_to_include: 'list'
+    filter_numeric_cutoff:
+      group: 'str'
+      field: 'str'
+      stat: 'str'
+    filter_row_field_above:
+      field: 'str'
+    filter_row_max_group_stat:
+      group: 'str'
+      field: 'str'
+      stat: 'str'
+    filter_row_min_group_stat:
+      group: 'str'
+      field: 'str'
+      stat: 'str'
+

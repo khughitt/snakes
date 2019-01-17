@@ -27,7 +27,7 @@ of dataset-specific config files. Dataset-specific configuration is described la
 :ref:`dataset-config` section.
 
 Below is an example `config.yml` which, in addition to including general settings and global
-filters and aggregation functions which should be applied to all features, also links to four 
+filters and aggregation functions which should be applied to all datasets, also links to four 
 additional dataset-specific config files.
 
 .. code-block:: yaml

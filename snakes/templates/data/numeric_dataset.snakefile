@@ -45,10 +45,10 @@ rule {{ rule_name }}:
 #
 # Saved cleaned dataset
 #
-{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dat_cfg['name']) %}
+{% set cleaned_file = "%s/data/%s.csv" | format(output_dir, dat_cfg['name']) %}
 {% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' %}
 {% do local_rules.append(rule_name) %}
-{% do training_set_features.append(cleaned_file | basename) %}
+{% do training_set_inputs.append(cleaned_file | basename) %}
 rule {{ rule_name }}:
     input: '{{ns.cur_output}}'
     output: '{{cleaned_file}}'
