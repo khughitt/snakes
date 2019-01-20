@@ -16,10 +16,12 @@ from pkg_resources import resource_filename
 class SnakefileRenderer():
     """Base SnakefileRenderer class"""
     def __init__(self, config_filepath=None, **kwargs):
-        self.main_config = None
-        self.data_configs = {}
-
+        self.config = None
         self.output_file = 'Snakefile'
+
+        # dict to keep track of names used; if multiple versions of the same pipeline are 
+        # applied, a number will be added to the end of the name to avoid rule collisions
+        self._rule_name_counter = {}
 
         self._setup_logger()
 
@@ -45,7 +47,7 @@ class SnakefileRenderer():
 
         logging.info("Initializing snakes")
 
-    def _get_default_data_config(self):
+    def _get_default_data_source_config(self):
         """Returns a dictionary of the default arguments associated with a dataset config
            entry"""
         infile = os.path.join(self._conf_dir, 'defaults', 'data_source.yml')
@@ -64,7 +66,7 @@ class SnakefileRenderer():
         cmdline_args = parser.parse_args()
         cmdline_args = dict((k, v) for k, v in list(vars(cmdline_args).items()) if v is not None)
 
-        # If user specified a configuration filepath on the command-line, use that path
+        # if user specified a config filepath on the command-line, use that path
         if 'config' in cmdline_args:
             config_file = cmdline_args['config']
         elif config_filepath is not None:
@@ -74,6 +76,7 @@ class SnakefileRenderer():
             # finally, check for config file in current working directory
             config_file = 'config.yml'
 
+        # check to make sure config filepath is valid
         if not os.path.isfile(config_file):
             logging.error("Invalid configuration path specified: %s", config_file)
             sys.exit()
@@ -81,67 +84,74 @@ class SnakefileRenderer():
         logging.info("Using configuration: %s", config_file)
 
         # get default main configuration options
-        self.main_config = self._default_params['shared']['main'].copy()
+        self.config = self._default_params['shared']['main'].copy()
 
         # load user-provided main snakes config file
         with open(config_file) as fp:
-            self.main_config.update(yaml.load(fp))
+            self.config.update(yaml.load(fp))
 
         # overide any settings specified via the command-line
-        self.main_config.update(cmdline_args)
+        self.config.update(cmdline_args)
 
         # overide any settings specified via the SnakefileRenderer constructor
-        self.main_config.update(kwargs)
+        self.config.update(kwargs)
 
         # Store filepath of config file used
-        self.main_config['config_file'] = os.path.abspath(config_file)
+        self.config['config_file'] = os.path.abspath(config_file)
 
         # Update logging level if 'verbose' option is enabled
-        if self.main_config['verbose']:
+        if self.config['verbose']:
             logging.getLogger().setLevel(logging.DEBUG)
 
         # check to make sure required config elements have been specified
         self._validate_main_config()
 
-        # load dataset-specific config files
-        for yml in self.main_config['data_sources']:
-            self._load_data_config(yml)
+        # load dataset-specific config files and replace original list of filepaths
+        data_sources = {}
 
-        # validate dataset configs
-        self._validate_data_configs()
+        for data_source in self.config['data_sources']:
+            # sub-config yaml filepath
+            if type(data_source) == str:
+                cfg = yaml.load(open(data_source))
+                cfg['config_file'] = os.path.abspath(data_source)
 
-    def _load_data_config(self, input_yaml):
+            else if type(data_source) == dict:
+                # inline config section
+                cfg = data_source
+
+            # validate and parse datasource config section
+            cfg = self._parse_data_source_config(cfg)
+
+            # add to dict of datasource-specific configs
+            data_sources[cfg['name']] = cfg
+        
+        self.config['data_sources'] = data_sources
+
+    def _parse_data_source_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with
         dataset-specific ones."""
-        # load user-provided dataset config file
-        user_cfg = yaml.load(open(input_yaml))
-
         # load default dataset config options
         cfg = self._default_params['shared']['data_source'].copy()
 
         # check for any unsupported settings
-        self._detect_unknown_settings(cfg, user_cfg, input_yaml)
+        self._detect_unknown_settings(cfg, user_cfg)
 
         # overide default settings with user-provided ones
         cfg.update(user_cfg)
 
-        # if no name specified, default to dataset type (e.g. 'rnaseq')
-        if not cfg['name']:
-            cfg['name'] = cfg['type']
-
         # parse pipeline section config section
         cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'])
 
-        # store filepath of config file used
-        cfg['config_file'] = os.path.abspath(input_yaml)
-
-        # store parsed data source config
-        self.data_configs[cfg['name']] = cfg
+        # validate data source config
+        self._validate_data_source_config(cfg)
 
         logging.debug("Loaded data config '%s':", cfg['name'])
         logging.debug(pprint.pformat(cfg))
 
-    def _detect_unknown_settings(self, supported_cfg, user_cfg, input_yaml):
+        # store parsed data source config
+        return cfg
+
+    def _detect_unknown_settings(self, supported_cfg, user_cfg):
         """
         Checks to see if use configuration contains any unrecognized parameters, and if so,
         raises and exception.
@@ -152,15 +162,12 @@ class SnakefileRenderer():
             Dictionary representation of configuration section including all supported parameters.
         user_cfg: dict
             Dictionary representation of corresponding user-provided configuration section 
-        input_yaml: str
-            Filepath to config file currently being analyzed; Used in error message if an invalid
-            option is encountered.
         """
         unknown_opts = [x for x in user_cfg.keys() if x not in supported_cfg.keys()]
 
         if unknown_opts:
-            msg = "Unexpected configuration options encountered in {}: {}"
-            raise Exception(msg.format(os.path.basename(input_yaml), ", ".join(unknown_opts)))
+            msg = "Unexpected configuration options encountered for {}: {}"
+            raise Exception(msg.format(cfg['name'], ", ".join(unknown_opts)))
 
     def _parse_pipeline_config(self, pipeline_cfg):
         """
@@ -171,76 +178,77 @@ class SnakefileRenderer():
         the type of transformation to be applied (e.g. 'log2'), or a dictionary including the type
         of transformation along with any relevants parameters.
         """
-        # if pipeline specified using a list, convert to dict
-        # if isinstance(pipeline, list):
-        #     pipeline = {pipeline: {'name': step} for step in pipeline}
-
-        # dict to keep track of names used; if multiple versions of the same pipeline are applied,
-        # a number will be added to the end of the name to avoid rule collisions
-        name_counter = {}
-
-        # get pipeline step shared default params
-        cfg = self._default_params['shared']['pipeline'].copy()
-
-        # iterate over pipeline steps
-        for i, pipeline_step_cfg in enumerate(pipeline_cfg):
-            # if step is specified as a simple string, convert to a dict with default settings
-            if isinstance(pipeline_step_cfg, str):
-                pipeline_step_cfg = {'type': action}
-
-            # TODO: CHECK FOR BRANCHING...
-            if pipeline_step_cfg['type'] in self._default_params['custom']['pipeline']:
-                cfg.update(self._default_params['custom']['pipeline'][pipeline_step_cfg['type']])
-
-            # overide with any user-specified config values
-            cfg.update(pipeline_step_cfg)
-
-            # if no specific name has been given to the pipeline entry, default to the name of
-            # the step itself
-            if not cfg['name']:
-                cfg['name'] = cfg['type']
-
-            # add a number to non-unique step names
-            if cfg['name'] in name_counter:
-                # if name has already been used, increment counter and add to config
-                name_counter[cfg['name']] += 1
-                cfg['name'] = cfg['name'] + "_" + str(name_counter[cfg['name']])
-            else:
-                # otherwise, if this is the first time the name has been encountered, add to counter
-                name_counter[cfg['name']] = 1
-
-            # store updated pipeline step parameters
-            pipeline_cfg[i] = cfg
+        # iterate over pipeline steps and recursively parse
+        for i, pipeline_step_cfg in enumerate(pipeline_cfg):        
+            pipeline_cfg[i] = self._parse_pipeline_step_config(pipeline_step_cfg)
 
         return pipeline_cfg
+
+    def _parse_pipeline_step_config(self, pipeline_step_cfg):
+        """Parses a single step in a snakes pipeline config section"""
+        # if no parameters specified, add placeholder empty dict
+        if isinstance(pipeline_step_cfg, str):
+            pipeline_step_cfg = {pipeline_step_cfg: {}}
+
+        # split into step name and parameters
+        step_name, step_params = list(pipeline_step_cfg.items())[0]
+
+        # if a "branch" action is encountered, parse sub-config(s)
+        if step_name == 'branch':
+            # parse any sub-pipelines defined
+            return self._parse_pipeline_config(step_params)
+
+        # get pipeline step default params (for now, just 'name' and 'id')
+        cfg = self._default_params['shared']['pipeline'].copy()
+
+        if step_name in self._default_params['custom']['pipeline']:
+            cfg.update(self._default_params['custom']['pipeline'][step_name])
+
+        # overide with any user-specified config values
+        cfg.update(step_params)
+
+        # if no specific name has been given to the pipeline entry, default to the name of
+        # the pipeline step itself
+        if not cfg['name']:
+            cfg['name'] = step_name
+
+        # add a number to non-unique step names
+        if cfg['name'] in self._rule_name_counter:
+            # if name has already been used, increment counter and add to config
+            self._rule_name_counter[cfg['name']] += 1
+            cfg['name'] = cfg['name'] + "_" + str(self._rule_name_counter[cfg['name']])
+        else:
+            # otherwise, if this is the first time the name has been encountered, add to counter
+            self._rule_name_counter[cfg['name']] = 1
+
+        return cfg
 
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
         for param in self._required_params['shared']['main']:
-            if param not in self.main_config or not self.main_config[param]:
+            if param not in self.config or not self.config[param]:
                 msg = "Missing required configuration parameter in {}: '{}'"
-                config_file = os.path.basename(self.main_config['config_file'])
+                config_file = os.path.basename(self.config['config_file'])
                 raise Exception(msg.format(config_file, param))
 
-    def _validate_data_configs(self):
+    def _validate_data_source_config(self, data_source_config):
         """Validate dataset-specific configurations"""
-        for data_cfg in self.data_configs.values():
             # get shared dataset required params
             reqs = self._required_params['shared']['data_source']:
 
             # add datatype-specific requirements, if they exist
-            if data_cfg['type'] in self._required_params['custom']['data_source']:
-                reqs.update(self._required_params['custom']['data_source'][data_cfg['type']])
+            if data_source_cfg['type'] in self._required_params['custom']['data_source']:
+                reqs.update(self._required_params['custom']['data_source'][data_source_cfg['type']])
 
             # check for required parameters
             for param in reqs:
-                if param not in data_cfg or not data_cfg[param]:
+                if param not in data_source_cfg or not data_source_cfg[param]:
                     msg = "Missing required configuration parameter in {}: '{}'"
-                    raise Exception(msg.format(os.path.basename(data_cfg['config_file']), param))
+                    raise Exception(msg.format(os.path.basename(data_source_cfg['config_file']), param))
 
-            # check pipeline sub-section
-            self._validate_config_section(data_cfg['pipeline'], 'pipeline')
+            # check pipeline sub-section of data source config
+            self._validate_config_section(data_source_cfg['pipeline'], 'pipeline')
 
     def _validate_config_section(self, config_section, config_section_type):
         """
@@ -344,8 +352,7 @@ class SnakefileRenderer():
         script_dir = os.path.abspath(resource_filename(__name__, 'src'))
 
         # render template
-        snakefile = template.render(config=self.main_config,
-                                    data_sources=self.data_configs,
+        snakefile = template.render(config=self.config,
                                     date_str=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                     script_dir=script_dir)
 

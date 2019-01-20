@@ -45,47 +45,25 @@ data_sources:
 
 ################################################################################
 #
-# Pipeline
-#
-################################################################################
-pipeline:
-  - type: 'filter_exclude_columns'
-    columns_to_exclude: ['KMS20_JCRB']
-  - type: 'filter_row_var_above'
-    name: 'exclude_zero_variance'
-    value: 0
-
-################################################################################
-#
-# Clustering
-#
-################################################################################
-clustering:
-  - type: 'hclust'
-    num_clusters: 4
-    funcs: ['sum', 'var']
-
-################################################################################
-#
 # Gene sets
 #
 ################################################################################
-gene_sets:
-  - type: 'go'
-    gene_id: 'entrez'
-    gmts:
-      - 'tests/data/gene_sets/go.gmt'
-    funcs: ['max', 'median', 'ratio_nonzero']
+#gene_sets:
+#  - type: 'go'
+#    gene_id: 'entrez'
+#    gmts:
+#      - 'tests/data/gene_sets/go.gmt'
+#    funcs: ['max', 'median', 'ratio_nonzero']
 
 ################################################################################
 #
 # Data integration
 #
 ################################################################################
-data_integration:
-  - type: 'correlation'
-    datasets:
-        - 'rnaseq_sample_pca_cormat'
-        - 'ac50_sample_pca_cormat'
-    method: 'pearson'
+#data_integration:
+#  - type: 'correlation'
+#    datasets:
+#        - 'rnaseq_sample_pca_cormat'
+#        - 'ac50_sample_pca_cormat'
+#    method: 'pearson'
 

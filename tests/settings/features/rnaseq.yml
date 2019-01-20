@@ -17,22 +17,33 @@ path: 'tests/data/features/rnaseq.csv'
 
 # Filters and transformations
 pipeline:
-  - type: 'filter_row_sum_above'
-    name: 'filter_min_reads'
-    value: 20
-  - type: 'filter_gene_type'
-    name: 'filter_by_gene_type'
-    include_gene_types: ['protein_coding']
-  - type: 'branch'
-      pipeline: 
-        - type: 'dim_reduce_pca'
+  - filter_exclude_columns:
+      columns_to_exclude: ['KMS20_JCRB']
+  - filter_row_var_above:
+      name: 'exclude_zero_variance'
+      value: 0
+  - filter_row_sum_above:
+      name: 'filter_min_reads'
+      value: 20
+  - filter_gene_type:
+      name: 'filter_by_gene_type'
+      include_gene_types: ['protein_coding']
+  - branch: 
+      - dim_reduce_pca:
           target: 'rows'
           num_pcs: 10
-        - type: 'correlate_pearson'
+      - compute_cor_mat:
           id: 'rnaseq_sample_pca_cormat'
+          method: 'pearson'
   - transform_cpm
   - transform_log2p
-  - type: 'transform_zscore'
-    name: 'transform_row_zscores'
-    axis: 1
+  - transform_zscore:
+      name: 'transform_row_zscores'
+      axis: 1
+  #- branch:
+  #  - clustering:
+  #    method: 'hclust'
+  #  - aggregate:
+  #    num_clusters: 4
+  #    funcs: ['sum', 'var']
 

@@ -17,7 +17,7 @@
 #  Date   : {{ date_str }}
 #
 #  Data sources:
-{% for dat_name, dat_cfg in data_sources.items() %}
+{% for dat_name, dat_cfg in config['data_sources'].items() %}
 #  - {{ dat_name }}: {{ dat_cfg['path'] }}
 {% endfor %}
 #
@@ -32,11 +32,6 @@ import yaml
 import numpy as np
 import pandas as pd
 from snakes import clustering, filters, gene_sets 
-
-# load metadata
-metadata = {
-    key: pd.read_csv(filepath, index_col=0) for key, filepath in {{ config["metadata"].items() | list }}
-}
 
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
@@ -68,7 +63,7 @@ rule all:
 {# Load data
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in data_sources.items() %}
+{% for dat_name, dat_cfg in config['data_sources'].items() %}
 {% include 'data/' + dat_cfg['type'] + '.snakefile' %}
 {% endfor %}
 
@@ -77,7 +72,7 @@ rule all:
 {# Cluster aggregation                                                                       #}
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in data_sources.items() %}
+{% for dat_name, dat_cfg in config['data_sources'].items() %}
   {% for clust_params in dat_cfg['clustering'] %}
     {% set clust_method = clust_params['type'] %}
     {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
@@ -92,7 +87,7 @@ rule all:
 {#                                                                                           #}
 {#############################################################################################}
 {% set preproccesed_gmt_files = [] %}
-{% for dat_name, dat_cfg in data_sources.items() %}
+{% for dat_name, dat_cfg in config['data_sources'].items() %}
   {% for gene_set_params in dat_cfg['gene_sets'] %}
     {% set gene_set = gene_set_params['type'] %}
     {% for gmt in gene_set_params['gmts'] %}

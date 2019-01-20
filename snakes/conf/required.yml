@@ -17,11 +17,10 @@ shared:
 
   ###################
   #
-  # pipeline
+  # pipeline steps
   # 
   ###################
-  pipeline:
-    type: 'str'
+  pipeline: {}
 
   ###################
   #

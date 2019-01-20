@@ -47,32 +47,38 @@ response_var: ac50
 #
 path: 'tests/data/response/drug_curves.csv'
 
-
-# Filtering and transformations
+# 
+# Drug screen data processing pipeline
+#
 pipeline:
-  - type: 'filter_row_val_not_missing'
-    name: 'filter_missing_ac50'
-    field: 'ac50'
-  - type: 'filter_row_field_above'
-    name: 'filter_curve_slope'
-    field: 'curve_slope'
-    value: 0
-  - type: 'filter_row_min_group_stat'
-    name: 'filter_min_curves_remaining'
-    group: 'drug_id'
-    field: 'cell_line'
-    stat: 'len'
-    value: 35 
-  - type: 'filter_row_min_group_stat'
-    name: 'filter_min_variability'
-    group: 'drug_id'
-    field: 'ac50'
-    stat: 'mad'
-    quantile: 0.95
-  - type: 'fork'
-    pipeline: 
-      - type: 'dim_reduce_pca'
-        target: 'rows'
-        num_pcs: 5
-      - type: 'correlate_pearson'
-        id: 'ac50_sample_pca_cormat'
+  - filter_exclude_columns:
+      columns_to_exclude: ['KMS20_JCRB']
+  - filter_row_val_not_missing:
+      name: 'filter_missing_ac50'
+      field: 'ac50'
+  - filter_row_field_above:
+      name: 'filter_curve_slope'
+      field: 'curve_slope'
+      value: 0
+  - filter_row_min_group_stat:
+      name: 'filter_min_curves_remaining'
+      group: 'drug_id'
+      field: 'cell_line'
+      stat: 'len'
+      value: 35 
+  - filter_row_min_group_stat:
+      name: 'filter_min_variability'
+      group: 'drug_id'
+      field: 'ac50'
+      stat: 'mad'
+      quantile: 0.95
+
+  #- branch:
+  #  - dim_reduce_pca:
+  #     target: 'rows'
+  #     num_pcs: 5
+  #  - compute_cor_mat:
+  #     target: columns
+  #     method: 'pearson'
+  #     id: 'ac50_sample_pca_cormat'
+  #     zero_diag: true
