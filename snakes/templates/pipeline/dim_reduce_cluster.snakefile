@@ -9,8 +9,8 @@
 #
 {% set output_path = "%s/data/%s-%s-{funcs}.csv" | format(output_dir, dat_name, clust_method) %}
 
-#{% for dat_name, dat_cfg in data_sources.items() %}
-#  {% for clust_params in dat_cfg['clustering'] %}
+#{% for dat_name, data_source in data_sources.items() %}
+#  {% for clust_params in data_source['clustering'] %}
 #    {% set clust_method = clust_params['type'] %}
 #    {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
 

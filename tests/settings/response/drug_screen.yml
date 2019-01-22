@@ -51,8 +51,8 @@ path: 'tests/data/response/drug_curves.csv'
 # Drug screen data processing pipeline
 #
 pipeline:
-  - filter_exclude_columns:
-      columns_to_exclude: ['KMS20_JCRB']
+  - filter_row_ids:
+      rows_to_exclude: ['KMS20_JCRB']
   - filter_row_val_not_missing:
       name: 'filter_missing_ac50'
       field: 'ac50'

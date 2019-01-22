@@ -1,5 +1,5 @@
 ################################################################################
-#          _       
+#                  _       
 #  ___ _ __   __ _| | _____  ___ 
 # / __| '_ \ / _` | |/ / _ \/ __|
 # \__ \ | | | (_| |   <  __/\__ \
@@ -17,8 +17,8 @@
 #  Date   : {{ date_str }}
 #
 #  Data sources:
-{% for dat_name, dat_cfg in config['data_sources'].items() %}
-#  - {{ dat_name }}: {{ dat_cfg['path'] }}
+{% for dat_name, data_source in config['data_sources'].items() %}
+#  - {{ dat_name }}: {{ data_source['path'] }}
 {% endfor %}
 #
 {% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) %}
@@ -48,7 +48,7 @@ if not os.path.exists(output_dir):
 {% set training_set_inputs = [] -%}
 
 {# list used to keep track of simple rules that should not be run on a cluster #}
-{% set local_rules = [] -%}
+{% set simple_rules = [] -%}
 
 {#############################################################################################}
 {#                                                                                           #}
@@ -63,52 +63,8 @@ rule all:
 {# Load data
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dat_cfg in config['data_sources'].items() %}
-{% include 'data/' + dat_cfg['type'] + '.snakefile' %}
-{% endfor %}
-
-{#############################################################################################}
-{#                                                                                           #}
-{# Cluster aggregation                                                                       #}
-{#                                                                                           #}
-{#############################################################################################}
-{% for dat_name, dat_cfg in config['data_sources'].items() %}
-  {% for clust_params in dat_cfg['clustering'] %}
-    {% set clust_method = clust_params['type'] %}
-    {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
-{% include 'clustering/clustering.snakefile' %}
-  {% endfor %}
-{% endfor %}
-
-
-{#############################################################################################}
-{#                                                                                           #}
-{# Gene set aggregation                                                                      #}
-{#                                                                                           #}
-{#############################################################################################}
-{% set preproccesed_gmt_files = [] %}
-{% for dat_name, dat_cfg in config['data_sources'].items() %}
-  {% for gene_set_params in dat_cfg['gene_sets'] %}
-    {% set gene_set = gene_set_params['type'] %}
-    {% for gmt in gene_set_params['gmts'] %}
-      {# if multiple gmt files exist for the same gene set, include gmt in rule #}
-      {# and filenames                                                          #}
-      {% if gene_set_params['gmts'] | length > 1 %}
-        {% set gene_set_name = gene_set ~ gmt | basename_no_ext %}
-      {% else %}
-        {% set gene_set_name = gene_set %}
-      {% endif %}
-      {# if this is the first time the gene set is being used, include logic for #}
-      {# parsing gmt file                                                        #}
-      {% set preprocessed_gmt = "%s/gene_sets/%s_%s.gmt" | format(output_dir, gene_set_name, dat_cfg['xid']) %}
-      {% if preprocessed_gmt not in preproccesed_gmt_files %}
-{% include 'annotations/load_gmt.snakefile' %}
-        {% do preproccesed_gmt_files.append(preprocessed_gmt) %}
-      {% endif %}
-      {% set cur_input = "%s/data/%s.csv" | format(output_dir, dat_name) %}
-{% include 'gene_sets/' + gene_set + '.snakefile' %}
-    {% endfor %}
-  {% endfor %}
+{% for dat_name, data_source in config['data_sources'].items() %}
+{% include 'data/' + data_source['type'] + '.snakefile' %}
 {% endfor %}
 
 {#############################################################################################}
@@ -116,6 +72,9 @@ rule all:
 {# Combine datasets
 {#                                                                                           #}
 {#############################################################################################}
+#
+# Create training set
+#
 rule combine_datasets:
     input: expand("{{ output_dir }}/data/{processed_datasets}", processed_datasets={{ training_set_inputs }})
     output: "{{ output_dir }}/training_set.csv"
@@ -136,7 +95,7 @@ rule combine_datasets:
 {# Other settings                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
-{% set localrules_str = ', '.join(local_rules) %}
+{% set localrules_str = ', '.join(simple_rules) %}
 localrules: {{ localrules_str }}
 
 {# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=jinja: #}

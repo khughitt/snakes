@@ -10,7 +10,7 @@
 library(VIM)
 
 # parameters
-params <- snakemake@params[['cfg']]
+params <- snakemake@params[['args']]
 
 message('kNN')
 print(params)

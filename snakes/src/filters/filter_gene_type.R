@@ -10,7 +10,7 @@
 library(biomaRt)
 
 # parameters
-params <- snakemake@params[['cfg']]
+params <- snakemake@params[['args']]
 
 # load data
 dat <- read.csv(snakemake@input[[1]], row.names = 1)

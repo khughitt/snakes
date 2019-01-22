@@ -11,50 +11,40 @@
 {# modified in the scope of a jinja for loop.
 {#############################################################################################}
 {% set ns = namespace(found=false) %}
-{% set ns.cur_input  =  dat_cfg['path'] %}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', dat_cfg['name'], 'raw.csv']) %}
+
+{# initial input and output filepaths #}
+{% set ns.cur_input  =  data_source.path %}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', data_source.name, 'raw.csv']) %}
 #
 # Load raw data
 #
-{% set rule_name = 'read_' ~ dat_cfg['name'] | to_rule_name %}
-{% do local_rules.append(rule_name) %}
+{% set rule_name = 'load_' ~ data_source.name | to_rule_name %}
+{% do simple_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
         # for now, assume that all input files are provided in csv or tsv format with a
         # header and a column for row ids
-        pd.read_table(input[0], sep='{{ dat_cfg["sep"] }}', index_col={{ dat_cfg['index_col'] }}).to_csv(output[0], index_label='{{ dat_cfg["xid"] }}')
+        pd.read_table(input[0], sep='{{ data_source.sep }}', index_col={{ data_source.index_col }}).to_csv(output[0], index_label='{{ data_source.xid }}')
 
-{% if dat_cfg['pipeline'] | length > 0 %}
+{% if data_source.pipeline | length > 0 %}
 #
-# Data transformations and filters
+# Data transformations
 #
-{% for cfg in dat_cfg['pipeline'] %}
-    {% set ns.cur_input  = ns.cur_output %}
-    {% set ns.cur_output =  ns.cur_input | replace_filename(cfg['type'] + '.csv') %}
-    {% set rule_name = dat_cfg['name'] ~ "_" ~ cfg['name'] | to_rule_name %}
-    {% do local_rules.append(rule_name) %}
-rule {{ rule_name }}:
+{% for action in data_source.pipeline recursive %}
+    {% if action | is_list %}
+        {{ loop(action) }}
+    {% else %}
+        {% set ns.cur_input  = ns.cur_output %}
+        {% set ns.cur_output =  ns.cur_input | replace_filename(action.action + '.csv') %}
+rule {{ action.rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'pipeline/' + cfg['type'] + '.snakefile' %}
+{% include 'pipeline/' + action.action + '.snakefile' %}
+    {% endif %}
 {% endfor %}
 {% endif %}
 
-#
-# Saved cleaned dataset
-#
-{% set cleaned_file = "%s/features/%s.csv" | format(output_dir, dat_cfg['name']) %}
-{% set rule_name = 'save_' ~ dat_cfg['name'] | to_rule_name ~ '_final' %}
-{% do local_rules.append(rule_name) %}
-{% do training_set_inputs.append(cleaned_file | basename) %}
-rule {{ rule_name }}:
-    input: '{{ns.cur_output}}'
-    output: '{{cleaned_file}}'
-    run:
-        df = pd.read_csv(input[0], index_col=0)
-        #df = df.rename(index={ind: '{{dat_name}}_' + ind for ind in df.index})
-        df.to_csv(output[0])
-
-
+{# Keep track of last version of file processed #}
+{% do training_set_inputs.append(ns.cur_output | basename_and_parent_dir) -%}
