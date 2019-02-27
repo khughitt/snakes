@@ -35,5 +35,5 @@ HCLUST_DF = pd.concat([pd.DataFrame({'cluster': HCLUST_CLUSTERS}),
 def test_hclust_cluster_apply(func, expected):
     """Test gene set aggregation"""
     np.random.seed(0)
-    clusters = clustering.cluster(INPUT, 'hclust', N_CLUSTERS)
+    clusters = clustering.hclust(INPUT, N_CLUSTERS)
     pd.testing.assert_frame_equal(expected, clustering.cluster_apply(INPUT, clusters, func))

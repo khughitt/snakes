@@ -41,9 +41,8 @@ pipeline:
       name: 'transform_row_zscores'
       axis: 1
   - branch:
-    - clustering:
-      method: 'hclust'
-    - aggregate:
-      num_clusters: 4
-      funcs: ['sum', 'var']
+    - cluster_hclust:
+        num_clusters: 4
+    #- aggregate:
+    #    funcs: ['sum', 'var']
 

@@ -2,6 +2,12 @@
 User's Guide
 ============
 
+NOTE
+----
+
+2019-02-26: These docs are currently out-of-date and do not reflect the most recent version of
+Snakes. They will be updated in the coming days.
+
 Overview
 --------
 

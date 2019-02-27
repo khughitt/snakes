@@ -19,7 +19,7 @@ class SnakefileRenderer():
         self.config = None
         self.output_file = 'Snakefile'
 
-        # dict to keep track of names used; if multiple versions of the same pipeline are 
+        # dict to keep track of names used; if multiple versions of the same rule are 
         # applied, a number will be added to the end of the name to avoid rule collisions
         self._rule_name_counter = {}
 
@@ -100,22 +100,22 @@ class SnakefileRenderer():
         # Store filepath of config file used
         self.config['config_file'] = os.path.abspath(config_file)
 
-        # Update logging level if 'verbose' option is enabled
+        # update logging level if 'verbose' option is enabled
         if self.config['verbose']:
             logging.getLogger().setLevel(logging.DEBUG)
 
         # check to make sure required config elements have been specified
         self._validate_main_config()
 
-        # load dataset-specific config files and replace original list of filepaths
+        # load dataset-specific configurations; each should be specified either as a filepath to a
+        # dataset-specific yaml file, or as a dict instance
         data_sources = {}
 
         for data_source in self.config['data_sources']:
-            # sub-config yaml filepath
+            # separate file
             if type(data_source) == str:
                 cfg = yaml.load(open(data_source))
                 cfg['config_file'] = os.path.abspath(data_source)
-
             elif type(data_source) == dict:
                 # inline config section
                 cfg = data_source
@@ -131,12 +131,15 @@ class SnakefileRenderer():
     def _parse_data_source_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with
         dataset-specific ones."""
+
         # load default dataset config options
         cfg = self._default_params['shared']['data_source'].copy()
 
         # add datatype-specific requirements, if they exist
         if user_cfg['type'] in self._default_params['custom']['data_source']:
             cfg.update(self._default_params['custom']['data_source'][user_cfg['type']])
+
+        logging.info("Parsing %s config", user_cfg['name'])
 
         # check for any unsupported settings
         self._detect_unknown_settings(cfg, user_cfg)
@@ -149,9 +152,6 @@ class SnakefileRenderer():
 
         # validate data source config
         self._validate_data_source_config(cfg)
-
-        logging.debug("Loaded data config '%s':", cfg['name'])
-        logging.debug(pprint.pformat(cfg))
 
         # store parsed data source config
         return cfg
@@ -202,10 +202,10 @@ class SnakefileRenderer():
         # if a "branch" action is encountered, parse sub-config(s)
         if action == 'branch':
             # parse any sub-pipelines defined
-            return self._parse_pipeline_config(action_params)
+            return self._parse_pipeline_config(action_params, data_source_name)
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
-        # a list in the YAML)
+        # a list in the yaml)
         if type(action_params) != dict:
             msg = "Parameters for {} must be specified as a YAML dictionary."
             raise Exception(msg.format(action))
@@ -285,14 +285,6 @@ class SnakefileRenderer():
 
         # iterate over subsection entries and validate
         for entry in config_section:
-            # check to make sure template exists
-            # if config_section_type == 'clustering':
-            #     # clustering methods currently all use the same template
-            #     template_filename = 'clustering.snakefile'
-            # else:
-                # gene set, etc. section each have their own separate templates
-                # template_filename = entry['action'] + '.snakefile'
-
             # recurse on pipeline branches
             if type(entry) == list:
                 self._validate_config_section(entry, 'pipeline')
@@ -338,7 +330,7 @@ class SnakefileRenderer():
 
         # template search paths
         loaders = [PackageLoader('snakes', 'templates'),
-                   PackageLoader('snakes', 'templates/clustering'),
+                   PackageLoader('snakes', 'templates/annotations'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/gene_sets'),
                    PackageLoader('snakes', 'templates/pipeline'),

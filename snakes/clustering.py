@@ -5,18 +5,14 @@ import numpy as np
 import pandas as pd
 from . import aggregation
 
-def cluster(df, method, n_clusters):
+def hclust(df, n_clusters):
     """
-    Clusters a dataset using a specified clustering method and number of clusters.
-
-    Note: currently only hierarchical clustering (hclust) is supported.
+    Performs hierarchical clustering on a dataset
 
     Arguments
     ---------
     df : pandas.DataFrame
         DataFrame indexed by genes.
-    method : str
-        Name of clustering method to be applied
     n_clusters: int
         Number of clusters to partition data into
 
@@ -26,14 +22,10 @@ def cluster(df, method, n_clusters):
         A list of cluster identifiers in the same order as the dataset rows
     """
     # hierarchical clustering (agglomerative)
-    if method == 'hclust':
-        from sklearn.cluster import AgglomerativeClustering
-        hclust = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
-                                         linkage='average')
-        clusters = hclust.fit_predict(df)
-    else:
-        # if not valid cluster method was specified, raise an error
-        raise Exception("Invalid clustering method specified: {}".format(method))
+    from sklearn.cluster import AgglomerativeClustering
+    hclust = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
+                                        linkage='average')
+    clusters = hclust.fit_predict(df)
 
     # convert numeric cluster ids to strings and return
     return ['cluster_{}'.format(i) for i in clusters]

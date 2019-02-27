@@ -30,11 +30,11 @@ rule {{ rule_name }}:
 
 {% if data_source.pipeline | length > 0 %}
 #
-# Data transformations
+# {{ data_source.name }} actions
 #
 {% for action in data_source.pipeline recursive %}
     {% if action | is_list %}
-        {{ loop(action) }}
+{{ loop(action) }}
     {% else %}
         {% set ns.cur_input  = ns.cur_output %}
         {% set ns.cur_output =  ns.cur_input | replace_filename(action.action + '.csv') %}

@@ -47,7 +47,7 @@ if not os.path.exists(output_dir):
 {# list used to keep track of different data sources to use for training set construction #}
 {% set training_set_inputs = [] -%}
 
-{# list used to keep track of simple rules that should not be run on a cluster #}
+{# list used to keep track of simple rules that should not be run on a compute cluster #}
 {% set simple_rules = [] -%}
 
 {#############################################################################################}

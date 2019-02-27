@@ -56,6 +56,9 @@ custom:
   # 
   ###################
   pipeline:
+    cluster_hclust:
+      num_clusters: 'int'
+      col_name: 'str'
     filter_exclude_columns:
       columns_to_exclude: 'list'
     filter_gene_type:

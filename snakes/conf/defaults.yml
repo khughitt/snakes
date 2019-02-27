@@ -77,6 +77,8 @@ custom:
   # 
   ###################
   pipeline:
+    cluster_hclust:
+      col_name: 'clusters'
     filter_exclude_columns:
       quantile: null
       value: null
