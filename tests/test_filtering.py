@@ -113,3 +113,10 @@ def test_grouped_rows():
                             columns=['group', 'X', 'Y'])
     res = filters.filter_grouped_rows(DF_GROUPED, 'group', 'X', 'sum', op=operator.gt, value=7)
     assert_frame_equal(expected, res)
+
+def test_filter_min_group_size():
+    """Tests filtering of groups of rows based on group size."""
+    expected = DF_GROUPED.loc[DF_GROUPED['group'].isin(['A', 'B'])]
+    res = filters.filter_row_min_group_size(DF_GROUPED, 'group', size=3)
+    assert_frame_equal(expected, res)
+

@@ -28,13 +28,13 @@ pipeline:
   - filter_gene_type:
       name: 'filter_by_gene_type'
       include_gene_types: ['protein_coding']
-  - branch: 
-      - dim_reduce_pca:
-          target: 'rows'
-          num_pcs: 10
-      - compute_cor_mat:
-          id: 'rnaseq_sample_pca_cormat'
-          method: 'pearson'
+  #- branch: 
+  #    - dim_reduce_pca:
+  #        target: 'rows'
+  #        num_pcs: 10
+  #    - compute_cor_mat:
+  #        id: 'rnaseq_sample_pca_cormat'
+  #        method: 'pearson'
   - transform_cpm
   - transform_log2p
   - transform_zscore:

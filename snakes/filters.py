@@ -111,7 +111,6 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
     For example, this could be used to filter out all entries for drugs which have a low
     variance of IC-50 scores across cell lines.
     """
-    print('[DEV] running filter_grouped_rows')
     # determine which function to apply within each group
     if func == 'mad':
         # median absolute deviation (mad)
@@ -134,3 +133,10 @@ def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quan
     mask = group_stats.loc[op(group_stats, cutoff_value)].index
 
     return df[df[group].isin(mask)]
+
+def filter_row_min_group_size(df, group, size):
+    """
+    Filters groups of rows that are not of a specified size or larger
+    """
+    return df.groupby(group).filter(lambda x: len(x) >= size)
+
