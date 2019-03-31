@@ -14,12 +14,16 @@ shared:
     output_dir: 'output'
 
     # development mode options 
-    verbose: false
-    dev_mode: false                # (UNUSED / PLACEHOLDER)
-    dev_mode_subsample_ratio: 0.05 # (UNUSED / PLACEHOLDER)
+    development:
+      enabled: false
+      sample_row_frac: 0.05
+      sample_col_frac: 1.00
 
-    # random seed (UNUSED / PLACEHOLDER)
+    # random seed
     random_seed: 1
+
+    # output verosity
+    verbose: false
 
     # software settings (UNUSED / PLACEHOLDER)
     software:

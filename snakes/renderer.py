@@ -7,11 +7,11 @@ import pprint
 import os
 import re
 import sys
-from argparse import ArgumentParser
-
 import yaml
+from argparse import ArgumentParser
 from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename
+from snakes.util import recursive_update
 
 class SnakefileRenderer():
     """Base SnakefileRenderer class"""
@@ -89,7 +89,8 @@ class SnakefileRenderer():
 
         # load user-provided main snakes config file
         with open(config_file) as fp:
-            self.config.update(yaml.load(fp))
+            # self.config.update(yaml.load(fp))
+            self.config = recursive_update(self.config, yaml.load(fp))
 
         # overide any settings specified via the command-line
         self.config.update(cmdline_args)
@@ -350,7 +351,7 @@ class SnakefileRenderer():
 
         def basename_no_ext(filepath):
             """Strips directories and extension from a filepath"""
-            return os.path.basename(os.path.splitext(filepath)[0])
+            return os.path.basename(os.path.splitext(filepath)[0]) 
 
         def is_list(value):
             """Checks if variable is of type list"""
@@ -372,6 +373,7 @@ class SnakefileRenderer():
         env.filters['basename'] = os.path.basename
         env.filters['basename_and_parent_dir'] = basename_and_parent_dir
         env.filters['basename_no_ext'] = basename_no_ext
+        env.filters['expanduser'] = os.path.expanduser
         env.filters['is_list'] = is_list
         env.filters['replace_filename'] = replace_filename
         env.filters['to_rule_name'] = to_rule_name

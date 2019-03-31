@@ -21,7 +21,7 @@
 #  - {{ dat_name }}: {{ data_source['path'] }}
 {% endfor %}
 #
-{% set output_dir = '/'.join([config['output_dir'], config['name'] | replace(' ', '_'), config['version']]) %}
+{% set output_dir = '/'.join([config['output_dir'] | expanduser, config['name'] | replace(' ', '_'), config['version']]) %}
 #  Output dir: {{ output_dir }} 
 #
 ################################################################################

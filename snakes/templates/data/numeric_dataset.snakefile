@@ -26,7 +26,17 @@ rule {{ rule_name }}:
     run:
         # for now, assume that all input files are provided in csv or tsv format with a
         # header and a column for row ids
-        pd.read_table(input[0], sep='{{ data_source.sep }}', index_col={{ data_source.index_col }}).to_csv(output[0], index_label='{{ data_source.xid }}')
+        dat = pd.read_table(input[0], sep='{{ data_source.sep }}', index_col={{ data_source.index_col }})
+        
+{% if config.development.enabled and config.development.sample_row_frac < 1 %}
+        # sub-sample dataset rows
+        dat = dat.sample(frac={{ config.development.sample_row_frac }}, random_state={{ config.random_seed }}, axis=0)
+{% endif %}
+{% if config.development.enabled and config.development.sample_col_frac < 1 %}
+        # sub-sample dataset columns
+        dat = dat.sample(frac={{ config.development.sample_col_frac }}, random_state={{ config.random_seed }}, axis=1)
+{% endif %}
+        dat.to_csv(output[0], index_label='{{ data_source.xid }}')
 
 {% if data_source.pipeline | length > 0 %}
 #
