@@ -24,9 +24,11 @@ rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
-        # for now, assume that all input files are provided in csv or tsv format with a
-        # header and a column for row ids
+{% if data_source.format in ['csv', 'tsv'] %}
         dat = pd.read_table(input[0], sep='{{ data_source.sep }}', index_col={{ data_source.index_col }})
+{% elif data_source.format == 'xls' %}
+        dat = pd.read_excel(input[0], sheet='{{ data_source.sheet }}', index_col={{ data_source.index_col }})
+{% endif %}
         
 {% if config.development.enabled and config.development.sample_row_frac < 1 %}
         # sub-sample dataset rows

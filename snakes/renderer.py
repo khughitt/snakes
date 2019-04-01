@@ -6,6 +6,7 @@ import logging
 import pprint
 import os
 import re
+import pathlib
 import sys
 import yaml
 from argparse import ArgumentParser
@@ -21,13 +22,14 @@ class SnakefileRenderer():
 
         # dict to keep track of names used; if multiple versions of the same rule are 
         # applied, a number will be added to the end of the name to avoid rule collisions
-        self._rule_name_counter = {}
+        self._rule_names = {}
 
         self._setup_logger()
 
         self._conf_dir = os.path.abspath(resource_filename(__name__, 'conf'))
         self._template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
 
+        # load required and default settings
         with open(os.path.join(self._conf_dir, "required.yml")) as fp:
             self._required_params = yaml.load(fp)
         with open(os.path.join(self._conf_dir, "defaults.yml")) as fp:
@@ -48,17 +50,6 @@ class SnakefileRenderer():
         root.addHandler(log_handle)
 
         logging.info("Initializing snakes")
-
-    def _get_default_data_source_config(self):
-        """Returns a dictionary of the default arguments associated with a dataset config
-           entry"""
-        infile = os.path.join(self._conf_dir, 'defaults', 'data_source.yml')
-        return yaml.load(open(infile))
-
-    def _get_pipeline_defaults(self):
-        """Returns a dictionary of the default arguments associated with each supported action"""
-        infile = os.path.join(self._conf_dir, 'defaults', 'pipeline.yml')
-        return yaml.load(open(infile))
 
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
@@ -146,7 +137,33 @@ class SnakefileRenderer():
         self._detect_unknown_settings(cfg, user_cfg)
 
         # overide default settings with user-provided ones
-        cfg.update(user_cfg)
+        # cfg.update(user_cfg)
+        cfg = recursive_update(cfg, user_cfg)
+
+        # get file extension (excluding .gz suffix, if present)
+        ext = pathlib.Path(cfg['path'].lower().replace('.gz', '')).suffix
+
+        # determine input file format / separator, if not specified
+        if cfg['format'] == '':
+            # csv
+            if ext == '.csv':
+                cfg['format'] = 'csv'
+                cfg['sep'] = ','
+            elif ext in ['.tsv', '.tab', '.txt']:
+                # tab-delimited
+                cfg['format'] = 'tsv'
+                cfg['sep'] = '\t'
+            elif ext in ['.xls', '.xlsx']:
+                # excel spreadsheet
+                cfg['format'] = 'xls'
+
+        if cfg['format'] in ['csv', 'tsv'] and cfg['sep'] == '':
+            # csv
+            if ext == '.csv':
+                cfg['sep'] = ','
+            elif ext in ['.tsv', '.tab', '.txt']:
+                # tab-delimited
+                cfg['sep'] = '\t'
 
         # parse pipeline section config section
         cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'], cfg['name'])
@@ -228,17 +245,17 @@ class SnakefileRenderer():
         if not cfg['rule_name']:
             cfg['rule_name'] = "%s_%s" % (data_source_name, action)
 
-        # only acfg['rule_name']llow letters, number, and underscores
+        # only allow letters, number, and underscores in rule names
         cfg['rule_name'] = re.sub(r"[^\w]", "_", cfg['rule_name'])
 
         # check to see if rule name has already been used
-        if cfg['rule_name'] in self._rule_name_counter:
+        if cfg['rule_name'] in self._rule_names:
             # if name has already been used, increment counter and add to config
-            self._rule_name_counter[cfg['rule_name']] += 1
-            cfg['rule_name'] += "_%d" % self._rule_name_counter[cfg['rule_name']]
+            self._rule_names[cfg['rule_name']] += 1
+            cfg['rule_name'] += "_%d" % self._rule_names[cfg['rule_name']]
         else:
             # if this is the first time the name has been encountered, add to counter
-            self._rule_name_counter[cfg['rule_name']] = 1
+            self._rule_names[cfg['rule_name']] = 1
 
         return cfg
 

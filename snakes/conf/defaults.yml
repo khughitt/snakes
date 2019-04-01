@@ -51,7 +51,9 @@ shared:
     name: ''
     xid: 'x'
     yid: 'y'
-    sep: ','
+    format: ''
+    sep: ''
+    sheet: 0
     config_file: ''
     index_col: 0
     pipeline: []
