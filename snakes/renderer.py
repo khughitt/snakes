@@ -70,7 +70,7 @@ class SnakefileRenderer():
 
         # check to make sure config filepath is valid
         if not os.path.isfile(config_file):
-            logging.error("Invalid configuration path specified: %s", config_file)
+            logging.error("Config error: invalid configuration path specified: %s", config_file)
             sys.exit()
 
         logging.info("Using configuration: %s", config_file)
@@ -189,8 +189,8 @@ class SnakefileRenderer():
         unknown_opts = [x for x in user_cfg.keys() if x not in supported_cfg.keys()]
 
         if unknown_opts:
-            msg = "Unexpected configuration options encountered for {}: {}"
-            raise Exception(msg.format(user_cfg['name'], ", ".join(unknown_opts)))
+            msg = "Config error: unexpected configuration options encountered for {}: {}"
+            sys.exit(msg.format(user_cfg['name'], ", ".join(unknown_opts)))
 
     def _parse_pipeline_config(self, pipeline_cfg, data_source_name):
         """
@@ -225,8 +225,8 @@ class SnakefileRenderer():
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(action_params) != dict:
-            msg = "Parameters for {} must be specified as a YAML dictionary."
-            raise Exception(msg.format(action))
+            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            sys.exit(msg.format(action))
 
         # get pipeline action default params (for now, just 'rule_name' and 'action')
         cfg = self._default_params['shared']['pipeline'].copy()
@@ -264,9 +264,9 @@ class SnakefileRenderer():
         #  check for required top-level parameters in main config
         for param in self._required_params['shared']['main']:
             if param not in self.config or not self.config[param]:
-                msg = "Missing required configuration parameter in {}: '{}'"
+                msg = "Config error: missing required configuration parameter in {}: '{}'"
                 config_file = os.path.basename(self.config['config_file'])
-                raise Exception(msg.format(config_file, param))
+                sys.exit(msg.format(config_file, param))
 
     def _validate_data_source_config(self, data_source_cfg):
         """Validate dataset-specific configurations"""
@@ -280,8 +280,8 @@ class SnakefileRenderer():
         # check for required parameters
         for param in reqs:
             if param not in data_source_cfg or not data_source_cfg[param]:
-                msg = "Missing required configuration parameter in {}: '{}'"
-                raise Exception(msg.format(os.path.basename(data_source_cfg['config_file']), param))
+                msg = "Config error: missing required configuration parameter in {}: '{}'"
+                sys.exit(msg.format(os.path.basename(data_source_cfg['config_file']), param))
 
         # check pipeline sub-section of data source config
         self._validate_config_section(data_source_cfg['pipeline'], 'pipeline')
@@ -314,9 +314,9 @@ class SnakefileRenderer():
                 template_filename = entry['action'] + '.snakefile'
 
             if template_filename not in os.listdir(template_dir):
-                msg = "Invalid coniguration! Unknown {} entry: '{}'".format(config_section_type,
+                msg = "Config error: invalid coniguration! Unknown {} entry: '{}'".format(config_section_type,
                                                                             entry['action'])
-                raise Exception(msg)
+                sys.exit(msg)
 
             # check main dataset configuration options
             reqs = self._required_params['shared'][config_section_type].copy()
@@ -328,8 +328,8 @@ class SnakefileRenderer():
             # check for required parameters
             for param in reqs:
                 if param not in entry or not entry[param]:
-                    msg = "Missing required {} {} parameter '{}'"
-                    raise Exception(msg.format(config_section_type, entry['action'], param))
+                    msg = "Config error: Missing required {} {} parameter '{}'"
+                    sys.exit(msg.format(config_section_type, entry['action'], param))
 
     def _get_args(self):
         """Parses input and returns arguments"""
