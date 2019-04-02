@@ -27,7 +27,6 @@ rule {{ rule_name }}:
 {% elif data_source.format == 'xls' %}
         dat = pd.read_excel(input[0], sheet='{{ data_source.sheet }}', index_col={{ data_source.index_col }})
 {% endif %}
-        
 {% if config.development.enabled and config.development.sample_row_frac < 1 %}
         # sub-sample dataset rows
         dat = dat.sample(frac={{ config.development.sample_row_frac }}, random_state={{ config.random_seed }}, axis=0)

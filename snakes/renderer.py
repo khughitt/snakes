@@ -165,6 +165,11 @@ class SnakefileRenderer():
                 # tab-delimited
                 cfg['sep'] = '\t'
 
+        # if a str index column value is specified, wrap in quotation marks so that it is handled
+        # properly in templates
+        if isinstance(cfg['index_col'], str):
+            cfg['index_col'] = "'{}'".format(cfg['index_col'])
+
         # parse pipeline section config section
         cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'], cfg['name'])
 

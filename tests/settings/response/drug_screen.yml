@@ -7,6 +7,7 @@
 # General
 name: ac50
 index_col: cell_line
+xid: sample_id
 
 #type: dose_response_dataframe
 #role: response
@@ -25,6 +26,8 @@ path: 'tests/data/response/drug_curves.csv'
 pipeline:
   #- filter_rows_col_ne:
   #    value: 'KMS20_JCRB'
+  - filter_row_ids:
+      rows_to_exclude: ['KMS20_JCRB']
   - filter_row_val_not_missing:
       name: 'filter_missing_ac50'
       field: 'ac50'
