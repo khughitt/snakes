@@ -1,4 +1,3 @@
 {% extends "filter_numeric_cutoff.snakefile" %}
-{% block filter_function %}filter_row_var_gt{% endblock %}
-
+{% block filter_function %}filter_rows_var_gt{% endblock %}
 

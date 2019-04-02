@@ -16,7 +16,7 @@ path: 'tests/data/features/variants.csv'
 
 # Filters and transformations
 pipeline:
-  - filter_exclude_columns:
-      columns_to_exclude: ['KMS20_JCRB']
+  - filter_columns_name_not_in:
+      names: ['KMS20_JCRB']
   - filter_rows_min_nonzero:
       value: 2

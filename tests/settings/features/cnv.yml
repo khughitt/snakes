@@ -18,8 +18,8 @@ path: 'tests/data/features/cnv.csv'
 # CNV data processing pipeline
 #
 pipeline:
-  - filter_exclude_columns:
-      columns_to_exclude: ['KMS20_JCRB']
+  - filter_columns_name_not_in:
+      names: ['KMS20_JCRB']
   - filter_rows_max_na:
       name: 'remove_missing_data'
       value: 0

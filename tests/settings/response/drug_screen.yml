@@ -26,14 +26,14 @@ path: 'tests/data/response/drug_curves.csv'
 pipeline:
   #- filter_rows_col_ne:
   #    value: 'KMS20_JCRB'
-  - filter_rows_index_not_in:
-      indices: ['KMS20_JCRB']
+  - filter_rows_name_not_in:
+      names: ['KMS20_JCRB']
   - filter_rows_col_not_na:
       name: 'filter_missing_ac50'
-      field: 'ac50'
+      col: 'ac50'
   - filter_rows_col_gt:
       name: 'filter_curve_slope'
-      field: 'curve_slope'
+      col: 'curve_slope'
       value: 0
   #- filter_rows_group_func_ge:
   #    name: 'filter_min_curves_remaining'
@@ -42,8 +42,8 @@ pipeline:
   - filter_rows_group_func_ge:
       name: 'filter_min_variability'
       group: 'drug_id'
-      field: 'ac50'
-      stat: 'mad'
+      col: 'ac50'
+      func: 'mad'
       quantile: 0.95
 
   #- branch:

@@ -16,17 +16,17 @@ path: 'tests/data/features/rnaseq.csv'
 
 # Filters and transformations
 pipeline:
-  - filter_exclude_columns:
-      columns_to_exclude: ['KMS20_JCRB']
+  - filter_columns_name_not_in:
+      names: ['KMS20_JCRB']
   - filter_rows_var_gt:
       name: 'exclude_zero_variance'
       value: 0
   - filter_rows_sum_gt:
       name: 'filter_min_reads'
       value: 20
-  - filter_gene_type:
+  - filter_rows_gene_biotype_in:
       name: 'filter_by_gene_type'
-      include_gene_types: ['protein_coding']
+      gene_biotypes: ['protein_coding']
   #- branch: 
   #    - dim_reduce_pca:
   #        target: 'rows'

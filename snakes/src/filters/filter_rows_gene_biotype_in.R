@@ -20,9 +20,9 @@ ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 genes <- getBM(attributes = c("ensembl_gene_id", "gene_biotype"), mart = ensembl)
 
 # get a list of genes matching specified type(s)
-coding_genes <- genes[genes$gene_biotype %in% params['include_gene_types'], ]$ensembl_gene_id
+include_genes <- genes[genes$gene_biotype %in% params['gene_biotypes'], ]$ensembl_gene_id
 
-dat <- dat[rownames(dat) %in% coding_genes, ]
+dat <- dat[rownames(dat) %in% include_genes, ]
 
 # save result
 write.csv(dat, file=snakemake@output[[1]], quote = FALSE)

@@ -80,55 +80,48 @@ custom:
   pipeline:
     cluster_hclust:
       col_name: 'clusters'
-    filter_exclude_columns:
-      quantile: null
-      value: null
-      columns_to_exclude: []
-    filter_gene_type:
-      include_gene_types: []
-    filter_include_columns:
-      quantile: null
-      value: null
-      columns_to_include: []
-    filter_numeric_cutoff:
-      quantile: null
-      value: null
+    filter_columns_name_in:
+      names: []
+    filter_columns_name_not_in:
+      names: []
+    filter_rows_gene_biotype_in:
+      gene_biotypes: []
+    filter_rows_col_not_na: 
+      col: null
+    filter_rows_group_func_ge: 
       group: null
-      field: null
-      stat: null
-    filter_row_field_above:
+      col: null
+      func: null
       quantile: null
       value: null
-      field: null
-    filter_row_max_group_stat:
-      quantile: null
-      value: null
+    filter_rows_group_func_le: 
       group: null
-      field: null
-      stat: null
-    filter_row_max_missing:
+      col: null
+      func: null
       quantile: null
       value: null
-    filter_row_min_group_stat:
+    filter_rows_max_na:
       quantile: null
       value: null
-      group: null
-      field: null
-      stat: null
-    filter_row_min_nonzero:
+    filter_rows_min_nonzero:
       quantile: null
       value: null
-    filter_row_sum_above:
+    filter_rows_sum_gt:
       quantile: null
       value: null
-    filter_row_val_not_missing:
+    filter_rows_col_not_na:
       quantile: null
       value: null
-    filter_row_var_above:
+    filter_rows_var_gt:
       quantile: null
       value: null
+    filter_rows_col_gt: 
+      col: null
+      quantile: null
+      value: null
+    filter_rows_name_not_in: 
+      names: []
     impute_knn:
       k: 5
     transform_zscore:
       axis: 0
-
