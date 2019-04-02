@@ -18,10 +18,10 @@ path: 'tests/data/features/rnaseq.csv'
 pipeline:
   - filter_exclude_columns:
       columns_to_exclude: ['KMS20_JCRB']
-  - filter_row_var_above:
+  - filter_rows_var_gt:
       name: 'exclude_zero_variance'
       value: 0
-  - filter_row_sum_above:
+  - filter_rows_sum_gt:
       name: 'filter_min_reads'
       value: 20
   - filter_gene_type:

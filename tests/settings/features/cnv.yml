@@ -20,7 +20,7 @@ path: 'tests/data/features/cnv.csv'
 pipeline:
   - filter_exclude_columns:
       columns_to_exclude: ['KMS20_JCRB']
-  - filter_row_max_missing:
+  - filter_rows_max_na:
       name: 'remove_missing_data'
       value: 0
 

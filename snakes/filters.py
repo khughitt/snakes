@@ -69,22 +69,22 @@ def col_value_present(df, field):
 #
 # Row-wise filter functions
 #
-def row_field_above(df, field=None, value=None, quantile=None):
+def filter_rows_col_gt(df, field=None, value=None, quantile=None):
     """Filters dataset to exclude rows for which a specified field falls below a certain cutoff"""
     if quantile is not None:
         value = df[field].quantile(quantile)
 
     return df[df[field] > value]
 
-def row_sum_above(df, value=None, quantile=None):
+def filter_rows_sum_gt(df, value=None, quantile=None):
     """Filters dataset to exclude rows whose sum falls below a certain cutoff"""
     return filter_rows(df=df, func=np.sum, op=operator.gt, value=value, quantile=quantile)
 
-def row_var_above(df, value=None, quantile=None):
+def filter_rows_var_gt(df, value=None, quantile=None):
     """Filters dataset to exclude rows whose variance falls below a certain cutoff"""
     return filter_rows(df=df, func=np.var, op=operator.gt, value=value, quantile=quantile)
 
-def row_max_missing(df, value=None, quantile=None):
+def filter_rows_max_na(df, value=None, quantile=None):
     """Filters dataset to exclude rows with too many missing values"""
     # if quantile specified, find associated value
     if quantile is not None:
@@ -92,7 +92,7 @@ def row_max_missing(df, value=None, quantile=None):
 
     return df[df.isnull().sum(axis=1) <= value]
 
-def row_min_nonzero(df, value=None, quantile=None):
+def filter_rows_min_nonzero(df, value=None, quantile=None):
     """Filters dataset to exclude rows with too many zeros"""
     # if quantile specified, find associated value
     if quantile is not None:
@@ -100,7 +100,7 @@ def row_min_nonzero(df, value=None, quantile=None):
 
     return df[(df != 0).sum(axis=1) >= value]
 
-def row_value_present(df, field):
+def filter_rows_col_not_na(df, field):
     """Returns all rows for which a specific column is not null"""
     return df[df[field].notnull()]
 
@@ -131,10 +131,7 @@ def filter_rows_col_val_not_in(df, field, values):
     """
     return df[~df[field].isin(values)]
 
-# filter_rows_col_val_above
-# filter_rows_col_value_below ?
-
-def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quantile=None):
+def filter_rows_by_group_func(df, group, field, func, op=operator.gt, value=None, quantile=None):
     """
     Filters groups of rows based on some function applied for a column within each group.
 
