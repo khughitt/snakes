@@ -24,8 +24,8 @@ path: 'tests/data/response/drug_curves.csv'
 # Drug screen data processing pipeline
 #
 pipeline:
-  #- filter_rows_col_ne:
-  #    value: 'KMS20_JCRB'
+  - filter_columns_name_in:
+      names: ['drug_id', 'ac50']
   - filter_rows_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_col_not_na:
@@ -35,10 +35,10 @@ pipeline:
       name: 'filter_curve_slope'
       col: 'curve_slope'
       value: 0
-  #- filter_rows_group_func_ge:
-  #    name: 'filter_min_curves_remaining'
-  #    group: 'drug_id'
-  #    size: 3 
+  - filter_rows_group_size_ge:
+      name: 'filter_min_curves_remaining'
+      group: 'drug_id'
+      size: 3 
   - filter_rows_group_func_ge:
       name: 'filter_min_variability'
       group: 'drug_id'
