@@ -104,6 +104,36 @@ def row_value_present(df, field):
     """Returns all rows for which a specific column is not null"""
     return df[df[field].notnull()]
 
+def filter_rows_col_val_in(df, field, values):
+    """
+    Removes all rows for which a field is not one of a specified set of values
+
+    df: pandas.DataFrame
+        Pandas DataFrame to operate on
+    field: str
+        Column name to filter on
+    values: list
+        Acceptable values for the specified field
+    """
+    return df[df[field].isin(values)]
+
+
+def filter_rows_col_val_not_in(df, field, values):
+    """
+    Removes all rows for which a field is one of a specified set of values
+
+    df: pandas.DataFrame
+        Pandas DataFrame to operate on
+    field: str
+        Column name to filter on
+    values: list
+        Values to exclude
+    """
+    return df[~df[field].isin(values)]
+
+# filter_rows_col_val_above
+# filter_rows_col_value_below ?
+
 def filter_grouped_rows(df, group, field, func, op=operator.gt, value=None, quantile=None):
     """
     Filters groups of rows based on some function applied for a column within each group.

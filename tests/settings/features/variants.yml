@@ -6,7 +6,6 @@
 
 # General
 name: variants
-type: variants
 xid: ensgene
 yid: sample_id
 

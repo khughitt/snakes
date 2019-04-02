@@ -4,8 +4,8 @@
         # apply stat to each group and filter results
         df = filters.filter_grouped_rows(df, "{{ action['group'] }}", "{{ action['field'] }}", "{{ action['stat'] }}", 
                                          op=operator.le, 
-                                         value="{{ action['value'] }}", 
-                                         quantile="{{ action['quantile'] }}")
+                                         value={{ action['value'] }}, 
+                                         quantile={{ action['quantile'] }})
         df.to_csv(output[0])
 
 

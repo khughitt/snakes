@@ -64,7 +64,7 @@ rule all:
 {#                                                                                           #}
 {#############################################################################################}
 {% for dat_name, data_source in config['data_sources'].items() %}
-{% include 'data/' + data_source['type'] + '.snakefile' %}
+{% include 'data/' + data_source['data_type'] + '.snakefile' %}
 {% endfor %}
 
 {#############################################################################################}

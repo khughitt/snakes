@@ -46,7 +46,7 @@ shared:
   # 
   ###################
   data_source:
-    type: 'numeric'
+    data_type: 'tabular_data'
     path: ''
     name: ''
     xid: 'x'
@@ -70,12 +70,7 @@ custom:
   # data_source
   # 
   ###################
-  data_source:
-    dose_response_dataframe:
-      sample_id: ''
-      compound_id: ''
-      response_var: ''
-      role: ''
+  data_source: {}
 
   ###################
   #

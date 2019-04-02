@@ -6,7 +6,6 @@
 
 # General
 name: rnaseq
-type: rnaseq
 xid: ensgene
 yid: sample_id
 

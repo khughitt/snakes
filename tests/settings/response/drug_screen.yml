@@ -1,46 +1,18 @@
 ################################################################################
 #
 # Drug Screen Data Example Configuration
-# 
-# Input format
-# ------------
-# Due to the different types of modeling scenarios one might desire to perform,
-# snakes supports several possible formats for the response data. In general,
-# the type of data format expected depends on two considerations:
-#
-#   1) The number of individual models that should be built
-#   2) The number of input dimensions per model
-#
-# To illustrate this, below are some hypothetical example response datasets 
-# that could be used:
-#
-#     Experiment design                                     # Models  |  # Dims
-#    ------------------                                     --------  |  ------
-#   - A 1d response vector for a single drug model             1      |    1
-#   - A 1d response vector for multiple models                many    |    1
-#   - A multivariable response matrix for a single model       1      |   many
-#   - Multivariable response matrices for n models            many    |   many
-# 
-# At present, for each case where there are multiple dimensions associated with
-# a single model (e.g. cell viability at 10 different doses for a single drug/
-# sample combo), it is assumed that dimension reduction is to be performed in
-# or to arrive at a univariate response distribution.
-#
-# For the "many/many" case, the input response table is expected to have
-# multiple rows for each observation / sample -- each row contains variables
-# associated with a single model (e.g. drug). In all other cases, the response
-# data is expected to be formatted such that each row represents a single
-# sample or observation.
 #
 ################################################################################
 
 # General
 name: ac50
-type: dose_response_dataframe
-role: response
-sample_id : cell_line
-compound_id : drug_id
-response_var: ac50
+index_col: cell_line
+
+#type: dose_response_dataframe
+#role: response
+#sample_id : cell_line
+#compound_id : drug_id
+#response_var: ac50
 
 #
 # Path to drug screen data
@@ -51,8 +23,8 @@ path: 'tests/data/response/drug_curves.csv'
 # Drug screen data processing pipeline
 #
 pipeline:
-  - filter_row_ids:
-      rows_to_exclude: ['KMS20_JCRB']
+  #- filter_rows_col_ne:
+  #    value: 'KMS20_JCRB'
   - filter_row_val_not_missing:
       name: 'filter_missing_ac50'
       field: 'ac50'
@@ -60,10 +32,10 @@ pipeline:
       name: 'filter_curve_slope'
       field: 'curve_slope'
       value: 0
-  - filter_row_min_group_size:
-      name: 'filter_min_curves_remaining'
-      group: 'drug_id'
-      size: 3 
+  #- filter_row_min_group_size:
+  #    name: 'filter_min_curves_remaining'
+  #    group: 'drug_id'
+  #    size: 3 
   - filter_row_min_group_stat:
       name: 'filter_min_variability'
       group: 'drug_id'

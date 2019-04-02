@@ -6,7 +6,6 @@
 
 # General
 name: cnv
-type: cnv
 xid: ensgene
 yid: sample_id
 

@@ -128,8 +128,8 @@ class SnakefileRenderer():
         cfg = self._default_params['shared']['data_source'].copy()
 
         # add datatype-specific requirements, if they exist
-        if user_cfg['type'] in self._default_params['custom']['data_source']:
-            cfg.update(self._default_params['custom']['data_source'][user_cfg['type']])
+        if 'data_type' in user_cfg and user_cfg['data_type'] in self._default_params['custom']['data_source']:
+            cfg.update(self._default_params['custom']['data_source'][user_cfg['data_type']])
 
         logging.info("Parsing %s config", user_cfg['name'])
 
@@ -274,8 +274,8 @@ class SnakefileRenderer():
         reqs = self._required_params['shared']['data_source'].copy()
 
         # add datatype-specific requirements, if they exist
-        if data_source_cfg['type'] in self._required_params['custom']['data_source']:
-            reqs.update(self._required_params['custom']['data_source'][data_source_cfg['type']])
+        if data_source_cfg['data_type'] in self._required_params['custom']['data_source']:
+            reqs.update(self._required_params['custom']['data_source'][data_source_cfg['data_type']])
 
         # check for required parameters
         for param in reqs:

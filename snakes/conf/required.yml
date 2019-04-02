@@ -44,11 +44,7 @@ custom:
   # data_source
   # 
   ###################
-  data_source:
-    dose_response_dataframe:
-      sample_id: 'str'
-      compound_id: 'str'
-      response_var: 'str'
+  data_source: {} 
 
   ###################
   #
