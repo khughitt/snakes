@@ -1,9 +1,9 @@
-# Snakes Pipeline Action Templates
+# Snakes Action Templates
 
-This directory contains the template logic for all supported Snakes pipeline actions (filters,
-transforms, etc.)
+This directory contains the template logic for all supported Snakes actions (filters, transforms,
+etc.)
 
-### Creating new Pipeline actions
+### Creating new actions
 
 To add support for a new transform:
 

@@ -14,8 +14,10 @@ yid: sample_id
 #
 path: 'tests/data/features/variants.csv'
 
-# Filters and transformations
-pipeline:
+# 
+# Variant data processing steps
+#
+actions:
   - filter_columns_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_min_nonzero:

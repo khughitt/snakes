@@ -170,8 +170,8 @@ class SnakefileRenderer():
         if isinstance(cfg['index_col'], str):
             cfg['index_col'] = "'{}'".format(cfg['index_col'])
 
-        # parse pipeline section config section
-        cfg['pipeline'] = self._parse_pipeline_config(cfg['pipeline'], cfg['name'])
+        # parse actions section config section
+        cfg['actions'] = self._parse_actions_list(cfg['actions'], cfg['name'])
 
         # validate data source config
         self._validate_data_source_config(cfg)
@@ -197,35 +197,33 @@ class SnakefileRenderer():
             msg = "Config error: unexpected configuration options encountered for {}: {}"
             sys.exit(msg.format(user_cfg['name'], ", ".join(unknown_opts)))
 
-    def _parse_pipeline_config(self, pipeline_cfg, data_source_name):
+    def _parse_actions_list(self, actions_cfg, data_source_name):
         """
-        Loads pipeline config section
+        Loads actions config section
 
-        Pipeline actions (data transformations, etc.) can be specified as a list in one or more of
+        Actions (data transformations, etc.) can be specified as a list in one or more of
         the snakes config files. Each entry in the list must be either a single string, indicating
         the type of action to be applied (e.g. 'log2'), or a dictionary including the type of
         action along with any relevants parameters.
         """
-        # iterate over pipeline actions and recursively parse
-        for i, pipeline_action_cfg in enumerate(pipeline_cfg):        
-            pipeline_cfg[i] = self._parse_pipeline_action_config(pipeline_action_cfg,
-                                                                 data_source_name)
+        # iterate over actions and parse
+        for i, cfg in enumerate(actions_cfg):        
+            actions_cfg[i] = self._parse_action(cfg, data_source_name)
 
-        return pipeline_cfg
+        return actions_cfg
 
-    def _parse_pipeline_action_config(self, pipeline_action_cfg, data_source_name):
-        """Parses a single action in a snakes pipeline config section"""
+    def _parse_action(self, action_cfg, data_source_name):
+        """Parses a single action in a snakes actions config section"""
         # if no parameters specified, add placeholder empty dict
-        if isinstance(pipeline_action_cfg, str):
-            pipeline_action_cfg = {pipeline_action_cfg: {}}
+        if isinstance(action_cfg, str):
+            action_cfg = {action_cfg: {}}
 
         # split into action name and parameters
-        action, action_params = list(pipeline_action_cfg.items())[0]
+        action, action_params = list(action_cfg.items())[0]
 
-        # if a "branch" action is encountered, parse sub-config(s)
+        # if a "branch" action is encountered, recurse and parse sub-config(s)
         if action == 'branch':
-            # parse any sub-pipelines defined
-            return self._parse_pipeline_config(action_params, data_source_name)
+            return self._parse_actions_list(action_params, data_source_name)
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
@@ -233,19 +231,19 @@ class SnakefileRenderer():
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(action))
 
-        # get pipeline action default params (for now, just 'rule_name' and 'action')
-        cfg = self._default_params['shared']['pipeline'].copy()
+        # get action default params (for now, just 'rule_name' and 'action')
+        cfg = self._default_params['shared']['actions'].copy()
 
-        if action in self._default_params['custom']['pipeline']:
-            cfg.update(self._default_params['custom']['pipeline'][action])
+        if action in self._default_params['custom']['actions']:
+            cfg.update(self._default_params['custom']['actions'][action])
 
         # overide with any user-specified config values
         cfg.update(action_params)
 
-        # store pipeline action name with params
+        # store action name with params
         cfg['action'] = action
 
-        # if no specific rule name has been given to the pipeline entry, use:
+        # if no specific rule name has been given to the action entry, use:
         # <data_source>_<action>
         if not cfg['rule_name']:
             cfg['rule_name'] = "%s_%s" % (data_source_name, action)
@@ -288,53 +286,49 @@ class SnakefileRenderer():
                 msg = "Config error: missing required configuration parameter in {}: '{}'"
                 sys.exit(msg.format(os.path.basename(data_source_cfg['config_file']), param))
 
-        # check pipeline sub-section of data source config
-        self._validate_config_section(data_source_cfg['pipeline'], 'pipeline')
+        # check action sub-section of data source config
+        self._validate_actions_config(data_source_cfg['actions'])
 
-    def _validate_config_section(self, config_section, config_section_type):
+    def _validate_actions_config(self, actions_config):
         """
         Checks for existence of necessary template and required config parameters for a dataset
         config file subsection.
 
         Arguments
         ---------
-        config_section: list
+        actions_config: list
             List of dicts representing a single section in a config file
-        config_section_type: str
-            Type of config section being processed (e.g. 'data_source' or 'pipeline')
         """
         # base template directory
-        template_dir = os.path.join(self._template_dir, config_section_type)
+        base_dir = os.path.join(self._template_dir, 'actions')
 
         # iterate over subsection entries and validate
-        for entry in config_section:
-            # recurse on pipeline branches
+        for entry in actions_config:
+            # recurse on actions branches
             if type(entry) == list:
-                self._validate_config_section(entry, 'pipeline')
+                self._validate_actions_config(entry)
                 continue
 
-            # TODO 2019-01-20 clean-up handling of 'type' / 'action' in data_source and pipeline
-            # config sections...
-            if config_section_type == 'pipeline':
-                template_filename = entry['action'] + '.snakefile'
-
+            # get expected path to template
+            template_dir = os.path.join(base_dir, entry['action'].split('_')[0])
+            template_filename = entry['action'] + '.snakefile'
+            
             if template_filename not in os.listdir(template_dir):
-                msg = "Config error: invalid coniguration! Unknown {} entry: '{}'".format(config_section_type,
-                                                                            entry['action'])
+                msg = "Config error: Unknown actions entry '{}'".format(entry['action'])
                 sys.exit(msg)
 
             # check main dataset configuration options
-            reqs = self._required_params['shared'][config_section_type].copy()
+            reqs = self._required_params['shared']['actions'].copy()
 
             # add entry-specific requirements, if they exist
-            if entry['action'] in self._required_params['custom'][config_section_type]:
-                reqs.update(self._required_params['custom'][config_section_type][entry['action']])
+            if entry['action'] in self._required_params['custom']['actions']:
+                reqs.update(self._required_params['custom']['actions'][entry['action']])
 
             # check for required parameters
             for param in reqs:
                 if param not in entry or not entry[param]:
                     msg = "Config error: Missing required {} {} parameter '{}'"
-                    sys.exit(msg.format(config_section_type, entry['action'], param))
+                    sys.exit(msg.format('actions', entry['action'], param))
 
     def _get_args(self):
         """Parses input and returns arguments"""
@@ -356,8 +350,7 @@ class SnakefileRenderer():
                    PackageLoader('snakes', 'templates/annotations'),
                    PackageLoader('snakes', 'templates/data'),
                    PackageLoader('snakes', 'templates/gene_sets'),
-                   PackageLoader('snakes', 'templates/pipeline'),
-                   PackageLoader('snakes', 'templates/vis')]
+                   PackageLoader('snakes', 'templates/actions')]
 
         # get jinaj2 environment
         env = Environment(loader=ChoiceLoader(loaders), trim_blocks=True, lstrip_blocks=True,
@@ -392,6 +385,10 @@ class SnakefileRenderer():
                 print("to_rule_name() failed!")
                 import pdb; pdb.set_trace()
 
+        def action_subdir(action_name):
+            """Returns the appropriate template sub-directory associated with a given action"""
+            return action_name.split('_')[0]
+
         env.filters['basename'] = os.path.basename
         env.filters['basename_and_parent_dir'] = basename_and_parent_dir
         env.filters['basename_no_ext'] = basename_no_ext
@@ -399,6 +396,7 @@ class SnakefileRenderer():
         env.filters['is_list'] = is_list
         env.filters['replace_filename'] = replace_filename
         env.filters['to_rule_name'] = to_rule_name
+        env.filters['action_subdir'] = action_subdir
 
         # get snakefile jinja2 template
         template = env.get_template('Snakefile')

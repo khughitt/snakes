@@ -17,10 +17,10 @@ shared:
 
   ###################
   #
-  # pipeline steps
+  # actions
   # 
   ###################
-  pipeline: {}
+  actions: {}
 
   ###################
   #
@@ -30,7 +30,7 @@ shared:
   data_source:
     name: 'str'
     path: 'str'
-    pipeline: 'list'
+    actions: 'list'
 
 ################################################################################
 #
@@ -48,10 +48,10 @@ custom:
 
   ###################
   #
-  # pipeline
+  # actions
   # 
   ###################
-  pipeline:
+  actions:
     cluster_hclust:
       num_clusters: 'int'
       col_name: 'str'

@@ -15,9 +15,9 @@ yid: sample_id
 path: 'tests/data/features/cnv.csv'
 
 # 
-# CNV data processing pipeline
+# CNV data processing steps
 #
-pipeline:
+actions:
   - filter_columns_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_max_na:

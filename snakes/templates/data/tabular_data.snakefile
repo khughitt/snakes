@@ -37,11 +37,11 @@ rule {{ rule_name }}:
 {% endif %}
         dat.to_csv(output[0], index_label='{{ data_source.xid }}')
 
-{% if data_source.pipeline | length > 0 %}
+{% if data_source.actions | length > 0 %}
 #
 # {{ data_source.name }} actions
 #
-{% for action in data_source.pipeline recursive %}
+{% for action in data_source.actions recursive %}
     {% if action | is_list %}
 {{ loop(action) }}
     {% else %}
@@ -50,7 +50,7 @@ rule {{ rule_name }}:
 rule {{ action.rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-{% include 'pipeline/' + action.action + '.snakefile' %}
+{% include 'actions/' + action.action | action_subdir + "/" + action.action + '.snakefile' %}
     {% endif %}
 {% endfor %}
 {% endif %}
