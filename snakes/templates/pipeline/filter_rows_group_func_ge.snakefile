@@ -7,5 +7,3 @@
                                                value={{ action['value'] }}, 
                                                quantile={{ action['quantile'] }})
         df.to_csv(output[0])
-
-
