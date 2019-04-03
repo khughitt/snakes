@@ -8,6 +8,18 @@
 Data integration and machine learning pipeline built on Snakemake
 ```
 
+# Table of contents
+
+- [Development status](#development-status)
+- [Overview](#overview)
+- [Why Snakes](#why-snakes)
+- [Scope](#scope)
+- [How Snakes works](#how-snakes-works)
+- [Example configuration](#example-configuration)
+- [Installation](#installation)
+- [Planned functionality](#planned-functionality)
+- [Feedback / suggestions](#feedback--suggestions)
+
 # Development status
 
 **April 2019**:
