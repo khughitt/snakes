@@ -1,0 +1,9 @@
+jinja2
+numpy
+pandas
+pyyaml
+r-base
+scikit-learn
+scipy
+snakemake-minimal
+statsmodels

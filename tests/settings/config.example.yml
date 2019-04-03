@@ -39,10 +39,6 @@ data_sources:
   - 'tests/settings/features/variants.yml'
   - 'tests/settings/response/drug_screen.yml'
 
-# todo:
-# - 'tests/data/metadata/sample_metadata.csv'
-# - 'tests/data/metadata/drug_metadata.csv'
-
 ################################################################################
 #
 # Gene sets
