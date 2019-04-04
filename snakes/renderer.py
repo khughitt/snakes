@@ -31,9 +31,9 @@ class SnakefileRenderer():
 
         # load required and default settings
         with open(os.path.join(self._conf_dir, "required.yml")) as fp:
-            self._required_params = yaml.load(fp)
+            self._required_params = yaml.load(fp, Loader=yaml.FullLoader)
         with open(os.path.join(self._conf_dir, "defaults.yml")) as fp:
-            self._default_params = yaml.load(fp)
+            self._default_params = yaml.load(fp, Loader=yaml.FullLoader)
 
         self._load_config(config_filepath, **kwargs)
 
@@ -80,8 +80,8 @@ class SnakefileRenderer():
 
         # load user-provided main snakes config file
         with open(config_file) as fp:
-            # self.config.update(yaml.load(fp))
-            self.config = recursive_update(self.config, yaml.load(fp))
+            # self.config.update(yaml.load(fp, Loader=yaml.FullLoader))
+            self.config = recursive_update(self.config, yaml.load(fp, Loader=yaml.FullLoader))
 
         # overide any settings specified via the command-line
         self.config.update(cmdline_args)
@@ -106,7 +106,7 @@ class SnakefileRenderer():
         for dataset in self.config['datasets']:
             # separate file
             if type(dataset) == str:
-                cfg = yaml.load(open(dataset))
+                cfg = yaml.load(open(dataset), Loader=yaml.FullLoader)
                 cfg['config_file'] = os.path.abspath(dataset)
             elif type(dataset) == dict:
                 # inline config section
