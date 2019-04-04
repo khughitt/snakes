@@ -101,35 +101,34 @@ class SnakefileRenderer():
 
         # load dataset-specific configurations; each should be specified either as a filepath to a
         # dataset-specific yaml file, or as a dict instance
-        data_sources = {}
+        datasets = {}
 
-        for data_source in self.config['data_sources']:
+        for dataset in self.config['datasets']:
             # separate file
-            if type(data_source) == str:
-                cfg = yaml.load(open(data_source))
-                cfg['config_file'] = os.path.abspath(data_source)
-            elif type(data_source) == dict:
+            if type(dataset) == str:
+                cfg = yaml.load(open(dataset))
+                cfg['config_file'] = os.path.abspath(dataset)
+            elif type(dataset) == dict:
                 # inline config section
-                cfg = data_source
+                cfg = dataset
 
             # validate and parse datasource config section
-            cfg = self._parse_data_source_config(cfg)
+            cfg = self._parse_dataset_config(cfg)
 
             # add to dict of datasource-specific configs
-            data_sources[cfg['name']] = cfg
+            datasets[cfg['name']] = cfg
         
-        self.config['data_sources'] = data_sources
+        self.config['datasets'] = datasets
 
-    def _parse_data_source_config(self, user_cfg):
-        """Loads a dataset config file and overides any global settings with
-        dataset-specific ones."""
+    def _parse_dataset_config(self, user_cfg):
+        """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 
         # load default dataset config options
-        cfg = self._default_params['shared']['data_source'].copy()
+        cfg = self._default_params['shared']['datasets'].copy()
 
         # add datatype-specific requirements, if they exist
-        if 'data_type' in user_cfg and user_cfg['data_type'] in self._default_params['custom']['data_source']:
-            cfg.update(self._default_params['custom']['data_source'][user_cfg['data_type']])
+        if 'data_source' in user_cfg and user_cfg['data_source'] in self._default_params['custom']['datasets']:
+            cfg.update(self._default_params['custom']['datasets'][user_cfg['data_source']])
 
         logging.info("Parsing %s config", user_cfg['name'])
 
@@ -143,26 +142,23 @@ class SnakefileRenderer():
         # get file extension (excluding .gz suffix, if present)
         ext = pathlib.Path(cfg['path'].lower().replace('.gz', '')).suffix
 
-        # determine input file format / separator, if not specified
-        if cfg['format'] == '':
-            # csv
-            if ext == '.csv':
-                cfg['format'] = 'csv'
-                cfg['sep'] = ','
-            elif ext in ['.tsv', '.tab', '.txt']:
-                # tab-delimited
-                cfg['format'] = 'tsv'
-                cfg['sep'] = '\t'
+        # if data source not specified, attempt to guess from file extension
+        if cfg['data_source'] == '':
+            if ext in ['.csv', '.tsv', '.tab']:
+                # comma-separated / tab-delmited
+                cfg['data_source'] = 'csv'
             elif ext in ['.xls', '.xlsx']:
                 # excel spreadsheet
-                cfg['format'] = 'xls'
+                cfg['data_source'] = 'xls'
+            else:
+                msg = "Config error: could not determine appropriate data_source for {}"
+                sys.exit(msg.format(cfg['path']))
 
-        if cfg['format'] in ['csv', 'tsv'] and cfg['sep'] == '':
-            # csv
-            if ext == '.csv':
+        # determine delimiter for csv/tsv files
+        if cfg['data_source'] == 'csv' and cfg['sep'] == '':
+            if ext in ['.csv']:
                 cfg['sep'] = ','
-            elif ext in ['.tsv', '.tab', '.txt']:
-                # tab-delimited
+            elif ext in ['.tsv', '.tab']:
                 cfg['sep'] = '\t'
 
         # if a str index column value is specified, wrap in quotation marks so that it is handled
@@ -173,10 +169,10 @@ class SnakefileRenderer():
         # parse actions section config section
         cfg['actions'] = self._parse_actions_list(cfg['actions'], cfg['name'])
 
-        # validate data source config
-        self._validate_data_source_config(cfg)
+        # validate dataset config
+        self._validate_dataset_config(cfg)
 
-        # store parsed data source config
+        # store parsed dataset config
         return cfg
 
     def _detect_unknown_settings(self, supported_cfg, user_cfg):
@@ -197,7 +193,7 @@ class SnakefileRenderer():
             msg = "Config error: unexpected configuration options encountered for {}: {}"
             sys.exit(msg.format(user_cfg['name'], ", ".join(unknown_opts)))
 
-    def _parse_actions_list(self, actions_cfg, data_source_name):
+    def _parse_actions_list(self, actions_cfg, dataset_name):
         """
         Loads actions config section
 
@@ -208,11 +204,11 @@ class SnakefileRenderer():
         """
         # iterate over actions and parse
         for i, cfg in enumerate(actions_cfg):        
-            actions_cfg[i] = self._parse_action(cfg, data_source_name)
+            actions_cfg[i] = self._parse_action(cfg, dataset_name)
 
         return actions_cfg
 
-    def _parse_action(self, action_cfg, data_source_name):
+    def _parse_action(self, action_cfg, dataset_name):
         """Parses a single action in a snakes actions config section"""
         # if no parameters specified, add placeholder empty dict
         if isinstance(action_cfg, str):
@@ -223,7 +219,7 @@ class SnakefileRenderer():
 
         # if a "branch" action is encountered, recurse and parse sub-config(s)
         if action == 'branch':
-            return self._parse_actions_list(action_params, data_source_name)
+            return self._parse_actions_list(action_params, dataset_name)
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
@@ -244,9 +240,9 @@ class SnakefileRenderer():
         cfg['action'] = action
 
         # if no specific rule name has been given to the action entry, use:
-        # <data_source>_<action>
+        # <dataset>_<action>
         if not cfg['rule_name']:
-            cfg['rule_name'] = "%s_%s" % (data_source_name, action)
+            cfg['rule_name'] = "%s_%s" % (dataset_name, action)
 
         # only allow letters, number, and underscores in rule names
         cfg['rule_name'] = re.sub(r"[^\w]", "_", cfg['rule_name'])
@@ -271,23 +267,23 @@ class SnakefileRenderer():
                 config_file = os.path.basename(self.config['config_file'])
                 sys.exit(msg.format(config_file, param))
 
-    def _validate_data_source_config(self, data_source_cfg):
+    def _validate_dataset_config(self, dataset_cfg):
         """Validate dataset-specific configurations"""
         # get shared dataset required params
-        reqs = self._required_params['shared']['data_source'].copy()
+        reqs = self._required_params['shared']['datasets'].copy()
 
         # add datatype-specific requirements, if they exist
-        if data_source_cfg['data_type'] in self._required_params['custom']['data_source']:
-            reqs.update(self._required_params['custom']['data_source'][data_source_cfg['data_type']])
+        if dataset_cfg['data_source'] in self._required_params['custom']['datasets']:
+            reqs.update(self._required_params['custom']['datasets'][dataset_cfg['data_source']])
 
         # check for required parameters
         for param in reqs:
-            if param not in data_source_cfg or not data_source_cfg[param]:
+            if param not in dataset_cfg or not dataset_cfg[param]:
                 msg = "Config error: missing required configuration parameter in {}: '{}'"
-                sys.exit(msg.format(os.path.basename(data_source_cfg['config_file']), param))
+                sys.exit(msg.format(os.path.basename(dataset_cfg['config_file']), param))
 
-        # check action sub-section of data source config
-        self._validate_actions_config(data_source_cfg['actions'])
+        # check action sub-section of dataset config
+        self._validate_actions_config(dataset_cfg['actions'])
 
     def _validate_actions_config(self, actions_config):
         """

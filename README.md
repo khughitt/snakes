@@ -150,10 +150,10 @@ verbose: true
 
 ################################################################################
 #
-# Data sources
+# Datasets
 #
 ################################################################################
-data_sources:
+datasets:
   - 'tests/settings/features/rnaseq.yml'
   - 'tests/settings/features/cnv.yml'
   - 'tests/settings/features/variants.yml'

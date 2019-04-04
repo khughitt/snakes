@@ -42,16 +42,15 @@ shared:
 
   ###################
   #
-  # data_source
+  # dataset
   # 
   ###################
-  data_source:
-    data_type: 'tabular_data'
+  datasets:
+    data_source: ''
     path: ''
     name: ''
     xid: 'x'
     yid: 'y'
-    format: ''
     sep: ''
     sheet: 0
     config_file: ''
@@ -67,10 +66,10 @@ custom:
 
   ###################
   #
-  # data_source
+  # dataset
   # 
   ###################
-  data_source: {}
+  datasets: {}
 
   ###################
   #

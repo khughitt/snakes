@@ -13,7 +13,7 @@ shared:
   main:
     name: 'str'
     version: 'str'
-    data_sources: 'list'
+    datasets: 'list'
 
   ###################
   #
@@ -24,10 +24,10 @@ shared:
 
   ###################
   #
-  # data_source
+  # dataset
   # 
   ###################
-  data_source:
+  datasets:
     name: 'str'
     path: 'str'
     actions: 'list'
@@ -41,10 +41,10 @@ custom:
 
   ###################
   #
-  # data_source
+  # dataset
   # 
   ###################
-  data_source: {} 
+  datasets: {} 
 
   ###################
   #

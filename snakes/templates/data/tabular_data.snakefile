@@ -1,6 +1,6 @@
 ################################################################################
 #
-# {{ data_source.name }} workflow
+# {{ dataset.name }} workflow
 #
 ################################################################################
 {#############################################################################################}
@@ -11,22 +11,18 @@
 {% set ns = namespace(found=false) %}
 
 {# initial input and output filepaths #}
-{% set ns.cur_input  =  data_source.path %}
-{% set ns.cur_output =  '/'.join([output_dir, 'data', data_source.name, 'raw.csv']) %}
+{% set ns.cur_input  =  dataset.path %}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dataset.name, 'raw.csv']) %}
 #
-# Load raw data
+# Load {{ dataset.name }} data
 #
-{% set rule_name = 'load_' ~ data_source.name | to_rule_name %}
+{% set rule_name = 'load_' ~ dataset.name | to_rule_name %}
 {% do simple_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
     run:
-{% if data_source.format in ['csv', 'tsv'] %}
-        dat = pd.read_table(input[0], sep='{{ data_source.sep }}', index_col={{ data_source.index_col }})
-{% elif data_source.format == 'xls' %}
-        dat = pd.read_excel(input[0], sheet='{{ data_source.sheet }}', index_col={{ data_source.index_col }})
-{% endif %}
+{% block load_data %}{% endblock %}
 {% if config.development.enabled and config.development.sample_row_frac < 1 %}
         # sub-sample dataset rows
         dat = dat.sample(frac={{ config.development.sample_row_frac }}, random_state={{ config.random_seed }}, axis=0)
@@ -35,13 +31,12 @@ rule {{ rule_name }}:
         # sub-sample dataset columns
         dat = dat.sample(frac={{ config.development.sample_col_frac }}, random_state={{ config.random_seed }}, axis=1)
 {% endif %}
-        dat.to_csv(output[0], index_label='{{ data_source.xid }}')
-
-{% if data_source.actions | length > 0 %}
+        dat.to_csv(output[0], index_label='{{ dataset.xid }}')
+{% if dataset.actions | length > 0 %}
 #
-# {{ data_source.name }} actions
+# {{ dataset.name }} actions
 #
-{% for action in data_source.actions recursive %}
+{% for action in dataset.actions recursive %}
     {% if action | is_list %}
 {{ loop(action) }}
     {% else %}

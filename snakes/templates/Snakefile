@@ -16,9 +16,9 @@
 #  Config : {{ config['config_file'] }}
 #  Date   : {{ date_str }}
 #
-#  Data sources:
-{% for dat_name, data_source in config['data_sources'].items() %}
-#  - {{ dat_name }}: {{ data_source['path'] }}
+#  datasets:
+{% for dat_name, dataset in config['datasets'].items() %}
+#  - {{ dat_name }}: {{ dataset['path'] }}
 {% endfor %}
 #
 {% set output_dir = '/'.join([config['output_dir'] | expanduser, config['name'] | replace(' ', '_'), config['version']]) %}
@@ -44,7 +44,7 @@ if not os.path.exists(output_dir):
 {# Global variables                                                                          #}
 {#                                                                                           #}
 {#############################################################################################}
-{# list used to keep track of different data sources to use for training set construction #}
+{# list used to keep track of different datasets to use for training set construction #}
 {% set training_set_inputs = [] -%}
 
 {# list used to keep track of simple rules that should not be run on a compute cluster #}
@@ -60,11 +60,11 @@ rule all:
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Load data
+{# Datasets
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, data_source in config['data_sources'].items() %}
-{% include 'data/' + data_source['data_type'] + '.snakefile' %}
+{% for dat_name, dataset in config['datasets'].items() %}
+{% include 'data/' + dataset['data_source'] + '.snakefile' %}
 {% endfor %}
 
 {#############################################################################################}
