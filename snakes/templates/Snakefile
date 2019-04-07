@@ -76,7 +76,7 @@ rule all:
 # Create training set
 #
 rule combine_datasets:
-    input: expand("{{ output_dir }}/data/{processed_datasets}", processed_datasets={{ training_set_inputs }})
+    input: expand("{{ output_dir }}/{processed_datasets}", processed_datasets={{ training_set_inputs }})
     output: "{{ output_dir }}/training_set.csv"
     run:
         # load_feature = lambda x: pd.read_csv(x, index_col=0).T
