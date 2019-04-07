@@ -19,6 +19,7 @@ path: 'tests/data/features/rnaseq.csv'
 #
 actions:
   - filter_columns_name_not_in:
+      file: 'rnaseq_filtered.csv' 
       names: ['KMS20_JCRB']
   - filter_rows_var_gt:
       name: 'exclude_zero_variance'

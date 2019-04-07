@@ -40,8 +40,13 @@ rule {{ rule_name }}:
     {% if action | is_list %}
 {{ loop(action) }}
     {% else %}
+        {% if action.file != '' %}
+        {% set output_filename = action.file %}
+        {% else %}
+        {% set output_filename = dataset.name ~ '_' ~ action.action ~ '.csv' %}
+        {% endif %}
         {% set ns.cur_input  = ns.cur_output %}
-        {% set ns.cur_output =  ns.cur_input | replace_filename(dataset.name ~ '_' ~ action.action + '.csv') %}
+        {% set ns.cur_output =  ns.cur_input | replace_filename(output_filename) %}
 rule {{ action.rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'

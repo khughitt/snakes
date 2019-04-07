@@ -38,6 +38,7 @@ shared:
   ###################
   actions:
     action: ''
+    file: ''
     rule_name: ''
 
   ###################
