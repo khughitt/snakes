@@ -48,6 +48,7 @@ shared:
   ###################
   datasets:
     data_source: ''
+    encoding: 'utf-8'
     path: ''
     name: ''
     xid: 'x'
