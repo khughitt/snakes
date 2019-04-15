@@ -42,8 +42,8 @@ actions:
     #    funcs: ['sum', 'var']
   - aggregate_gene_sets:
       gmt: 'tests/data/gene_sets/go.gmt'
-      data_key: 'entrez'
-      gmt_key: 'entrez'
+      data_key: 'ensembl.gene'
+      gmt_key: 'entrezgene'
       func: 'sum'
 
   #- branch: 
