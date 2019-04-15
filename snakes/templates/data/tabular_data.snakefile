@@ -37,8 +37,12 @@ rule {{ rule_name }}:
 # {{ dataset.name }} actions
 #
 {% for action in dataset.actions recursive %}
+    {# recurse on pipeline branches #}
+    {# parent_output used to preserve last output filename prior to recursion. #}
     {% if action | is_list %}
+    {% set parent_output = ns.cur_output %}
 {{ loop(action) }}
+    {% set ns.cur_output = parent_output %}
     {% else %}
         {% if action.file != '' %}
         {% set output_filename = action.file %}
