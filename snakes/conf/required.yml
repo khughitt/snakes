@@ -83,4 +83,6 @@ custom:
       names: 'str'
     filter_rows_name_not_in: 
       names: 'str'
+    group:
+      group_actions: 'list'
 

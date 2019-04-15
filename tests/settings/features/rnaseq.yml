@@ -30,8 +30,11 @@ actions:
   - filter_rows_gene_biotype_in:
       name: 'filter_by_gene_type'
       gene_biotypes: ['protein_coding']
-  - transform_cpm
-  - transform_log2p
+  - group:
+      name: 'log2cpm'
+      group_actions:
+        - transform_cpm
+        - transform_log2p
   - transform_zscore:
       name: 'transform_row_zscores'
       axis: 1

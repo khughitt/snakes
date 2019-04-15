@@ -40,6 +40,7 @@ shared:
     action: ''
     file: ''
     rule_name: ''
+    groupable: true
 
   ###################
   #
@@ -92,6 +93,7 @@ custom:
       names: []
     filter_rows_gene_biotype_in:
       gene_biotypes: []
+      groupable: false
     filter_rows_col_not_na: 
       col: null
     filter_rows_group_func_ge: 
@@ -127,7 +129,10 @@ custom:
       value: null
     filter_rows_name_not_in: 
       names: []
+    group:
+      group_actions: []
     impute_knn:
       k: 5
+      groupable: false
     transform_zscore:
       axis: 0

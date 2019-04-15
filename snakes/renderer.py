@@ -217,8 +217,12 @@ class SnakefileRenderer():
         # split into action name and parameters
         action, action_params = list(action_cfg.items())[0]
 
-        # if a "branch" action is encountered, recurse and parse sub-config(s)
-        if action == 'branch':
+        # group meta-action
+        if action == 'group':
+            action_params['action'] = 'group'
+            action_params['group_actions'] = self._parse_actions_list(action_params['group_actions'], dataset_name)
+        # branch meta-action
+        elif action == 'branch':
             return self._parse_actions_list(action_params, dataset_name)
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
@@ -302,7 +306,12 @@ class SnakefileRenderer():
         for entry in actions_config:
             # recurse on actions branches
             if type(entry) == list:
+                # branch
                 self._validate_actions_config(entry)
+                continue
+            elif entry['action'] == 'group':
+                # group 
+                self._validate_actions_config(entry['group_actions'])
                 continue
 
             # get expected path to template
@@ -384,6 +393,11 @@ class SnakefileRenderer():
             """Returns the appropriate template sub-directory associated with a given action"""
             return action_name.split('_')[0]
 
+        def log_debug(msg):
+            """Logs a specified mesage using the logging module"""
+            logging.debug(msg)
+            return ''
+
         env.filters['basename'] = os.path.basename
         env.filters['basename_and_parent_dir'] = basename_and_parent_dir
         env.filters['basename_no_ext'] = basename_no_ext
@@ -392,6 +406,7 @@ class SnakefileRenderer():
         env.filters['replace_filename'] = replace_filename
         env.filters['to_rule_name'] = to_rule_name
         env.filters['action_subdir'] = action_subdir
+        env.filters['debug'] = log_debug
 
         # get snakefile jinja2 template
         template = env.get_template('Snakefile')
