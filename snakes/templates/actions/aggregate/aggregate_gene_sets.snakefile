@@ -1,26 +1,8 @@
-################################################################################
-#
-# {% block header_comment %}
-# Abstract gene set template 
-# {% endblock %}
-#
-################################################################################
-#
-# Aggregates gene features into pre-defined gene sets and applies one more functions to derive
-# new features.
-#
-{% set output_path = "%s/data/%s-%s-{funcs}.csv" | format(output_dir, dat_name, gene_set_name) %}
-
-rule gene_set_{{ dat_name }}_{{ gene_set_name | to_rule_name }}:
-    input: '{{ cur_input }}',
-           '{{ preprocessed_gmt }}'
-    output: expand("{{ output_path }}", funcs={{ gene_set_params['funcs'] }})
     run:
-        # load dataset
         df = pd.read_csv(input[0], index_col=0)
         
         # load gmt file
-        entries = [x.rstrip('\n') for x in open(input[1]).readlines()]
+        entries = [x.rstrip('\n') for x in open('{{ action["gmt"] }}').readlines()]
 
         # gmt file column indices
         GENE_SET_NAME  = 0
@@ -36,25 +18,11 @@ rule gene_set_{{ dat_name }}_{{ gene_set_name | to_rule_name }}:
 
             gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
-        # add 
-        #gset_id_prefix = '{{ dat_name }}_{{ gene_set_name | to_rule_name }}'
+        # apply function along gene sets and save output
+        gset_df = gene_sets.gene_set_apply(df, gsets, '{{ action["func"] }}')
 
-        # iterate over functions and create one output for each function
-        funcs = {{ gene_set_params['funcs'] }}
+        # update row names to include dataset, gene set, and function applied
+        #gset_df.index = ["_".join([gset_id_prefix, gene_set, func]) for gene_set in gset_df.index]
+        gset_df.to_csv(output[0], index_label='gene_set_id')
 
-        for i in range(len(funcs)):
-            func = funcs[i]
 
-            # apply function along gene sets and save output
-            gset_df = gene_sets.gene_set_apply(df, gsets, func)
-
-            # update row names to include dataset, gene set, and function applied
-            #gset_df.index = ["_".join([gset_id_prefix, gene_set, func]) for gene_set in gset_df.index]
-
-            gset_df.to_csv(output[i], index_label='gene_set_id')
-
-{# add output filenames to list of expected datasets #}
-{% for func in gene_set_params['funcs'] %}
-    {% set output_file = "%s-%s-%s.csv" | format(dat_name, gene_set_name, func) %}
-    {% do training_set_inputs.append(output_file) %}
-{% endfor %}

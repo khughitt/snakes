@@ -345,7 +345,6 @@ class SnakefileRenderer():
         loaders = [PackageLoader('snakes', 'templates'),
                    PackageLoader('snakes', 'templates/annotations'),
                    PackageLoader('snakes', 'templates/data'),
-                   PackageLoader('snakes', 'templates/gene_sets'),
                    PackageLoader('snakes', 'templates/actions')]
 
         # get jinaj2 environment

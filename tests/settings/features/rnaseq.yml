@@ -40,6 +40,11 @@ actions:
         num_clusters: 4
     #- aggregate:
     #    funcs: ['sum', 'var']
+  - aggregate_gene_sets:
+      gmt: 'tests/data/gene_sets/go.gmt'
+      data_key: 'entrez'
+      gmt_key: 'entrez'
+      func: 'sum'
 
   #- branch: 
   #    - dim_reduce_pca:

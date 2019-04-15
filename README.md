@@ -246,10 +246,11 @@ conda create -n snakes \
   --channel conda-forge
 ```
 
-Finally, activate the new environment using:
+Finally, activate the new environment and install snakes in development mode using:
 
 ```sh
 conda activate snakes
+pip install -e .
 ```
 
 To test out the new installation, you can try building the example workflow included with snakes,

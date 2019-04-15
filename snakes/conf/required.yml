@@ -51,6 +51,11 @@ custom:
   # 
   ###################
   actions:
+    aggregate_gene_sets:
+      gmt: 'str'
+      data_key: 'str'
+      gmt_key: 'str'
+      func: 'str'
     cluster_hclust:
       num_clusters: 'int'
       col_name: 'str'

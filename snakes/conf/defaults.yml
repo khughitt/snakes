@@ -79,6 +79,11 @@ custom:
   # 
   ###################
   actions:
+    aggregate_gene_sets:
+      gmt: null
+      data_key: null
+      gmt_key: null
+      func: 'sum'
     cluster_hclust:
       col_name: 'clusters'
     filter_columns_name_in:
