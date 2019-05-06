@@ -4,6 +4,7 @@ numpy
 pandas
 pyyaml
 r-base
+bioconductor-biomart
 scikit-learn
 scipy
 snakemake-minimal
