@@ -30,15 +30,20 @@ def filter_data_by_func(df, func, axis=1, op=operator.gt, value=None, quantile=N
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
     return df
+
+
 #
 # Row-wise filter functions
 #
 def filter_rows_by_func(df, func, op=operator.gt, value=None, quantile=None):
     """Filters rows from a dataset"""
-    return filter_data_by_func(df=df, func=func, axis=1, op=op, value=value, quantile=quantile)
+    return filter_data_by_func(
+        df=df, func=func, axis=1, op=op, value=value, quantile=quantile
+    )
+
 
 def filter_rows_by_col(df, col=None, op=operator.gt, value=None, quantile=None):
     """Filter rows in a dataset based on their value for a specific column"""
@@ -53,6 +58,7 @@ def filter_rows_by_col(df, col=None, op=operator.gt, value=None, quantile=None):
 
     return df
 
+
 def filter_rows_by_na(df, op=operator.le, value=None, quantile=None):
     """Filters dataset rows based on the number of missing values"""
     if quantile is not None:
@@ -62,9 +68,10 @@ def filter_rows_by_na(df, op=operator.le, value=None, quantile=None):
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
     return df
+
 
 def filter_rows_by_nonzero(df, op=operator.gt, value=None, quantile=None):
     """Filters dataset rows based on the number of 0's present"""
@@ -75,9 +82,10 @@ def filter_rows_by_nonzero(df, op=operator.gt, value=None, quantile=None):
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
-    return df 
+    return df
+
 
 def filter_rows_col_not_na(df, col):
     """Returns all rows for which a specific column is not null"""
@@ -85,9 +93,10 @@ def filter_rows_col_not_na(df, col):
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
-    
+        raise EmptyDataError("No data remaining after filter applied")
+
     return df
+
 
 def filter_rows_col_val_in(df, col, values):
     """
@@ -97,9 +106,10 @@ def filter_rows_col_val_in(df, col, values):
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
-    return df 
+    return df
+
 
 def filter_rows_col_val_not_in(df, col, values):
     """
@@ -109,11 +119,14 @@ def filter_rows_col_val_not_in(df, col, values):
     df = df[~df[col].isin(values)]
 
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
     return df
 
-def filter_rows_by_group_func(df, group, col, func, op=operator.gt, value=None, quantile=None):
+
+def filter_rows_by_group_func(
+    df, group, col, func, op=operator.gt, value=None, quantile=None
+):
     """
     Filters groups of rows based on some function applied for a column within each group.
 
@@ -121,9 +134,10 @@ def filter_rows_by_group_func(df, group, col, func, op=operator.gt, value=None, 
     variance of IC-50 scores across cell lines.
     """
     # determine which function to apply within each group
-    if func == 'mad':
+    if func == "mad":
         # median absolute deviation (mad)
         from statsmodels import robust
+
         func = robust.mad
     elif isinstance(func, str):
         # otherwise assume function name or expression passed in as a string
@@ -146,14 +160,16 @@ def filter_rows_by_group_func(df, group, col, func, op=operator.gt, value=None, 
 
     # check to make sure data is non-empty after filtering step
     if df.empty:
-        raise EmptyDataError('No data remaining after filter applied')
+        raise EmptyDataError("No data remaining after filter applied")
 
     return df
+
 
 #
 # Column-wise filter functions
 #
 def filter_cols_by_func(df, func, op=operator.gt, value=None, quantile=None):
     """Filters columns from a dataset"""
-    return filter_data_by_func(df=df, func=func, axis=0, op=op, value=value, quantile=quantile)
-
+    return filter_data_by_func(
+        df=df, func=func, axis=0, op=op, value=value, quantile=quantile
+    )

@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from . import aggregation
 
+
 def hclust(df, n_clusters):
     """
     Performs hierarchical clustering on a dataset
@@ -23,12 +24,15 @@ def hclust(df, n_clusters):
     """
     # hierarchical clustering (agglomerative)
     from sklearn.cluster import AgglomerativeClustering
-    hclust = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean',
-                                        linkage='average')
+
+    hclust = AgglomerativeClustering(
+        n_clusters=n_clusters, affinity="euclidean", linkage="average"
+    )
     clusters = hclust.fit_predict(df)
 
     # convert numeric cluster ids to strings and return
-    return ['cluster_{}'.format(i) for i in clusters]
+    return ["cluster_{}".format(i) for i in clusters]
+
 
 def cluster_apply(df, clusters, func):
     """
@@ -53,7 +57,9 @@ def cluster_apply(df, clusters, func):
     func = aggregation.get_agg_func(func)
 
     # transpose dat and add cluster column
-    df = pd.concat([pd.DataFrame({'cluster': clusters}), df.reset_index(drop=True)], axis = 1)
+    df = pd.concat(
+        [pd.DataFrame({"cluster": clusters}), df.reset_index(drop=True)], axis=1
+    )
 
     # apply function to elements in each cluster and revert to original orientation
-    return df.groupby('cluster').agg(func)
+    return df.groupby("cluster").agg(func)

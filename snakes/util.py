@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 
+
 def recursive_update(d, u):
     """
     recursive dictionary update
@@ -17,4 +18,3 @@ def recursive_update(d, u):
         else:
             d[k] = v
     return d
-

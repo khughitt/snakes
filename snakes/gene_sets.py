@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from . import aggregation
 
+
 def gene_set_apply(df, gene_sets, func):
     """
     Aggregates a dataset by specified gene sets and applies a function to the values within each
