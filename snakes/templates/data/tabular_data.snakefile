@@ -95,4 +95,4 @@ rule {{ action.rule_name }}:
 {% endif %}
 
 {# Keep track of last version of file processed #}
-{% do training_set_inputs.append(dataset.name ~ '/' ~ ns.cur_output | basename_and_parent_dir) -%}
+{% do terminal_datasets.append(dataset.name ~ '/' ~ ns.cur_output | basename_and_parent_dir) -%}
