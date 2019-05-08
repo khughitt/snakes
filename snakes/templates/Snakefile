@@ -98,5 +98,5 @@ rule combine_datasets:
 {% set localrules_str = ', '.join(simple_rules) %}
 localrules: {{ localrules_str }}
 
-{# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=jinja: #}
-# vim: set filetype=snakemake: 
+{# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}
+# vim: set filetype=snakemake:

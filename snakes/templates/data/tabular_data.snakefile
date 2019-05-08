@@ -38,13 +38,18 @@ rule {{ rule_name }}:
 # {{ dataset.name }} actions
 #
     {% for action in dataset.actions recursive %}
-        {# === BRANCH === #}
+        {# ============== #}
+        {# =   BRANCH   = #}
+        {# ============== #}
         {% if action | is_list %}
             {# parent_output used to preserve last output filename prior to recursion. #}
             {% set parent_output = ns.cur_output %}
             {# iterate over branch actions #}
             {{- loop(action) }}
             {% set ns.cur_output = parent_output %}
+        {# ==================== #}
+        {# =   ACTION START   = #}
+        {# ==================== #}
         {% else %}
             {# determine input and output filenames to use #}
             {# TODO: move logic to renderer?.. #}
@@ -59,24 +64,33 @@ rule {{ action.rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
             {% if not action.groupable %}
-                {# === ACTION (Non-groupable) === #}
+                {# ============================== #}
+                {# =   ACTION (Non-groupable)   = #}
+                {# ============================== #}
                 {%- include 'actions/' + action.action | action_subdir + "/" + action.action + '.snakefile' %}
             {% else %}
     run:
         dat = pd.read_csv(input[0], index_col=0)
-                {# === GROUP === #}
+                {# ============== #}
+                {# =   GROUP    = #}
+                {# ============== #}
                 {% if action.action == 'group' %}
                     {% for action in action.group_actions %}
                         {%- include 'actions/' + action.action | action_subdir + "/" + action.action + '.snakefile' %}
                     {% endfor %}
                 {% else %}
-                    {# === ACTION (Groupable) === #}
+                    {# ========================== #}
+                    {# =   ACTION (Groupable)   = #}
+                    {# ========================== #}
                     {%- include 'actions/' + action.action | action_subdir + "/" + action.action + '.snakefile' %}
                 {% endif %}
         dat.to_csv(output[0])
 
             {% endif %}
         {% endif %}
+        {# ==================== #}
+        {# =   ACTION END   = #}
+        {# ==================== #}
     {% endfor %}
 {% endif %}
 

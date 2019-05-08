@@ -46,7 +46,7 @@ actions:
       group: 'drug_id'
       col: 'ac50'
       func: 'mad'
-      quantile: 0.95
+      quantile: 0.5
 
   #- branch:
   #  - dim_reduce_pca:
