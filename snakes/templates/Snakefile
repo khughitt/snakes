@@ -70,7 +70,7 @@ rule all:
 {#                                                                                           #}
 {#############################################################################################}
 rule process_data_sources:
-    input: expand("{{ output_dir }}/{processed_datasets}", processed_datasets={{ terminal_datasets }})
+    input: expand("{{ output_dir }}/data/{processed_datasets}", processed_datasets={{ terminal_datasets }})
     output: touch("{{ output_dir }}/finished")
 
 {#############################################################################################}

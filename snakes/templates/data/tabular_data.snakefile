@@ -12,7 +12,7 @@
 
 {# initial input and output filepaths #}
 {% set ns.cur_input  =  dataset.path %}
-{% set ns.cur_output =  '/'.join([output_dir, dataset.name, 'data', dataset.name ~ '_raw.csv']) %}
+{% set ns.cur_output =  '/'.join([output_dir, 'data', dataset.name, 'raw.csv']) %}
 #
 # Load {{ dataset.name }} data
 #
@@ -56,7 +56,7 @@ rule {{ rule_name }}:
             {% if action.file != '' %}
                 {% set output_filename = action.file %}
             {% else %}
-                {% set output_filename = dataset.name ~ '_' ~ action.action ~ '.csv' %}
+                {% set output_filename = action.action ~ '.csv' %}
             {% endif %}
             {% set ns.cur_input  = ns.cur_output %}
             {% set ns.cur_output =  ns.cur_input | replace_filename(output_filename) %}
@@ -95,4 +95,4 @@ rule {{ action.rule_name }}:
 {% endif %}
 
 {# Keep track of last version of file processed #}
-{% do terminal_datasets.append(dataset.name ~ '/' ~ ns.cur_output | basename_and_parent_dir) -%}
+{% do terminal_datasets.append(ns.cur_output | basename_and_parent_dir) -%}
