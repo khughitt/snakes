@@ -27,7 +27,7 @@ Main configuration
 ##################
 
 In order to run `snakes`, a valid `YAML <http://yaml.org/>`_ configuration file must be provided.
-An example config file (`config.example.yml`) is provided in the `tests/settings` directory. This
+An example config file (`config.example.yml`) is provided in the `example/settings` directory. This
 configuration file is used to specify the globa pipeline parameters to use as well as the locations 
 of dataset-specific config files. Dataset-specific configuration is described later in the 
 :ref:`dataset-config` section.
@@ -72,15 +72,15 @@ additional dataset-specific config files.
    ################################################################################
    datasets:
       features:
-         - 'tests/settings/features/rnaseq.yml'
-         - 'tests/settings/features/cnv.yml'
-         - 'tests/settings/features/variants.yml'
+         - 'example/settings/features/rnaseq.yml'
+         - 'example/settings/features/cnv.yml'
+         - 'example/settings/features/variants.yml'
       response:
-         - 'tests/settings/response/drug_screen.yml'
+         - 'example/settings/response/drug_screen.yml'
 
    metadata:
-      samples: 'tests/data/metadata/sample_metadata.csv'
-      response: 'tests/data/metadata/drug_metadata.csv'
+      samples: 'example/data/metadata/sample_metadata.csv'
+      response: 'example/data/metadata/drug_metadata.csv'
 
    ################################################################################
    #
@@ -114,7 +114,7 @@ additional dataset-specific config files.
       go:
          gene_id: 'entrez'
          gmts:
-            - 'tests/data/gene_sets/go.gmt'
+            - 'example/data/gene_sets/go.gmt'
          funcs: ['max', 'median']
 
 
