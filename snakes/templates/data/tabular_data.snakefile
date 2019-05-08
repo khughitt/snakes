@@ -63,7 +63,7 @@ rule {{ rule_name }}:
 rule {{ action.rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'
-            {% if not action.groupable %}
+            {% if not action.groupable and action.action != 'group' %}
                 {# ============================== #}
                 {# =   ACTION (Non-groupable)   = #}
                 {# ============================== #}
@@ -96,3 +96,5 @@ rule {{ action.rule_name }}:
 
 {# Keep track of last version of file processed #}
 {% do terminal_datasets.append(ns.cur_output | basename_and_parent_dir) -%}
+
+{# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}

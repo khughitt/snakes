@@ -1,138 +1,18 @@
-################################################################################
+###############################
 #
-# Snakes default configuration options (shared)
+# Snakes default configuration
 #
-################################################################################
-shared:
-  ###################
-  #
-  # main
-  # 
-  ###################
-  main:
-    # general
-    output_dir: 'output'
+###############################
+output_dir: 'output'
 
-    # development mode options 
-    development:
-      enabled: false
-      sample_row_frac: 0.05
-      sample_col_frac: 1.00
+development:
+  enabled: false
+  sample_row_frac: 0.05
+  sample_col_frac: 1.00
 
-    # random seed
-    random_seed: 1
+random_seed: 1
+verbose: false
 
-    # output verosity
-    verbose: false
+actions: []
+datasets: []
 
-    # software settings (UNUSED / PLACEHOLDER)
-    software:
-      biomart:
-        mart: 'ensembl'
-        dataset: 'hsapiens_gene_ensembl'
-
-  ###################
-  #
-  # actions
-  # 
-  ###################
-  actions:
-    action: ''
-    file: ''
-    rule_name: ''
-    groupable: true
-
-  ###################
-  #
-  # dataset
-  # 
-  ###################
-  datasets:
-    data_source: ''
-    encoding: 'utf-8'
-    path: ''
-    name: ''
-    xid: 'x'
-    yid: 'y'
-    sep: ''
-    sheet: 0
-    config_file: ''
-    index_col: 0
-    actions: []
-
-################################################################################
-#
-# Snakes default configuration options (custom)
-#
-################################################################################
-custom:
-
-  ###################
-  #
-  # dataset
-  # 
-  ###################
-  datasets: {}
-
-  ###################
-  #
-  # actions
-  # 
-  ###################
-  actions:
-    aggregate_gene_sets:
-      gmt: null
-      data_key: null
-      gmt_key: null
-      func: 'sum'
-    cluster_hclust:
-      col_name: 'clusters'
-    filter_columns_name_in:
-      names: []
-    filter_columns_name_not_in:
-      names: []
-    filter_rows_gene_biotype_in:
-      gene_biotypes: []
-      groupable: false
-    filter_rows_col_not_na: 
-      col: null
-    filter_rows_group_func_ge: 
-      group: null
-      col: null
-      func: null
-      quantile: null
-      value: null
-    filter_rows_group_func_le: 
-      group: null
-      col: null
-      func: null
-      quantile: null
-      value: null
-    filter_rows_max_na:
-      quantile: null
-      value: null
-    filter_rows_min_nonzero:
-      quantile: null
-      value: null
-    filter_rows_sum_gt:
-      quantile: null
-      value: null
-    filter_rows_col_not_na:
-      quantile: null
-      value: null
-    filter_rows_var_gt:
-      quantile: null
-      value: null
-    filter_rows_col_gt: 
-      col: null
-      quantile: null
-      value: null
-    filter_rows_name_not_in: 
-      names: []
-    group:
-      group_actions: []
-    impute_knn:
-      k: 5
-      groupable: false
-    transform_zscore:
-      axis: 0

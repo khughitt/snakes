@@ -1,0 +1,126 @@
+############################################
+#
+# Snakes action required/default parameters
+#
+aggregate_gene_sets:
+  required:
+    gmt: 'str'
+    data_key: 'str'
+    gmt_key: 'str'
+    func: 'str'
+  defaults:
+    gmt: null
+    data_key: null
+    gmt_key: null
+    func: 'sum'
+cluster_hclust:
+  required:
+    num_clusters: 'int'
+    col_name: 'str'
+  defaults:
+    col_name: 'clusters'
+filter_columns_name_in:
+  required:
+    names: 'list'
+  defaults:
+    names: []
+filter_columns_name_not_in:
+  required:
+    names: 'list'
+  defaults:
+    names: []
+filter_rows_gene_biotype_in:
+  required:
+    gene_biotypes: 'list'
+  defaults:
+    gene_biotypes: []
+    groupable: false
+filter_rows_gene_biotype_not_in:
+  required:
+    gene_biotypes: 'list'
+  defaults:
+    gene_biotypes: []
+    groupable: false
+filter_rows_col_not_na: 
+  required:
+    col: 'str'
+  defaults:
+    col: null
+filter_rows_group_func_ge: 
+  required:
+    group: 'str'
+    col: 'str'
+    func: 'str'
+  defaults:
+    group: null
+    col: null
+    func: null
+    quantile: null
+    value: null
+filter_rows_group_func_le: 
+  required:
+    group: 'str'
+    col: 'str'
+    func: 'str'
+  defaults:
+    group: null
+    col: null
+    func: null
+    quantile: null
+    value: null
+filter_rows_max_na:
+  required:
+  defaults:
+    quantile: null
+    value: null
+filter_rows_min_nonzero:
+  required:
+  defaults:
+    quantile: null
+    value: null
+filter_rows_sum_gt:
+  required:
+  defaults:
+    quantile: null
+    value: null
+filter_rows_col_not_na:
+  required:
+  defaults:
+    quantile: null
+    value: null
+filter_rows_var_gt:
+  required:
+  defaults:
+    quantile: null
+    value: null
+filter_rows_col_gt: 
+  required:
+    col: 'str'
+  defaults:
+    col: null
+    quantile: null
+    value: null
+filter_rows_name_in: 
+  required:
+    names: 'str'
+  defaults:
+    names: []
+filter_rows_name_not_in: 
+  required:
+    names: 'list'
+  defaults:
+    names: []
+group:
+  required:
+    group_actions: 'list'
+  defaults:
+    group_actions: []
+impute_knn:
+  required:
+  defaults:
+    k: 5
+    groupable: false
+transform_zscore:
+  required:
+  defaults:
+    axis: 0

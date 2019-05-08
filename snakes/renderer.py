@@ -29,11 +29,9 @@ class SnakefileRenderer():
         self._conf_dir = os.path.abspath(resource_filename(__name__, 'conf'))
         self._template_dir = os.path.abspath(resource_filename(__name__, 'templates'))
 
-        # load required and default settings
-        with open(os.path.join(self._conf_dir, "required.yml")) as fp:
-            self._required_params = yaml.load(fp, Loader=yaml.FullLoader)
-        with open(os.path.join(self._conf_dir, "defaults.yml")) as fp:
-            self._default_params = yaml.load(fp, Loader=yaml.FullLoader)
+        # load action required / default parameters
+        with open(os.path.join(self._conf_dir, "actions.yml")) as fp:
+            self._supported_actions = yaml.load(fp, Loader=yaml.FullLoader)
 
         self._load_config(config_filepath, **kwargs)
 
@@ -76,7 +74,8 @@ class SnakefileRenderer():
         logging.info("Using configuration: %s", config_file)
 
         # get default main configuration options
-        self.config = self._default_params['shared']['main'].copy()
+        with open(os.path.join(self._conf_dir, "defaults.yml")) as fp:
+            self.config = yaml.load(fp, Loader=yaml.FullLoader)
 
         # load user-provided main snakes config file
         with open(config_file) as fp:
@@ -123,12 +122,20 @@ class SnakefileRenderer():
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 
-        # load default dataset config options
-        cfg = self._default_params['shared']['datasets'].copy()
-
-        # add datatype-specific requirements, if they exist
-        if 'data_source' in user_cfg and user_cfg['data_source'] in self._default_params['custom']['datasets']:
-            cfg.update(self._default_params['custom']['datasets'][user_cfg['data_source']])
+        # default dataset parameters
+        cfg = {
+            'data_source': '',
+            'encoding': 'utf-8',
+            'path': '',
+            'name': '',
+            'xid': 'x',
+            'yid': 'y',
+            'sep': '',
+            'sheet': 0,
+            'config_file': '',
+            'index_col': 0,
+            'actions': []
+        }
 
         logging.info("Parsing %s config", user_cfg['name'])
 
@@ -231,11 +238,16 @@ class SnakefileRenderer():
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(action))
 
-        # get action default params (for now, just 'rule_name' and 'action')
-        cfg = self._default_params['shared']['actions'].copy()
+        # get default action params
+        cfg = {
+            'action': '',
+            'file': '',
+            'rule_name': '',
+            'groupable': True
+        }
 
-        if action in self._default_params['custom']['actions']:
-            cfg.update(self._default_params['custom']['actions'][action])
+        if action in self._supported_actions:
+            cfg.update(self._supported_actions[action]['defaults'])
 
         # overide with any user-specified config values
         cfg.update(action_params)
@@ -265,31 +277,45 @@ class SnakefileRenderer():
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
-        for param in self._required_params['shared']['main']:
+        required_params = {
+            'name': str,
+            'version': str,
+            'datasets': list
+        }
+        for param, expected_type in required_params.items():
             if param not in self.config or not self.config[param]:
                 msg = "Config error: missing required configuration parameter in {}: '{}'"
                 config_file = os.path.basename(self.config['config_file'])
                 sys.exit(msg.format(config_file, param))
+            elif not isinstance(self.config[param], expected_type):
+                msg = "Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
+                config_file = os.path.basename(self.config['config_file'])
+                sys.exit(msg.format(config_file, param, expected_type))
 
     def _validate_dataset_config(self, dataset_cfg):
         """Validate dataset-specific configurations"""
-        # get shared dataset required params
-        reqs = self._required_params['shared']['datasets'].copy()
-
-        # add datatype-specific requirements, if they exist
-        if dataset_cfg['data_source'] in self._required_params['custom']['datasets']:
-            reqs.update(self._required_params['custom']['datasets'][dataset_cfg['data_source']])
+        # required dataset parameters
+        required_params = {
+            'name': str,
+            'path': str
+        }
 
         # check for required parameters
-        for param in reqs:
+        for param, expected_type in required_params.items():
             if param not in dataset_cfg or not dataset_cfg[param]:
                 msg = "Config error: missing required configuration parameter in {}: '{}'"
-                sys.exit(msg.format(os.path.basename(dataset_cfg['config_file']), param))
+                config_file = os.path.basename(dataset_cfg['config_file'])
+                sys.exit(msg.format(config_file, param))
+            elif not isinstance(dataset_cfg[param], expected_type):
+                msg = "Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
+                config_file = os.path.basename(dataset_cfg['config_file'])
+                sys.exit(msg.format(config_file, param, expected_type))
 
         # check action sub-section of dataset config
-        self._validate_actions_config(dataset_cfg['actions'])
+        self._validate_actions_config(dataset_cfg['actions'],
+                os.path.basename(dataset_cfg['config_file']))
 
-    def _validate_actions_config(self, actions_config):
+    def _validate_actions_config(self, actions_config, config_file):
         """
         Checks for existence of necessary template and required config parameters for a dataset
         config file subsection.
@@ -298,6 +324,8 @@ class SnakefileRenderer():
         ---------
         actions_config: list
             List of dicts representing a single section in a config file
+        config_file: str
+            Filename of configuration file being processed
         """
         # base template directory
         base_dir = os.path.join(self._template_dir, 'actions')
@@ -307,33 +335,37 @@ class SnakefileRenderer():
             # recurse on actions branches
             if type(entry) == list:
                 # branch
-                self._validate_actions_config(entry)
+                self._validate_actions_config(entry, config_file)
                 continue
             elif entry['action'] == 'group':
                 # group 
-                self._validate_actions_config(entry['group_actions'])
+                self._validate_actions_config(entry['group_actions'], config_file)
                 continue
 
             # get expected path to template
             template_dir = os.path.join(base_dir, entry['action'].split('_')[0])
             template_filename = entry['action'] + '.snakefile'
             
+            # check for valid action
             if template_filename not in os.listdir(template_dir):
-                msg = "Config error: Unknown actions entry '{}'".format(entry['action'])
+                msg = "[ERROR] Unknown action entry '{}'".format(entry['action'])
                 sys.exit(msg)
 
-            # check main dataset configuration options
-            reqs = self._required_params['shared']['actions'].copy()
-
-            # add entry-specific requirements, if they exist
-            if entry['action'] in self._required_params['custom']['actions']:
-                reqs.update(self._required_params['custom']['actions'][entry['action']])
+            # add action-specific defaults
+            if (entry['action'] in self._supported_actions and
+                self._supported_actions[entry['action']]['required'] is not None):
+                required_params = self._supported_actions[entry['action']]['required']
+            else:
+                required_params = {}
 
             # check for required parameters
-            for param in reqs:
+            for param, expected_type in required_params.items():
                 if param not in entry or not entry[param]:
-                    msg = "Config error: Missing required {} {} parameter '{}'"
+                    msg = "[ERROR] Missing required {} {} parameter '{}'"
                     sys.exit(msg.format('actions', entry['action'], param))
+                elif not isinstance(entry[param], eval(expected_type)):
+                    msg = '[ERROR] Parameter "{}" in {} is of unexpected type: "{}" (expected: "{}")'
+                    sys.exit(msg.format(entry['action'], config_file, type(entry[param]).__name__, expected_type))
 
     def _get_args(self):
         """Parses input and returns arguments"""
