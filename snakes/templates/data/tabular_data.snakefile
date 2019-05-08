@@ -17,7 +17,7 @@
 # Load {{ dataset.name }} data
 #
 {% set rule_name = 'load_' ~ dataset.name | to_rule_name %}
-{% do simple_rules.append(rule_name) %}
+{% do local_rules.append(rule_name) %}
 rule {{ rule_name }}:
     input: '{{ ns.cur_input }}'
     output: '{{ ns.cur_output }}'

@@ -45,7 +45,7 @@ output_dir = '{{ output_dir }}'
 {% set terminal_datasets = [] -%}
 
 {# list used to keep track of simple rules that should not be run on a compute cluster #}
-{% set simple_rules = [] -%}
+{% set local_rules = [] -%}
 
 {#############################################################################################}
 {#                                                                                           #}
@@ -78,7 +78,7 @@ rule process_data_sources:
 {# Other settings                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
-{% set localrules_str = ', '.join(simple_rules) %}
+{% set localrules_str = ', '.join(local_rules) %}
 localrules: {{ localrules_str }}
 
 {# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}
