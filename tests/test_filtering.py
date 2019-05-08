@@ -4,7 +4,9 @@ Test cases for filtering-related functionality.
 import operator
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
+from pandas.errors import EmptyDataError
 from snakes import filters
 
 #
@@ -90,7 +92,8 @@ def test_filter_rows_sum_gt():
     assert_frame_equal(DF_NUMERIC.iloc[[0, 1, 2]], filters.filter_rows_by_func(DF_NUMERIC, sum, op=operator.gt, value=0))
 
     # 9: empty result
-    assert_frame_equal(DF_NUMERIC.iloc[[]], filters.filter_rows_by_func(DF_NUMERIC, sum, op=operator.gt, value=9))
+    with pytest.raises(EmptyDataError):
+        filters.filter_rows_by_func(DF_NUMERIC, sum, op=operator.gt, value=9)
 
 def test_filter_rows_var_gt():
     """tests filter_rows_var_gt function"""
