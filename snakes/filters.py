@@ -3,7 +3,7 @@ Functions for filtering datasets by row, column, or group.
 """
 import operator
 import numpy as np
-from pandas import EmptyDataError
+from pandas.errors import EmptyDataError
 
 #
 # Generalized filter function
