@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename
 from snakes.util import recursive_update
+from snakes.wrangler import SnakeWrangler
 
 
 class SnakefileRenderer:
@@ -21,10 +22,6 @@ class SnakefileRenderer:
     def __init__(self, config_filepath=None, **kwargs):
         self.config = None
         self.output_file = "Snakefile"
-
-        # dict to keep track of names used; if multiple versions of the same rule are
-        # applied, a number will be added to the end of the name to avoid rule collisions
-        self._rule_names = {}
 
         self._setup_logger()
 
@@ -107,6 +104,12 @@ class SnakefileRenderer:
         # check to make sure required config elements have been specified
         self._validate_main_config()
 
+        # create a new SnakeWrangler instance to manage rules
+        output_dir = "/".join(
+            [os.path.expanduser(self.config["output_dir"]), self.config["version"]]
+        )
+        self._wrangler = SnakeWrangler(output_dir)
+
         # load dataset-specific configurations; each should be specified either as a filepath to a
         # dataset-specific yaml file, or as a dict instance
         datasets = {}
@@ -132,8 +135,8 @@ class SnakefileRenderer:
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 
         # default dataset parameters
-        cfg = {
-            "data_source": "",
+        dataset = {
+            "file_type": "",
             "encoding": "utf-8",
             "path": "",
             "name": "",
@@ -149,47 +152,57 @@ class SnakefileRenderer:
         logging.info("Parsing %s config", user_cfg["name"])
 
         # check for any unsupported settings
-        self._detect_unknown_settings(cfg, user_cfg)
+        self._detect_unknown_settings(dataset, user_cfg)
 
         # overide default settings with user-provided ones
-        # cfg.update(user_cfg)
-        cfg = recursive_update(cfg, user_cfg)
+        # dataset.update(user_cfg)
+        dataset = recursive_update(dataset, user_cfg)
 
         # get file extension (excluding .gz suffix, if present)
-        ext = pathlib.Path(cfg["path"].lower().replace(".gz", "")).suffix
+        ext = pathlib.Path(dataset["path"].lower().replace(".gz", "")).suffix
 
         # if data source not specified, attempt to guess from file extension
-        if cfg["data_source"] == "":
+        if dataset["file_type"] == "":
             if ext in [".csv", ".tsv", ".tab"]:
                 # comma-separated / tab-delmited
-                cfg["data_source"] = "csv"
+                dataset["file_type"] = "csv"
             elif ext in [".xls", ".xlsx"]:
                 # excel spreadsheet
-                cfg["data_source"] = "xls"
+                dataset["file_type"] = "xls"
             else:
-                msg = "Config error: could not determine appropriate data_source for {}"
-                sys.exit(msg.format(cfg["path"]))
+                msg = "Config error: could not determine appropriate file_type for {}"
+                sys.exit(msg.format(dataset["path"]))
 
         # determine delimiter for csv/tsv files
-        if cfg["data_source"] == "csv" and cfg["sep"] == "":
+        if dataset["file_type"] == "csv" and dataset["sep"] == "":
             if ext in [".csv"]:
-                cfg["sep"] = ","
+                dataset["sep"] = ","
             elif ext in [".tsv", ".tab"]:
-                cfg["sep"] = "\t"
+                dataset["sep"] = "\t"
 
         # if a str index column value is specified, wrap in quotation marks so that it is handled
         # properly in templates
-        if isinstance(cfg["index_col"], str):
-            cfg["index_col"] = "'{}'".format(cfg["index_col"])
+        if isinstance(dataset["index_col"], str):
+            dataset["index_col"] = "'{}'".format(dataset["index_col"])
 
         # parse actions section config section
-        cfg["actions"] = self._parse_actions_list(cfg["actions"], cfg["name"])
+        dataset["actions"] = self._parse_actions_list(
+            dataset["actions"], dataset["name"]
+        )
 
         # validate dataset config
-        self._validate_dataset_config(cfg)
+        self._validate_dataset_config(dataset)
+
+        # separate actions from rest of dataset parameters
+        dataset_actions = dataset["actions"]
+
+        del dataset["actions"]
+
+        # add actions to SnakeWrangler instance
+        self._wrangler.add(dataset["name"], dataset_actions, **dataset)
 
         # store parsed dataset config
-        return cfg
+        return dataset
 
     def _detect_unknown_settings(self, supported_cfg, user_cfg):
         """
@@ -215,10 +228,17 @@ class SnakefileRenderer:
         """
         Loads actions config section
 
-        Actions (data transformations, etc.) can be specified as a list in one or more of
-        the snakes config files. Each entry in the list must be either a single string, indicating
-        the type of action to be applied (e.g. 'log2'), or a dictionary including the type of
-        action along with any relevants parameters.
+        The "actions_cfg" parameter should be a list of strings (action name with no
+        parametes), and dicts (i.e. "{'action_name': { params }}").
+
+        A special case is "branch" actions which themselves contain a nested list of
+        actions, e.g.:
+
+        [
+            "action1",
+            { "action2": { "param1": "foo" } },
+            { "branch": [{ "action3": { "param2": "bar" } }]
+        ]
         """
         # iterate over actions and parse
         for i, cfg in enumerate(actions_cfg):
@@ -227,58 +247,38 @@ class SnakefileRenderer:
         return actions_cfg
 
     def _parse_action(self, action_cfg, dataset_name):
-        """Parses a single action in a snakes actions config section"""
+        """Parses a single action config section"""
         # if no parameters specified, add placeholder empty dict
         if isinstance(action_cfg, str):
             action_cfg = {action_cfg: {}}
 
         # split into action name and parameters
-        action, action_params = list(action_cfg.items())[0]
+        action_name, action_params = list(action_cfg.items())[0]
 
         # group meta-action
-        if action == "group":
-            action_params["action"] = "group"
-            action_params["group_actions"] = self._parse_actions_list(
-                action_params["group_actions"], dataset_name
+        if action_name == "group":
+            action_params["action_name"] = "group"
+            action_params["actions"] = self._parse_actions_list(
+                action_params["actions"], dataset_name
             )
         # branch meta-action
-        elif action == "branch":
+        elif action_name == "branch":
             return self._parse_actions_list(action_params, dataset_name)
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(action_params) != dict:
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
-            sys.exit(msg.format(action))
+            sys.exit(msg.format(action_name))
 
         # get default action params
-        cfg = {"action": "", "file": "", "rule_name": "", "groupable": True}
+        cfg = {"action_name": action_name, "filename": "", "groupable": True}
 
-        if action in self._supported_actions:
-            cfg.update(self._supported_actions[action]["defaults"])
+        if action_name in self._supported_actions:
+            cfg.update(self._supported_actions[action_name]["defaults"])
 
         # overide with any user-specified config values
         cfg.update(action_params)
-
-        # store action name with params
-        cfg["action"] = action
-
-        # if no specific rule name has been given to the action entry, use:
-        # <dataset>_<action>
-        if not cfg["rule_name"]:
-            cfg["rule_name"] = "%s_%s" % (dataset_name, action)
-
-        # only allow letters, number, and underscores in rule names
-        cfg["rule_name"] = re.sub(r"[^\w]", "_", cfg["rule_name"])
-
-        # check to see if rule name has already been used
-        if cfg["rule_name"] in self._rule_names:
-            # if name has already been used, increment counter and add to config
-            self._rule_names[cfg["rule_name"]] += 1
-            cfg["rule_name"] += "_%d" % self._rule_names[cfg["rule_name"]]
-        else:
-            # if this is the first time the name has been encountered, add to counter
-            self._rule_names[cfg["rule_name"]] = 1
 
         return cfg
 
@@ -343,26 +343,29 @@ class SnakefileRenderer:
                 # branch
                 self._validate_actions_config(entry, config_file)
                 continue
-            elif entry["action"] == "group":
+            elif entry["action_name"] == "group":
                 # group
-                self._validate_actions_config(entry["group_actions"], config_file)
+                self._validate_actions_config(entry["actions"], config_file)
                 continue
 
             # get expected path to template
-            template_dir = os.path.join(base_dir, entry["action"].split("_")[0])
-            template_filename = entry["action"] + ".snakefile"
+            template_dir = os.path.join(base_dir, entry["action_name"].split("_")[0])
+            template_filename = entry["action_name"] + ".snakefile"
 
             # check for valid action
             if template_filename not in os.listdir(template_dir):
-                msg = "[ERROR] Unknown action entry '{}'".format(entry["action"])
+                msg = "[ERROR] Unknown action entry '{}'".format(entry["action_name"])
                 sys.exit(msg)
 
             # add action-specific defaults
             if (
-                entry["action"] in self._supported_actions
-                and self._supported_actions[entry["action"]]["required"] is not None
+                entry["action_name"] in self._supported_actions
+                and self._supported_actions[entry["action_name"]]["required"]
+                is not None
             ):
-                required_params = self._supported_actions[entry["action"]]["required"]
+                required_params = self._supported_actions[entry["action_name"]][
+                    "required"
+                ]
             else:
                 required_params = {}
 
@@ -370,12 +373,12 @@ class SnakefileRenderer:
             for param, expected_type in required_params.items():
                 if param not in entry or not entry[param]:
                     msg = "[ERROR] Missing required {} {} parameter '{}'"
-                    sys.exit(msg.format("actions", entry["action"], param))
+                    sys.exit(msg.format("actions", entry["action_name"], param))
                 elif not isinstance(entry[param], eval(expected_type)):
                     msg = '[ERROR] Parameter "{}" in {} is of unexpected type: "{}" (expected: "{}")'
                     sys.exit(
                         msg.format(
-                            entry["action"],
+                            entry["action_name"],
                             config_file,
                             type(entry[param]).__name__,
                             expected_type,
@@ -404,12 +407,20 @@ class SnakefileRenderer:
         """Renders snakefile"""
         logging.info("Generating Snakefile...")
 
-        # template search paths
+        # template search paths;
+        # paths to inherited templates must be included here
         loaders = [
             PackageLoader("snakes", "templates"),
             PackageLoader("snakes", "templates/annotations"),
             PackageLoader("snakes", "templates/data"),
             PackageLoader("snakes", "templates/actions"),
+            PackageLoader("snakes", "templates/actions/aggregate"),
+            PackageLoader("snakes", "templates/actions/cluster"),
+            PackageLoader("snakes", "templates/actions/filter"),
+            PackageLoader("snakes", "templates/actions/impute"),
+            PackageLoader("snakes", "templates/actions/load"),
+            PackageLoader("snakes", "templates/actions/project"),
+            PackageLoader("snakes", "templates/actions/transform"),
         ]
 
         # get jinaj2 environment
@@ -440,17 +451,6 @@ class SnakefileRenderer:
             """Repaces the filename portion of a filepath"""
             return os.path.join(os.path.dirname(filepath), filename)
 
-        def to_rule_name(rule):
-            """Takes a string and replaces characters that aren't allowed in snakemake rule names
-            with underscores"""
-            try:
-                return re.sub(r"[^\w]", "_", rule)
-            except:
-                print("to_rule_name() failed!")
-                import pdb
-
-                pdb.set_trace()
-
         def action_subdir(action_name):
             """Returns the appropriate template sub-directory associated with a given action"""
             return action_name.split("_")[0]
@@ -466,7 +466,6 @@ class SnakefileRenderer:
         env.filters["expanduser"] = os.path.expanduser
         env.filters["is_list"] = is_list
         env.filters["replace_filename"] = replace_filename
-        env.filters["to_rule_name"] = to_rule_name
         env.filters["action_subdir"] = action_subdir
         env.filters["debug"] = log_debug
 
@@ -479,6 +478,7 @@ class SnakefileRenderer:
         # render template
         snakefile = template.render(
             config=self.config,
+            wrangler=self._wrangler,
             date_str=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             script_dir=script_dir,
         )

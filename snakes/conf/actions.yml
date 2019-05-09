@@ -2,6 +2,7 @@
 #
 # Snakes action required/default parameters
 #
+############################################
 aggregate_gene_sets:
   required:
     gmt: 'str'
@@ -112,9 +113,9 @@ filter_rows_name_not_in:
     names: []
 group:
   required:
-    group_actions: 'list'
+    actions: 'list'
   defaults:
-    group_actions: []
+    actions: []
 impute_knn:
   required:
   defaults:

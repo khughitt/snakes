@@ -1,5 +1,5 @@
         # load gmt file
-        entries = [x.rstrip('\n') for x in open('{{ action["gmt"] }}').readlines()]
+        entries = [x.rstrip('\n') for x in open('{{ action.params["gmt"] }}').readlines()]
 
         # gmt file column indices
         GENE_SET_NAME  = 0
@@ -14,7 +14,7 @@
             fields = entry.split('\t')
             gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
-        {% if action["gmt_key"] != action["data_key"] %}
+        {% if action.params["gmt_key"] != action.params["data_key"] %}
         # map gene identifiers
         import mygene
         mg = mygene.MyGeneInfo()
@@ -22,9 +22,9 @@
         for gset_id in gsets:
             # query mygene.info 
             res = mg.querymany(gsets[gset_id], 
-                                scopes='{{ action["gmt_key"] }}', 
-                                fields='{{ action["data_key"] }}', species='human')
-            {% if action["data_key"] == 'ensembl.gene' %}
+                                scopes='{{ action.params["gmt_key"] }}', 
+                                fields='{{ action.params["data_key"] }}', species='human')
+            {% if action.params["data_key"] == 'ensembl.gene' %}
             # parse mapped ensembl gene ids
             gsets[gset_id] = []
             
@@ -38,12 +38,12 @@
                     # { 'ensembl': [{ 'gene': 'xxx' }, { 'gene': 'yyy' }, ... ] }
                     gsets[gset_id] = gsets[gset_id] +[x['gene'] for x in entry['ensembl']] 
             {% else %}
-            gsets[[gset_id]] = [x['{{ action["data_key"] }}'] for x in res]
+            gsets[[gset_id]] = [x['{{ action.params["data_key"] }}'] for x in res]
             {% endif %}
         {% endif %}
 
         # apply function along gene sets and save output
-        dat = gene_sets.gene_set_apply(dat, gsets, '{{ action["func"] }}')
+        dat = gene_sets.gene_set_apply(dat, gsets, '{{ action.params["func"] }}')
 
         # update row names to include dataset, gene set, and function applied
         #dat.index = ["_".join([gset_id_prefix, gene_set, func]) for gene_set in dat.index]

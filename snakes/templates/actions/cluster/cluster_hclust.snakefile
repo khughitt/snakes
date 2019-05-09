@@ -1,6 +1,6 @@
         # cluster dataset
-        clusters = clustering.hclust(dat, {{ action.num_clusters }})
+        clusters = clustering.hclust(dat, {{ action.params.num_clusters }})
 
         # add cluster column and store results
-        dat['{{ action.col_name }}'] = clusters
+        dat['{{ action.params.col_name }}'] = clusters
 

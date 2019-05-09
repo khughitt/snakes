@@ -1,0 +1,67 @@
+################################################################################
+#                  _             
+#  ___ _ __   __ _| | _____  ___ 
+# / __| '_ \ / _` | |/ / _ \/ __|
+# \__ \ | | | (_| |   <  __/\__ \
+# |___/_| |_|\__,_|_|\_\___||___/
+#                               
+# Example configuration
+#
+################################################################################
+
+################################################################################
+#
+# General settings
+#
+################################################################################
+
+# analysis name and version
+name: 'test pipeline'
+version: '1.0'
+
+# output directory
+output_dir: 'output'
+
+# random seed
+random_seed: 1
+
+# output verbosity
+verbose: true
+
+################################################################################
+#
+# Datasets
+#
+################################################################################
+datasets:
+  - 'example/settings/features/rnaseq.yml'
+  - 'example/settings/features/cnv.yml'
+  - 'example/settings/features/variants.yml'
+  - 'example/settings/response/drug_screen.yml'
+
+################################################################################
+#
+# Datasets
+#
+################################################################################
+training_sets:
+    features:
+      - 'rnaseq_transform_zscore'
+      - 'rnaseq_aggregate_gene_sets'
+    response:
+      rule_name: 'ac50_filter_min_variability'
+      column: 'ac50'
+      group: 'drug_id'
+
+################################################################################
+#
+# Data integration
+#
+################################################################################
+#data_integration:
+#  - type: 'correlation'
+#    datasets:
+#        - 'rnaseq_sample_pca_cormat'
+#        - 'ac50_sample_pca_cormat'
+#    method: 'pearson'
+

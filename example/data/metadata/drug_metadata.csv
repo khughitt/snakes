@@ -1,0 +1,7 @@
+ncgc_id,name,alias,target,target_subcat,super_class,class,primary_mechanism,additional_mechanisms,phase
+NCGC00167977-03,Bicalutamide,ICI-176334, Casodex,AR,AR,Transcriptional Regulation,Nuclear Receptor Transcription Factor,Androgen Receptor Antagonist,NA,Approved
+NCGC00015264-08,Clomipramine hydrochloride,Anafranil
+Chlorimipramine hydrochloride,SLC6A4,Serotonin,Cell Surface Protein,Plasma Membrane Transporter,Serotonin Transporter (SERT) inhibitor,NA,Approved
+NCGC00093560-06,Finasteride,MK-906  
+YM-152,AR,AR,Transcriptional Regulation,Nuclear Receptor Transcription Factor,Androgen Receptor Antagonist,Steroid 5alpha-Reductase inhibitors,Approved
+NCGC00345840-01,Merck-22-6,NA,AKT1,AKT,Cell Signaling,Serine/Threonine Kinase,AKT inhibitor,NA,Preclinical

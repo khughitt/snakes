@@ -1,0 +1,26 @@
+################################################################################
+#
+# Copy Number Variant (CNV) Example Configuration
+#
+################################################################################
+
+# General
+name: cnv
+xid: ensgene
+yid: sample_id
+
+#
+# Path to CNV matrix
+#
+path: 'example/data/features/cnv.csv'
+
+# 
+# CNV data processing steps
+#
+actions:
+  - filter_columns_name_not_in:
+      names: ['KMS20_JCRB']
+  - filter_rows_max_na:
+      id: 'remove_missing_data'
+      value: 0
+

@@ -1,6 +1,5 @@
     params:
-        args = {{ action }},
-        dat_name = '{{ dat_name }}'
+        args = {{ action.params }}
     script:
         '{{ script_dir }}/impute/impute_knn.R' 
 

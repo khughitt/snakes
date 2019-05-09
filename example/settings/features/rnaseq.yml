@@ -1,0 +1,58 @@
+################################################################################
+#
+# RNA-Seq Example Configuration
+#
+################################################################################
+
+# General
+name: rnaseq
+xid: ensgene
+yid: sample_id
+
+#
+# Path to RNA-Seq count data
+#
+path: 'example/data/features/rnaseq.csv'
+
+# 
+# RNA-Seq data processing steps
+#
+actions:
+  - filter_columns_name_not_in:
+      filename: 'rnaseq_filtered.csv' 
+      names: ['KMS20_JCRB']
+  - filter_rows_var_gt:
+      id: 'exclude_zero_variance'
+      value: 0
+  - filter_rows_sum_gt:
+      id: 'filter_min_reads'
+      value: 20
+  - filter_rows_gene_biotype_in:
+      id: 'filter_by_gene_type'
+      gene_biotypes: ['protein_coding']
+  - group:
+      id: 'log2cpm'
+      actions:
+        - transform_cpm
+        - transform_log2p
+  - transform_zscore:
+      id: 'transform_row_zscores'
+      axis: 1
+  - branch:
+    - cluster_hclust:
+        num_clusters: 4
+    #- aggregate:
+    #    funcs: ['sum', 'var']
+  - aggregate_gene_sets:
+      gmt: 'example/data/gene_sets/go.gmt'
+      data_key: 'ensembl.gene'
+      gmt_key: 'entrezgene'
+      func: 'sum'
+
+  #- branch: 
+  #    - dim_reduce_pca:
+  #        target: 'rows'
+  #        num_pcs: 10
+  #    - compute_cor_mat:
+  #        id: 'rnaseq_sample_pca_cormat'
+  #        method: 'pearson'

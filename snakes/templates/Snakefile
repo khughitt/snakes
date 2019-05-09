@@ -17,8 +17,8 @@
 #  Date   : {{ date_str }}
 #
 #  datasets:
-{% for dat_name, dataset in config['datasets'].items() %}
-#  - {{ dat_name }}: {{ dataset['path'] }}
+{% for dataset_name, dataset in config['datasets'].items() %}
+#  - {{ dataset_name }}: {{ dataset['path'] }}
 {% endfor %}
 #
 {% set output_dir = '/'.join([config['output_dir'] | expanduser, config['version']]) %}
@@ -32,6 +32,7 @@ import yaml
 import numpy as np
 import pandas as pd
 from snakes import clustering, filters, gene_sets 
+from snakes.actions import SnakesAction, SnakesActionGroup
 
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
@@ -60,8 +61,41 @@ rule all:
 {# Datasets
 {#                                                                                           #}
 {#############################################################################################}
-{% for dat_name, dataset in config['datasets'].items() %}
-{% include 'data/' + dataset['data_source'] + '.snakefile' %}
+{% for dataset_name, dataset in config['datasets'].items() %}
+################################################################################
+#
+# {{ dataset.name }} workflow
+#
+################################################################################
+  {% for action_id, action in wrangler.datasets[dataset_name].items() %}
+rule {{ action_id }}:
+    input: '{{ action.input }}'
+    output: '{{ action.output }}'
+    {% if not action.groupable and action.action_name != 'group' %}
+      {# ============================== #}
+      {# =   ACTION (Non-groupable)   = #}
+      {# ============================== #}
+      {%- include action.template %}
+    {% else %}
+    run:
+        dat = pd.read_csv(input[0], index_col=0)
+        {% if action.action_name == 'group' %}
+            {# ==================== #}
+            {# =   ACTION GROUP   = #}
+            {# ==================== #}
+            {% for group_action in action.actions %}
+                {%- include action.actions[group_action].template %}
+            {% endfor %}
+        {% else %}
+            {# ============== #}
+            {# =   ACTION   = #}
+            {# ============== #}
+            {%- include action.template %}
+        {% endif %}
+        dat.to_csv(output[0])
+
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 
 {#############################################################################################}
