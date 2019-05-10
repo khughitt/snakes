@@ -39,17 +39,6 @@ output_dir = '{{ output_dir }}'
 
 {#############################################################################################}
 {#                                                                                           #}
-{# Global variables                                                                          #}
-{#                                                                                           #}
-{#############################################################################################}
-{# list used to keep track of terminal datasets produced for each data source #}
-{% set terminal_datasets = [] -%}
-
-{# list used to keep track of simple rules that should not be run on a compute cluster #}
-{% set local_rules = [] -%}
-
-{#############################################################################################}
-{#                                                                                           #}
 {# Default target                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
@@ -104,7 +93,7 @@ rule {{ action_id }}:
 {#                                                                                           #}
 {#############################################################################################}
 rule process_data_sources:
-    input: expand("{{ output_dir }}/data/{processed_datasets}", processed_datasets={{ terminal_datasets }})
+    input: expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }})
     output: touch("{{ output_dir }}/finished")
 
 {#############################################################################################}

@@ -130,7 +130,20 @@ class SnakeWrangler:
                 if self.datasets[dataset_name][action_id].local:
                     localrules.append(action_id)
 
-        return ",".join(localrules)
+        return ", ".join(localrules)
+
+    def get_terminal_rules(self):
+        """Returns a list of the final rules in each dataset-specific pipeline"""
+        terminal_rules = []
+
+        for dataset_name in self.datasets:
+            key = next(reversed(self.datasets[dataset_name]))
+            out = self.datasets[dataset_name][key].output.replace(
+                "{}/data/".format(self.output_dir), ""
+            )
+            terminal_rules.append(out)
+
+        return "['{}']".format("', '".join(terminal_rules))
 
     def _get_action_id(self, dataset_name, action_name):
         """Determines a unique action identifier to assign to a given action"""

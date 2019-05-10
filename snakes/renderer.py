@@ -274,7 +274,7 @@ class SnakefileRenderer:
         # get default action params
         cfg = {
             "action_name": action_name,
-            "filename": "",
+            "filename": None,
             "groupable": True,
             "local": False,
         }
@@ -439,40 +439,8 @@ class SnakefileRenderer:
         #
         # define custom jinja2 filters
         #
-        def basename_and_parent_dir(filepath):
-            """Strips directories and extension from a filepath"""
-            path, filename = os.path.split(filepath)
-            return os.path.join(os.path.basename(path), filename)
-
-        def basename_no_ext(filepath):
-            """Strips directories and extension from a filepath"""
-            return os.path.basename(os.path.splitext(filepath)[0])
-
-        def is_list(value):
-            """Checks if variable is of type list"""
-            return isinstance(value, list)
-
-        def replace_filename(filepath, filename):
-            """Repaces the filename portion of a filepath"""
-            return os.path.join(os.path.dirname(filepath), filename)
-
-        def action_subdir(action_name):
-            """Returns the appropriate template sub-directory associated with a given action"""
-            return action_name.split("_")[0]
-
-        def log_debug(msg):
-            """Logs a specified mesage using the logging module"""
-            logging.debug(msg)
-            return ""
-
         env.filters["basename"] = os.path.basename
-        env.filters["basename_and_parent_dir"] = basename_and_parent_dir
-        env.filters["basename_no_ext"] = basename_no_ext
         env.filters["expanduser"] = os.path.expanduser
-        env.filters["is_list"] = is_list
-        env.filters["replace_filename"] = replace_filename
-        env.filters["action_subdir"] = action_subdir
-        env.filters["debug"] = log_debug
 
         # get snakefile jinja2 template
         template = env.get_template("Snakefile")
