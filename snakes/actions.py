@@ -5,7 +5,15 @@ from collections import OrderedDict
 
 class SnakesAction:
     def __init__(
-        self, action_name, action_id, parent_id, input, output, groupable=True, **kwargs
+        self,
+        action_name,
+        action_id,
+        parent_id,
+        input,
+        output,
+        groupable=True,
+        local=False,
+        **kwargs
     ):
         """Creates a new SnakesAction instance from a dict representation"""
         self.action_name = action_name
@@ -14,6 +22,7 @@ class SnakesAction:
         self.input = input
         self.output = output
         self.groupable = groupable
+        self.local = local
         self.params = kwargs
 
         # determine template filepath
@@ -30,6 +39,7 @@ class SnakesAction:
         - input       : {}
         - output      : {}
         - groupable   : {}
+        - local       : {}
         - params      : {}
         """
 
@@ -40,18 +50,22 @@ class SnakesAction:
             self.input,
             self.output,
             self.groupable,
+            self.local,
             self.params,
         )
 
 
 class SnakesActionGroup:
-    def __init__(self, action_id, parent_id, group_actions, input, output, **kwargs):
+    def __init__(
+        self, action_id, parent_id, group_actions, input, output, local=False, **kwargs
+    ):
         """Creates a new SnakesActionGroup instance from a dict representation"""
         self.action_name = "group"
         self.action_id = action_id
         self.parent_id = parent_id
         self.input = input
         self.output = output
+        self.local = local
         self.params = kwargs
 
         # load sub-actions
@@ -64,5 +78,10 @@ class SnakesActionGroup:
 
             # create new SnakesAction instance
             self.actions[action_name] = SnakesAction(
-                action_name, None, None, None, None, **action
+                action_name,
+                action_id=None,
+                parent_id=None,
+                input=None,
+                output=None,
+                **action
             )

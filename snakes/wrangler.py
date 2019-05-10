@@ -52,6 +52,7 @@ class SnakeWrangler:
                 input=kwargs["path"],
                 output="/".join([self.output_dir, "data", dataset_name, "raw.csv"]),
                 groupable=False,
+                local=True,
             )
 
             # update parent id
@@ -119,6 +120,17 @@ class SnakeWrangler:
 
             # update parent node
             parent_id = action_id
+
+    def get_localrules(self):
+        """Returns a list of all rules which should be run locally"""
+        localrules = []
+
+        for dataset_name in self.datasets:
+            for action_id in self.datasets[dataset_name]:
+                if self.datasets[dataset_name][action_id].local:
+                    localrules.append(action_id)
+
+        return ",".join(localrules)
 
     def _get_action_id(self, dataset_name, action_name):
         """Determines a unique action identifier to assign to a given action"""

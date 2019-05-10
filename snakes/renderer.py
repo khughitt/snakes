@@ -272,7 +272,12 @@ class SnakefileRenderer:
             sys.exit(msg.format(action_name))
 
         # get default action params
-        cfg = {"action_name": action_name, "filename": "", "groupable": True}
+        cfg = {
+            "action_name": action_name,
+            "filename": "",
+            "groupable": True,
+            "local": False,
+        }
 
         if action_name in self._supported_actions:
             cfg.update(self._supported_actions[action_name]["defaults"])

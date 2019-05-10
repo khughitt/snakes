@@ -112,8 +112,7 @@ rule process_data_sources:
 {# Other settings                                                                            #}
 {#                                                                                           #}
 {#############################################################################################}
-{% set localrules_str = ', '.join(local_rules) %}
-localrules: {{ localrules_str }}
+localrules: {{ wrangler.get_localrules() }}
 
 {# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}
 # vim: set filetype=snakemake:
