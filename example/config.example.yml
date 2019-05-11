@@ -34,10 +34,10 @@ verbose: true
 #
 ################################################################################
 datasets:
-  - 'example/settings/features/rnaseq.yml'
-  - 'example/settings/features/cnv.yml'
-  - 'example/settings/features/variants.yml'
-  - 'example/settings/response/drug_screen.yml'
+  - 'example/yml/features/rnaseq.yml'
+  - 'example/yml/features/cnv.yml'
+  - 'example/yml/features/variants.yml'
+  - 'example/yml/response/drug_screen.yml'
 
 ################################################################################
 #
@@ -46,12 +46,10 @@ datasets:
 ################################################################################
 training_sets:
     features:
-      - 'rnaseq_transform_zscore'
-      - 'rnaseq_aggregate_gene_sets'
+      - 'rnaseq_final'
+      - 'rnaseq_go_sum'
     response:
-      rule_name: 'ac50_filter_min_variability'
-      column: 'ac50'
-      group: 'drug_id'
+      rule_name: 'ac50_final'
 
 ################################################################################
 #

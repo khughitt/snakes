@@ -100,7 +100,7 @@ Below is a partial example set of config files for a hypothetical multi-omics bi
 pipeline aimed at building models for predicting biomarkers associated with drug sensitivity.
 
 The complete configuration can be found in the
-[example/settings](https://github.com/khughitt/snakes/tree/master/example/settings) directory of the
+[example/](https://github.com/khughitt/snakes/tree/master/example/) directory of the
 repository.
 
 Note that, as mentioned above, Snakes is currently under active development and is not considered
@@ -113,7 +113,7 @@ additional dataset-specific config files.
 
 Below, an example main config file is shown, along with a sub-config file for processing a
 transcriptomics ([RNA-Seq](https://en.wikipedia.org/wiki/RNA-Seq)) dataset. The config files for
-the remaining datasets can be found in the `example/settings` directory.
+the remaining datasets can be found in the `example/yml` directory.
 
 **config.yml**
 
@@ -154,10 +154,10 @@ verbose: true
 #
 ################################################################################
 datasets:
-  - 'example/settings/features/rnaseq.yml'
-  - 'example/settings/features/cnv.yml'
-  - 'example/settings/features/variants.yml'
-  - 'example/settings/response/drug_screen.yml'
+  - 'example/yml/features/rnaseq.yml'
+  - 'example/yml/features/cnv.yml'
+  - 'example/yml/features/variants.yml'
+  - 'example/yml/response/drug_screen.yml'
 ```
 
 **rnaseq.yml**

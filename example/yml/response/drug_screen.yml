@@ -48,6 +48,7 @@ actions:
       func: 'mad'
       quantile: 0.5
   - pivot_wide:
+      id: 'ac50_final'
       index: null
       columns: 'drug_id'
       values: 'ac50'

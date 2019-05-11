@@ -36,18 +36,20 @@ actions:
         - transform_cpm
         - transform_log2p
   - transform_zscore:
-      id: 'transform_row_zscores'
+      id: 'rnaseq_final'
       axis: 1
   - branch:
     - cluster_hclust:
         num_clusters: 4
     #- aggregate:
     #    funcs: ['sum', 'var']
-  - aggregate_gene_sets:
-      gmt: 'example/data/gene_sets/go.gmt'
-      data_key: 'ensembl.gene'
-      gmt_key: 'entrezgene'
-      func: 'sum'
+  - branch:
+    - aggregate_gene_sets:
+        id: 'rnaseq_go_sum'
+        gmt: 'example/data/gene_sets/go.gmt'
+        data_key: 'ensembl.gene'
+        gmt_key: 'entrezgene'
+        func: 'sum'
 
   #- branch: 
   #    - dim_reduce_pca:
