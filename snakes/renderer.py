@@ -131,6 +131,9 @@ class SnakefileRenderer:
 
         self.config["datasets"] = datasets
 
+        # validate training sets configuration
+        self._validate_training_sets_config()
+
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 
@@ -290,7 +293,13 @@ class SnakefileRenderer:
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
-        required_params = {"name": str, "version": str, "datasets": list}
+        required_params = {
+            "name": str,
+            "version": str,
+            "datasets": list,
+            "training_sets": dict,
+        }
+
         for param, expected_type in required_params.items():
             if param not in self.config or not self.config[param]:
                 msg = (
@@ -390,6 +399,26 @@ class SnakefileRenderer:
                         )
                     )
 
+    def _validate_training_sets_config(self):
+        """Validates the training sets section of config file"""
+        # check for required subsections
+        for key in ["features", "response"]:
+            if key not in self.config["training_sets"]:
+                msg = "[ERROR] Missing required training_sets parameter '{}'"
+                sys.exit(msg.format(key))
+
+        # check to make sure valid target ids specified
+        target_ids = self.config["training_sets"]["features"] + [
+            self.config["training_sets"]["response"]
+        ]
+
+        action_ids = self._wrangler.get_all_action_ids()
+
+        for target_id in target_ids:
+            if target_id not in action_ids:
+                msg = "[ERROR] Unknown target action id specified: '{}'"
+                sys.exit(msg.format(target_id))
+
     def _get_args(self):
         """Parses input and returns arguments"""
         parser = ArgumentParser(
@@ -417,8 +446,8 @@ class SnakefileRenderer:
         loaders = [
             PackageLoader("snakes", "templates"),
             PackageLoader("snakes", "templates/annotations"),
-            PackageLoader("snakes", "templates/data"),
             PackageLoader("snakes", "templates/actions"),
+            PackageLoader("snakes", "templates/gene_sets"),
             PackageLoader("snakes", "templates/actions/aggregate"),
             PackageLoader("snakes", "templates/actions/cluster"),
             PackageLoader("snakes", "templates/actions/filter"),

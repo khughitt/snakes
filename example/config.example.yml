@@ -48,8 +48,7 @@ training_sets:
     features:
       - 'rnaseq_final'
       - 'rnaseq_go_sum'
-    response:
-      rule_name: 'ac50_final'
+    response: 'ac50_final'
 
 ################################################################################
 #

@@ -78,7 +78,7 @@ class SnakeWrangler:
                 del action["id"]
 
                 # check to make sure user-specified id isn't already in use
-                if action_id in self._get_all_action_ids():
+                if action_id in self.get_all_action_ids():
                     sys.exit(
                         '[ERROR] Action id "{}" is already being used; '
                         "please choose a different name".format(action_id)
@@ -164,9 +164,14 @@ class SnakeWrangler:
 
         return action_id
 
-    def _get_all_action_ids(self):
+    def get_all_action_ids(self):
         """Returns a list of all action ids currently being used"""
-        return [self.datasets[dataset_name].keys() for dataset_name in self.datasets]
+        ids = []
+
+        for dataset_name in self.datasets:
+            ids = ids + list(self.datasets[dataset_name].keys())
+
+        return ids
 
     def _get_output(self, target_id):
         """Returns the output filepath associated with a given action_id"""
