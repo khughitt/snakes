@@ -32,7 +32,7 @@ import yaml
 import numpy as np
 import pandas as pd
 from snakes import clustering, filters, gene_sets 
-from snakes.actions import SnakesAction, SnakesActionGroup
+from snakes.rules import SnakemakeRule, SnakemakeRuleGroup
 
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
@@ -45,22 +45,17 @@ output_dir = '{{ output_dir }}'
 rule all:
     input: "{{ output_dir }}/finished"
 
-{#############################################################################################}
-{#                                                                                           #}
-{# Datasets
-{#                                                                                           #}
-{#############################################################################################}
 {% for dataset_name, dataset in config['datasets'].items() %}
 ################################################################################
 #
 # {{ dataset.name }} workflow
 #
 ################################################################################
-  {% for action_id, action in wrangler.datasets[dataset_name].items() %}
-rule {{ action_id }}:
+  {% for rule_id, action in wrangler.datasets[dataset_name].items() %}
+rule {{ rule_id }}:
     input: '{{ action.input }}'
     output: '{{ action.output }}'
-    {% if not action.groupable and action.action_name != 'group' %}
+    {% if not action.groupable and not action.groupped %}
       {# ============================== #}
       {# =   ACTION (Non-groupable)   = #}
       {# ============================== #}
@@ -68,7 +63,7 @@ rule {{ action_id }}:
     {% else %}
     run:
         dat = pd.read_csv(input[0], index_col=0)
-        {% if action.action_name == 'group' %}
+        {% if action.groupped %}
             {# ==================== #}
             {# =   ACTION GROUP   = #}
             {# ==================== #}
@@ -87,20 +82,28 @@ rule {{ action_id }}:
   {% endfor %}
 {% endfor %}
 
-{#############################################################################################}
-{#                                                                                           #}
-{# Default target
-{#                                                                                           #}
-{#############################################################################################}
+################################################################################
+#
+# Training sets
+#
+################################################################################
+{% for training_set_name, training_set in config['training_sets'].items() %}
+{% endfor %}
+
+################################################################################
+#
+# Default target
+#
+################################################################################
 rule process_data_sources:
     input: expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }})
     output: touch("{{ output_dir }}/finished")
 
-{#############################################################################################}
-{#                                                                                           #}
-{# Other settings                                                                            #}
-{#                                                                                           #}
-{#############################################################################################}
+################################################################################
+#
+# Other settings
+#
+################################################################################
 localrules: {{ wrangler.get_localrules() }}
 
 {# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}

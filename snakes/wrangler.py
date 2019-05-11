@@ -1,21 +1,20 @@
 """
 SnakeWrangler class definition
 
-The SnakeWrangler class handles the mapping between Snakes action configuration entries
+The SnakeWrangler class handles the mapping between Snakes configuration entries
 to Snakemake rules.
 
-Each Snakes action is associated with a unique identifier which is used for
-cross-references, as well as rule name generation.
+Each Snakes action and training set is associated with a unique identifier which is used
+for cross-references, as well as rule name generation.
 
-This class provides helps to manage these actions and provide helper functions for
-determining the rulenames, input and output filepaths, and parameters associated with
-each action.
+This class provides helps to manage these elements and provide helper functions for
+determining the rulenames, input and output filepaths, and associated parameters.
 """
 import os
 import re
 import sys
 from collections import OrderedDict
-from snakes.actions import SnakesAction, SnakesActionGroup
+from snakes.rules import SnakemakeRule, SnakemakeRuleGroup
 
 
 class SnakeWrangler:
@@ -25,10 +24,9 @@ class SnakeWrangler:
         self.datasets = {}
         self.counters = OrderedDict()
 
-    # def add(self, dataset, input_file, file_type, actions, parent_id=None, **kwargs):
-    def add(self, dataset_name, actions, parent_id=None, **kwargs):
+    def add_actions(self, dataset_name, actions, parent_id=None, **kwargs):
         """
-        Adds one or more steps to a specified dataset.
+        Adds one or more actions to a specified dataset pipeline.
 
         Parameters
         ----------
@@ -37,54 +35,58 @@ class SnakeWrangler:
         actions: list
             A nested list of actions to be added
         parent_id: str
-            Identifier for the parent action of the action(s) being passed in.
+            Identifier for the parent rule of the rule(s) being passed in.
         """
         # if dataset has not yet been added, create a new OrderedDict instance and
-        # add initial load_data action
+        # add initial load_data rule
         if dataset_name not in self.datasets:
-            # create load_data action
-            action_id = "load_{}".format(dataset_name)
+            # create load_data snakemake rule
+            rule_id = "load_{}".format(dataset_name)
 
-            snakes_action = SnakesAction(
-                action_name="load_{}".format(kwargs["file_type"]),
-                action_id=action_id,
+            # determine template filepath
+            template_filename = "load_{}".format(kwargs["file_type"])
+            template = "actions/load/{}.snakefile".format(template_filename)
+
+            rule = SnakemakeRule(
+                rule_id=rule_id,
                 parent_id=None,
                 input=kwargs["path"],
                 output="/".join([self.output_dir, "data", dataset_name, "raw.csv"]),
                 groupable=False,
                 local=True,
+                template=template,
             )
 
             # update parent id
-            parent_id = action_id
+            parent_id = rule_id
 
-            # create OrderedDict and store load_data action
-            self.datasets[dataset_name] = OrderedDict({action_id: snakes_action})
+            # create OrderedDict and store load_data rule
+            self.datasets[dataset_name] = OrderedDict({rule_id: rule})
 
         # iterate over user-defined actions and add to wrangler
         for action in actions:
             # dataset branch
             if isinstance(action, list):
-                self.add(dataset_name, action, parent_id=parent_id, **kwargs)
+                self.add_actions(dataset_name, action, parent_id=parent_id, **kwargs)
                 continue
 
             # get action name
             action_name = action["action_name"]
             del action["action_name"]
 
-            # determine unique action identifier / snakemake rule name to use
+            # determine unique snakemake rule name to use
             if "id" in action:
-                action_id = action["id"]
+                rule_id = action["id"]
                 del action["id"]
 
                 # check to make sure user-specified id isn't already in use
-                if action_id in self.get_all_action_ids():
+                if rule_id in self.get_all_rule_ids():
                     sys.exit(
                         '[ERROR] Action id "{}" is already being used; '
-                        "please choose a different name".format(action_id)
+                        "please choose a different name".format(rule_id)
                     )
             else:
-                action_id = self._get_action_id(dataset_name, action_name)
+                rule_id = self._get_action_rule_id(dataset_name, action_name)
 
             # determine input filepath
             input = self._get_output(parent_id)
@@ -93,7 +95,7 @@ class SnakeWrangler:
             if action["filename"] is not None:
                 output_filename = action["filename"]
             else:
-                output_filename = "{}.csv".format(action_id)
+                output_filename = "{}.csv".format(rule_id)
 
             output = os.path.join(os.path.dirname(input), output_filename)
 
@@ -101,34 +103,37 @@ class SnakeWrangler:
             if not action["filename"]:
                 del action["filename"]
 
-            # create new SnakesAction or SnakesActionGroup instance
+            # create new SnakemakeRule or SnakemakeRuleGroup instance
             if action_name == "group":
-                snakes_action = SnakesActionGroup(
-                    action_id, parent_id, action["actions"], input, output, **action
+                rule = SnakemakeRuleGroup(
+                    rule_id, parent_id, action["actions"], input, output, **action
                 )
             else:
-                snakes_action = SnakesAction(
-                    action_name, action_id, parent_id, input, output, **action
+                action_type = action_name.split("_")[0]
+                template = "actions/{}/{}.snakefile".format(action_type, action_name)
+
+                rule = SnakemakeRule(
+                    rule_id, parent_id, input, output, template=template, **action
                 )
 
             # add to dataset
-            self.datasets[dataset_name][action_id] = snakes_action
+            self.datasets[dataset_name][rule_id] = rule
 
             # if this is the first action in the dataset, point counter to it
             if len(self.datasets[dataset_name]) == 1:
-                self.counters[dataset_name] = action_id
+                self.counters[dataset_name] = rule_id
 
             # update parent node
-            parent_id = action_id
+            parent_id = rule_id
 
     def get_localrules(self):
         """Returns a list of all rules which should be run locally"""
         localrules = []
 
         for dataset_name in self.datasets:
-            for action_id in self.datasets[dataset_name]:
-                if self.datasets[dataset_name][action_id].local:
-                    localrules.append(action_id)
+            for rule_id in self.datasets[dataset_name]:
+                if self.datasets[dataset_name][rule_id].local:
+                    localrules.append(rule_id)
 
         return ", ".join(localrules)
 
@@ -145,27 +150,27 @@ class SnakeWrangler:
 
         return "['{}']".format("', '".join(terminal_rules))
 
-    def _get_action_id(self, dataset_name, action_name):
-        """Determines a unique action identifier to assign to a given action"""
-        # base action id: <dataset_name>_<action>
-        action_id = dataset_name + "_" + action_name
+    def _get_action_rule_id(self, dataset_name, action_name):
+        """Determines a unique rule identifier to assign to a given action"""
+        # base rule id: <dataset_name>_<action>
+        rule_id = dataset_name + "_" + action_name
 
         # only allow letters, number, and underscores in rule names
-        action_id = re.sub(r"[^\w]", "_", action_id)
+        rule_id = re.sub(r"[^\w]", "_", rule_id)
 
-        existing_ids = self.datasets[dataset_name].keys()
+        existing_ids = self.get_all_rule_ids()
 
         # if id is already being used, append first available numeric suffix
         id_counter = 2
 
-        while action_id in existing_ids:
-            action_id = "_".join([dataset_name, action_name, str(id_counter)])
+        while rule_id in existing_ids:
+            rule_id = "_".join([dataset_name, action_name, str(id_counter)])
             id_counter += 1
 
-        return action_id
+        return rule_id
 
-    def get_all_action_ids(self):
-        """Returns a list of all action ids currently being used"""
+    def get_all_rule_ids(self):
+        """Returns a list of all rule ids currently being used"""
         ids = []
 
         for dataset_name in self.datasets:
@@ -174,8 +179,8 @@ class SnakeWrangler:
         return ids
 
     def _get_output(self, target_id):
-        """Returns the output filepath associated with a given action_id"""
+        """Returns the output filepath associated with a given rule_id"""
         for dataset_name in self.datasets:
-            for action_id in self.datasets[dataset_name]:
-                if action_id == target_id:
-                    return self.datasets[dataset_name][action_id].output
+            for rule_id in self.datasets[dataset_name]:
+                if rule_id == target_id:
+                    return self.datasets[dataset_name][rule_id].output

@@ -1,72 +1,71 @@
-"""SnakesAction class definition"""
+"""SnakemakeRule and SnakemakeRuleGroup class definitions"""
 import os
 from collections import OrderedDict
 
 
-class SnakesAction:
+class SnakemakeRule:
     def __init__(
         self,
-        action_name,
-        action_id,
+        rule_id,
         parent_id,
         input,
         output,
         groupable=True,
         local=False,
+        template=None,
         **kwargs
     ):
-        """Creates a new SnakesAction instance from a dict representation"""
-        self.action_name = action_name
-        self.action_id = action_id
+        """Creates a new SnakemakeRule instance from a dict representation"""
+        self.rule_id = rule_id
         self.parent_id = parent_id
         self.input = input
         self.output = output
         self.groupable = groupable
         self.local = local
+        self.template = template
         self.params = kwargs
 
-        # determine template filepath
-        action_type = action_name.split("_")[0]
-        self.template = "actions/{}/{}.snakefile".format(action_type, action_name)
+        self.groupped = False
 
     def __repr__(self):
-        """Prints a string representation of SnakesAction instance"""
+        """Prints a string representation of SnakemakeRule instance"""
         template = """
-        SnakesAction ({})
+        SnakemakeRule ({})
         
-        - action_name : {}
         - parent_id   : {}
         - input       : {}
         - output      : {}
         - groupable   : {}
         - local       : {}
+        - template    : {}
         - params      : {}
         """
 
         return template.format(
-            self.action_id,
-            self.action_name,
+            self.rule_id,
             self.parent_id,
             self.input,
             self.output,
             self.groupable,
             self.local,
+            self.template,
             self.params,
         )
 
 
-class SnakesActionGroup:
+class SnakemakeRuleGroup:
     def __init__(
-        self, action_id, parent_id, group_actions, input, output, local=False, **kwargs
+        self, rule_id, parent_id, group_actions, input, output, local=False, **kwargs
     ):
-        """Creates a new SnakesActionGroup instance from a dict representation"""
-        self.action_name = "group"
-        self.action_id = action_id
+        """Creates a new SnakemakeRuleGroup instance from a dict representation"""
+        self.rule_id = rule_id
         self.parent_id = parent_id
         self.input = input
         self.output = output
         self.local = local
         self.params = kwargs
+
+        self.groupped = True
 
         # load sub-actions
         self.actions = OrderedDict()
@@ -76,12 +75,16 @@ class SnakesActionGroup:
             action_name = action["action_name"]
             del action["action_name"]
 
-            # create new SnakesAction instance
-            self.actions[action_name] = SnakesAction(
-                action_name,
-                action_id=None,
+            # determine template filepath
+            action_type = action_name.split("_")[0]
+            template = "actions/{}/{}.snakefile".format(action_type, action_name)
+
+            # create new SnakemakeRule instance
+            self.actions[action_name] = SnakemakeRule(
+                rule_id=None,
                 parent_id=None,
                 input=None,
                 output=None,
+                template=template,
                 **action
             )

@@ -202,7 +202,7 @@ class SnakefileRenderer:
         del dataset["actions"]
 
         # add actions to SnakeWrangler instance
-        self._wrangler.add(dataset["name"], dataset_actions, **dataset)
+        self._wrangler.add_actions(dataset["name"], dataset_actions, **dataset)
 
         # store parsed dataset config
         return dataset
@@ -412,10 +412,10 @@ class SnakefileRenderer:
             self.config["training_sets"]["response"]
         ]
 
-        action_ids = self._wrangler.get_all_action_ids()
+        rule_ids = self._wrangler.get_all_rule_ids()
 
         for target_id in target_ids:
-            if target_id not in action_ids:
+            if target_id not in rule_ids:
                 msg = "[ERROR] Unknown target action id specified: '{}'"
                 sys.exit(msg.format(target_id))
 
@@ -476,6 +476,10 @@ class SnakefileRenderer:
 
         # root snakes script directory
         script_dir = os.path.abspath(resource_filename(__name__, "src"))
+
+        import pdb
+
+        pdb.set_trace()
 
         # render template
         snakefile = template.render(
