@@ -29,24 +29,28 @@ actions:
   - filter_rows_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_col_not_na:
-      name: 'filter_missing_ac50'
+      id: 'filter_missing_ac50'
       col: 'ac50'
   - filter_rows_col_gt:
-      name: 'filter_curve_slope'
+      id: 'filter_curve_slope'
       col: 'curve_slope'
       value: 0
   - filter_rows_group_size_ge:
-      name: 'filter_min_curves_remaining'
+      id: 'filter_min_curves_remaining'
       group: 'drug_id'
       size: 3 
   - filter_columns_name_not_in:
       names: ['curve_slope']
   - filter_rows_group_func_ge:
-      name: 'filter_min_variability'
+      id: 'filter_min_variability'
       group: 'drug_id'
       col: 'ac50'
       func: 'mad'
       quantile: 0.5
+  - pivot_wide:
+      index: null
+      columns: 'drug_id'
+      values: 'ac50'
 
   #- branch:
   #  - dim_reduce_pca:
