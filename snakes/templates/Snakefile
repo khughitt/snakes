@@ -37,14 +37,14 @@ from snakes.rules import ActionRule, GroupedActionRule
 # create output directory, if needed
 output_dir = '{{ output_dir }}' 
 
-{#############################################################################################}
-{#                                                                                           #}
-{# Default target                                                                            #}
-{#                                                                                           #}
-{#############################################################################################}
+################################################################################
+#
+# Default target
+#
+################################################################################
 rule all:
     input: "{{ output_dir }}/finished"
-
+      
 {% for dataset_name, dataset in config['datasets'].items() %}
 ################################################################################
 #
@@ -84,7 +84,7 @@ rule {{ rule_id }}:
 
 ################################################################################
 #
-# Training sets
+# Training set construction
 #
 ################################################################################
 {% include wrangler.training_set.template %}
@@ -94,8 +94,10 @@ rule {{ rule_id }}:
 # Default target
 #
 ################################################################################
-rule process_data_sources:
-    input: expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }})
+rule run_pipeline:
+    input:
+      data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
+      training_sets=aggregate_training_sets_input 
     output: touch("{{ output_dir }}/finished")
 
 ################################################################################

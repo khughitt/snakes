@@ -9,15 +9,15 @@ rule aggregate_training_sets:
 
 checkpoint create_training_sets:
   input:
-    features={{ config['training_sets']['features'] }},
-    response="{{ config['training_sets']['response'] }}"
-  output: {{ config['training_sets']['output'] }}
+    features={{ wrangler.training_set.input.features }},
+    response="{{ wrangler.training_set.input.response }}"
+  output: {{ wrangler.training_set.output }}
   params:
-    output_dir="{{ config['training_sets']['output_dir'] }}",
+    output_dir="{{ output_dir }}/training_sets",
     allow_mismatched_indices={{ config['quality_control']['allow_mismatched_indices'] }}
   run:
     # create output directory
-    os.mkdir(params.output_dir, mode=0o755)
+    #os.mkdir(params.output_dir, mode=0o755)
 
     # load feature data
     feature_dat = pd.read_csv(input.features[0], index_col=0)

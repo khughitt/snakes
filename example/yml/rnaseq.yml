@@ -36,7 +36,6 @@ actions:
         - transform_cpm
         - transform_log2p
   - transform_zscore:
-      id: 'rnaseq_final'
       axis: 1
   - branch:
     - cluster_hclust:
@@ -50,6 +49,10 @@ actions:
         data_key: 'ensembl.gene'
         gmt_key: 'entrezgene'
         func: 'sum'
+    - transpose_data:
+        id: 'rnaseq_go_terms_sum_final'
+  - transpose_data:
+      id: 'rnaseq_final'
 
   #- branch: 
   #    - dim_reduce_pca:

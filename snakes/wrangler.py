@@ -125,27 +125,30 @@ class SnakeWrangler:
     def add_trainingset_rule(self, features, response):
         """Adds a training set-related SnakemakeRule"""
         # convert input feature and response rule ids to filepaths
-        input = []
+        input = {"features": [], response: ""}
 
         for rule_id in features:
-            input.append(self.get_output(rule_id))
+            input["features"].append(self.get_output(rule_id))
 
-        # load response dataframe to check dimensions
+        # add response filepath to rule input list
         response_filepath = self.get_output(response)
-        response_dat = pd.read_csv(response_filepath, index_col=0)
+        input["response"] = response_filepath
 
         output_dir = os.path.join(self.output_dir, "training_set")
 
-        if response_dat.shape[1] == 1:
-            # for response dataframes with a single column, output is a single file;
-            # most common scenario..
-            output = '"{}"'.format(os.path.join(output_dir, "training_set.csv"))
-            rule = TrainingSetRule(input, output)
-        else:
-            # for multi-column response dataframes, a training set directory is passed
-            # as output
-            output = 'directory("{}")'.format(output_dir)
-            rule = MultiTrainingSetRule(input, output)
+        # load response dataframe, check dimensions, and add appropriate rule
+        # response_dat = pd.read_csv(response_filepath, index_col=0)
+
+        # if response_dat.shape[1] == 1:
+        #     # for response dataframes with a single column, output is a single file;
+        #     # most common scenario..
+        #     output = '"{}"'.format(os.path.join(output_dir, "training_set.csv"))
+        #     rule = TrainingSetRule(input, output)
+        # else:
+        # for multi-column response dataframes, a training set directory is passed
+        # as output
+        output = 'directory("{}")'.format(output_dir)
+        rule = MultiTrainingSetRule(input, output)
 
         self.training_set = rule
 

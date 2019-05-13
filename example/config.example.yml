@@ -38,10 +38,10 @@ quality_control:
 #
 ################################################################################
 datasets:
-  - 'example/yml/features/rnaseq.yml'
-  - 'example/yml/features/cnv.yml'
-  - 'example/yml/features/variants.yml'
-  - 'example/yml/response/drug_screen.yml'
+  - 'example/yml/rnaseq.yml'
+  - 'example/yml/cnv.yml'
+  - 'example/yml/variants.yml'
+  - 'example/yml/drug_screen.yml'
 
 ################################################################################
 #
@@ -51,7 +51,9 @@ datasets:
 training_sets:
     features:
       - 'rnaseq_final'
-      - 'rnaseq_go_sum'
+      - 'rnaseq_go_terms_sum_final'
+      - 'cnv_final'
+      - 'variants_final'
     response: 'ac50_final'
 
 ################################################################################

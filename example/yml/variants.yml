@@ -22,3 +22,5 @@ actions:
       names: ['KMS20_JCRB']
   - filter_rows_min_nonzero:
       value: 2
+  - transpose_data:
+      id: 'variants_final'

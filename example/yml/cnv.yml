@@ -23,4 +23,7 @@ actions:
   - filter_rows_max_na:
       id: 'remove_missing_data'
       value: 0
+  - transpose_data:
+      id: 'cnv_final'
+
 

@@ -278,6 +278,7 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(action_params) != dict:
+            breakpoint()
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(action_name))
 

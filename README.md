@@ -154,10 +154,10 @@ verbose: true
 #
 ################################################################################
 datasets:
-  - 'example/yml/features/rnaseq.yml'
-  - 'example/yml/features/cnv.yml'
-  - 'example/yml/features/variants.yml'
-  - 'example/yml/response/drug_screen.yml'
+  - 'example/yml/rnaseq.yml'
+  - 'example/yml/cnv.yml'
+  - 'example/yml/variants.yml'
+  - 'example/yml/drug_screen.yml'
 ```
 
 **rnaseq.yml**
