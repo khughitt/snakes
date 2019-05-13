@@ -28,10 +28,6 @@ random_seed: 1
 # output verbosity
 verbose: true
 
-# quality control related options
-quality_control:
-  allow_mismatched_indices: false
-
 ################################################################################
 #
 # Datasets
@@ -55,6 +51,9 @@ training_sets:
       - 'cnv_final'
       - 'variants_final'
     response: 'ac50_final'
+    options:
+      allow_mismatched_indices: false
+      include_column_prefix: true
 
 ################################################################################
 #

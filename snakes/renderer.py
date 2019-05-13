@@ -139,6 +139,7 @@ class SnakefileRenderer:
         self._wrangler.add_trainingset_rule(
             self.config["training_sets"]["features"],
             self.config["training_sets"]["response"],
+            self.config["training_sets"]["options"],
         )
 
     def _parse_dataset_config(self, user_cfg):

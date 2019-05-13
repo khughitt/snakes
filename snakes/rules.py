@@ -82,7 +82,7 @@ class TrainingSetRule(SnakemakeRule):
 
 
 class MultiTrainingSetRule(SnakemakeRule):
-    def __init__(self, input, output, local=False):
+    def __init__(self, input, output, options, local=False):
         """Creates a new SnakemakeRule instance from a dict representation"""
         super().__init__(
             "create_training_set",
@@ -92,6 +92,7 @@ class MultiTrainingSetRule(SnakemakeRule):
             local,
             "multi_training_set.snakefile",
         )
+        self.options = options
 
 
 class GroupedActionRule:

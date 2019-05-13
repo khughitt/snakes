@@ -122,7 +122,7 @@ class SnakeWrangler:
             # update parent node
             parent_id = rule_id
 
-    def add_trainingset_rule(self, features, response):
+    def add_trainingset_rule(self, features, response, options):
         """Adds a training set-related SnakemakeRule"""
         # convert input feature and response rule ids to filepaths
         input = {"features": [], response: ""}
@@ -134,7 +134,7 @@ class SnakeWrangler:
         response_filepath = self.get_output(response)
         input["response"] = response_filepath
 
-        output_dir = os.path.join(self.output_dir, "training_set")
+        output_dir = os.path.join(self.output_dir, "training_sets")
 
         # load response dataframe, check dimensions, and add appropriate rule
         # response_dat = pd.read_csv(response_filepath, index_col=0)
@@ -148,7 +148,7 @@ class SnakeWrangler:
         # for multi-column response dataframes, a training set directory is passed
         # as output
         output = 'directory("{}")'.format(output_dir)
-        rule = MultiTrainingSetRule(input, output)
+        rule = MultiTrainingSetRule(input, output, options)
 
         self.training_set = rule
 

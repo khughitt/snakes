@@ -10,13 +10,15 @@ development:
   sample_row_frac: 0.05
   sample_col_frac: 1.00
 
-quality_control:
-  allow_mismatched_indices: false
-
 random_seed: 1
 verbose: false
 
 actions: []
 datasets: []
-training_sets: {}
+
+training_sets:
+  options:
+    allow_mismatched_indices: false
+    include_column_prefix: true
+
 

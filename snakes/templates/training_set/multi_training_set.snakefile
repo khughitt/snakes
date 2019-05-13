@@ -14,20 +14,34 @@ checkpoint create_training_sets:
   output: {{ wrangler.training_set.output }}
   params:
     output_dir="{{ output_dir }}/training_sets",
-    allow_mismatched_indices={{ config['quality_control']['allow_mismatched_indices'] }}
+    allow_mismatched_indices={{ wrangler.training_set.options['allow_mismatched_indices'] }},
+    include_column_prefix={{ wrangler.training_set.options['include_column_prefix'] }}
   run:
     # create output directory
-    #os.mkdir(params.output_dir, mode=0o755)
+    if not os.path.exists(params.output_dir):
+        os.mkdir(params.output_dir, mode=0o755)
 
     # load feature data
-    feature_dat = pd.read_csv(input.features[0], index_col=0)
+    feature_dat = pd.read_csv(input.features[0], index_col=0).sort_index()
+
+    # update column names (optional)
+    if params.include_column_prefix:
+        prefix = pathlib.Path(input.features[0]).stem + "_"
+        feature_dat.columns = prefix + feature_dat.columns
 
     if len(input.features) > 1:
         for filepath in input.features[1:]:
-            dat = pd.read_csv(filepath, index_col=0)
+            dat = pd.read_csv(filepath, index_col=0).sort_index()
+
+            # update column names (optional)
+            if params.include_column_prefix:
+                prefix = pathlib.Path(filepath).stem + "_"
+                dat.columns = prefix + dat.columns
 
             # check to make sure there are no overlapping columns
-            if len(set(feature_dat.columns).intersection(dat.columns)) > 0:
+            shared_columns = set(feature_dat.columns).intersection(dat.columns)
+
+            if len(shared_columns) > 0:
                 msg = f"Column names in {filepath} overlap with others in feature data."
                 raise ValueError(msg)
 
@@ -47,7 +61,7 @@ checkpoint create_training_sets:
                 raise EmptyDataError(msg)
 
     # load response dataframe
-    response_dat = pd.read_csv(input.response, index_col=0)
+    response_dat = pd.read_csv(input.response, index_col=0).sort_index()
 
     # check for index mismatches
     if not params.allow_mismatched_indices and not response_dat.index.equals(feature_dat.index):
@@ -62,6 +76,10 @@ checkpoint create_training_sets:
 
     # iterate over columns in response data and create training sets
     for col in response_dat.columns:
+        # get response column as a Series and rename to "response"
+        dat = response_dat[col]
+        dat.name = 'response'
+
         # add response data column to end of feature data and save to disk
-        feature_dat.join(response_dat[col]).to_csv(os.path.join(params.output_dir, "{}.csv".format(col)))
+        feature_dat.join(dat).to_csv(os.path.join(params.output_dir, "{}.csv".format(col)))
 
