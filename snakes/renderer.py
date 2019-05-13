@@ -9,6 +9,7 @@ import re
 import pathlib
 import sys
 import yaml
+import pandas as pd
 from argparse import ArgumentParser
 from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename
@@ -105,8 +106,8 @@ class SnakefileRenderer:
         self._validate_main_config()
 
         # create a new SnakeWrangler instance to manage rules
-        output_dir = "/".join(
-            [os.path.expanduser(self.config["output_dir"]), self.config["version"]]
+        output_dir = os.path.join(
+            os.path.expanduser(self.config["output_dir"]), self.config["version"]
         )
         self._wrangler = SnakeWrangler(output_dir)
 
@@ -131,8 +132,14 @@ class SnakefileRenderer:
 
         self.config["datasets"] = datasets
 
-        # validate training sets configuration
+        # validate and parse training sets configuration
         self._validate_training_sets_config()
+
+        # add to wrangler
+        self._wrangler.add_trainingset_rule(
+            self.config["training_sets"]["features"],
+            self.config["training_sets"]["response"],
+        )
 
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
@@ -416,6 +423,7 @@ class SnakefileRenderer:
 
         for target_id in target_ids:
             if target_id not in rule_ids:
+                breakpoint()
                 msg = "[ERROR] Unknown target action id specified: '{}'"
                 sys.exit(msg.format(target_id))
 
@@ -448,6 +456,7 @@ class SnakefileRenderer:
             PackageLoader("snakes", "templates/annotations"),
             PackageLoader("snakes", "templates/actions"),
             PackageLoader("snakes", "templates/gene_sets"),
+            PackageLoader("snakes", "templates/training_set"),
             PackageLoader("snakes", "templates/actions/aggregate"),
             PackageLoader("snakes", "templates/actions/cluster"),
             PackageLoader("snakes", "templates/actions/filter"),
@@ -476,10 +485,6 @@ class SnakefileRenderer:
 
         # root snakes script directory
         script_dir = os.path.abspath(resource_filename(__name__, "src"))
-
-        import pdb
-
-        pdb.set_trace()
 
         # render template
         snakefile = template.render(

@@ -13,8 +13,9 @@ determining the rulenames, input and output filepaths, and associated parameters
 import os
 import re
 import sys
+import pandas as pd
 from collections import OrderedDict
-from snakes.rules import SnakemakeRule, SnakemakeRuleGroup
+from snakes.rules import *
 
 
 class SnakeWrangler:
@@ -22,7 +23,6 @@ class SnakeWrangler:
         """SnakeWrangler constructor"""
         self.output_dir = output_dir
         self.datasets = {}
-        self.counters = OrderedDict()
 
     def add_actions(self, dataset_name, actions, parent_id=None, **kwargs):
         """
@@ -47,14 +47,14 @@ class SnakeWrangler:
             template_filename = "load_{}".format(kwargs["file_type"])
             template = "actions/load/{}.snakefile".format(template_filename)
 
-            rule = SnakemakeRule(
+            rule = ActionRule(
                 rule_id=rule_id,
                 parent_id=None,
                 input=kwargs["path"],
                 output="/".join([self.output_dir, "data", dataset_name, "raw.csv"]),
-                groupable=False,
                 local=True,
                 template=template,
+                groupable=False,
             )
 
             # update parent id
@@ -89,7 +89,7 @@ class SnakeWrangler:
                 rule_id = self._get_action_rule_id(dataset_name, action_name)
 
             # determine input filepath
-            input = self._get_output(parent_id)
+            input = self.get_output(parent_id)
 
             # determine output filepath
             if action["filename"] is not None:
@@ -103,28 +103,51 @@ class SnakeWrangler:
             if not action["filename"]:
                 del action["filename"]
 
-            # create new SnakemakeRule or SnakemakeRuleGroup instance
+            # create new ActionRule or GroupedActionRule instance
             if action_name == "group":
-                rule = SnakemakeRuleGroup(
+                rule = GroupedActionRule(
                     rule_id, parent_id, action["actions"], input, output, **action
                 )
             else:
                 action_type = action_name.split("_")[0]
                 template = "actions/{}/{}.snakefile".format(action_type, action_name)
 
-                rule = SnakemakeRule(
+                rule = ActionRule(
                     rule_id, parent_id, input, output, template=template, **action
                 )
 
             # add to dataset
             self.datasets[dataset_name][rule_id] = rule
 
-            # if this is the first action in the dataset, point counter to it
-            if len(self.datasets[dataset_name]) == 1:
-                self.counters[dataset_name] = rule_id
-
             # update parent node
             parent_id = rule_id
+
+    def add_trainingset_rule(self, features, response):
+        """Adds a training set-related SnakemakeRule"""
+        # convert input feature and response rule ids to filepaths
+        input = []
+
+        for rule_id in features:
+            input.append(self.get_output(rule_id))
+
+        # load response dataframe to check dimensions
+        response_filepath = self.get_output(response)
+        response_dat = pd.read_csv(response_filepath, index_col=0)
+
+        output_dir = os.path.join(self.output_dir, "training_set")
+
+        if response_dat.shape[1] == 1:
+            # for response dataframes with a single column, output is a single file;
+            # most common scenario..
+            output = '"{}"'.format(os.path.join(output_dir, "training_set.csv"))
+            rule = TrainingSetRule(input, output)
+        else:
+            # for multi-column response dataframes, a training set directory is passed
+            # as output
+            output = 'directory("{}")'.format(output_dir)
+            rule = MultiTrainingSetRule(input, output)
+
+        self.training_set = rule
 
     def get_localrules(self):
         """Returns a list of all rules which should be run locally"""
@@ -178,7 +201,7 @@ class SnakeWrangler:
 
         return ids
 
-    def _get_output(self, target_id):
+    def get_output(self, target_id):
         """Returns the output filepath associated with a given rule_id"""
         for dataset_name in self.datasets:
             for rule_id in self.datasets[dataset_name]:
