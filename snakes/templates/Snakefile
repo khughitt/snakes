@@ -90,12 +90,39 @@ rule {{ rule_id }}:
 ################################################################################
 {% include wrangler.training_set.template %}
 
+{% if wrangler.feature_selection | length > 0 %}
 ################################################################################
 #
-# Default target
+# Feature selection
 #
 ################################################################################
-rule run_pipeline:
+{% for rule in wrangler.feature_selection %}
+rule {{ rule.rule_id }}:
+  input: "{{ rule.input }}"
+  output: "{{ rule.output }}"
+  params: {{ rule.params }}
+{% include rule.template %}
+{% endfor %}
+{% endif %}
+
+
+################################################################################
+#
+# Results
+#
+################################################################################
+def aggregate_training_sets_input(wildcards):
+    # trigger dag re-evaluation
+    trash = checkpoints.create_training_sets.get(**wildcards)
+
+    # output of final feature selection step, or the training set construction
+    # step if no feature selection was applied
+    tset_output = os.path.join("{{ wrangler.training_set.output }}", "{training_set}.csv")
+    fsel_output = "{{ wrangler.get_feature_selection_output() }}"
+
+    return expand(fsel_output, training_set=glob_wildcards(tset_output).training_set)
+
+rule collect_results:
     input:
       data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
       training_sets=aggregate_training_sets_input 

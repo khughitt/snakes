@@ -68,17 +68,10 @@ class ActionRule(SnakemakeRule):
         return super().__repr__() + template.format(self.groupable)
 
 
-class TrainingSetRule(SnakemakeRule):
-    def __init__(self, input, output, local=False):
+class FeatureSelectionRule(SnakemakeRule):
+    def __init__(self, rule_id, input, output, local=False, template=None, **kwargs):
         """Creates a new SnakemakeRule instance from a dict representation"""
-        super().__init__(
-            "create_training_set",
-            None,
-            input,
-            output,
-            local,
-            "single_training_set.snakefile",
-        )
+        super().__init__(rule_id, None, input, output, local, template, **kwargs)
 
 
 class MultiTrainingSetRule(SnakemakeRule):

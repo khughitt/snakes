@@ -209,7 +209,7 @@ actions:
 **Dependencies**
 
 - [Python](https://www.python.org/) (3.4+)
-- [Snakemake](https://snakemake.readthedocs.io/en/stable/)
+- [Snakemake](https://snakemake.readthedocs.io/en/stable/) (5.4+)
 - [Jinja2](http://jinja.pocoo.org/docs/2.10/)
 - [PyYAML](https://pyyaml.org/wiki/PyYAMLDocumentation)
 - [Numpy](http://www.numpy.org/)

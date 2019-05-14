@@ -33,6 +33,10 @@ class SnakefileRenderer:
         with open(os.path.join(self._conf_dir, "actions.yml")) as fp:
             self._supported_actions = yaml.load(fp, Loader=yaml.FullLoader)
 
+        # load feature selection required / default parameters
+        with open(os.path.join(self._conf_dir, "feature_selection.yml")) as fp:
+            self._supported_feat_sel_methods = yaml.load(fp, Loader=yaml.FullLoader)
+
         self._load_config(config_filepath, **kwargs)
 
     @staticmethod
@@ -135,12 +139,23 @@ class SnakefileRenderer:
         # validate and parse training sets configuration
         self._validate_training_sets_config()
 
-        # add to wrangler
         self._wrangler.add_trainingset_rule(
             self.config["training_sets"]["features"],
             self.config["training_sets"]["response"],
             self.config["training_sets"]["options"],
         )
+
+        # validate and parse feature selection configuration
+        fsel_cfgs = []
+
+        for fsel_cfg in self.config["feature_selection"]:
+            fsel_cfgs.append(self._parse_feature_selection(fsel_cfg))
+
+        # TODO
+        # self._validate_feature_selection_config()
+        self.config["feature_selection"] = fsel_cfgs
+
+        self._wrangler.add_feature_selection_rules(fsel_cfgs)
 
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
@@ -296,6 +311,33 @@ class SnakefileRenderer:
 
         # overide with any user-specified config values
         cfg.update(action_params)
+
+        return cfg
+
+    def _parse_feature_selection(self, fsel_cfg):
+        """Parses a single feature selection config section"""
+        # if no parameters specified, add placeholder empty dict
+        if isinstance(fsel_cfg, str):
+            fsel_cfg = {fsel_cfg: {}}
+
+        # split into feature selection method and parameters
+        fsel_method, fsel_params = list(fsel_cfg.items())[0]
+
+        # check to make sure parameters specified as a dict (in case user accidentally uses
+        # a list in the yaml)
+        if type(fsel_params) != dict:
+            breakpoint()
+            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            sys.exit(msg.format(fsel_method))
+
+        # get default feature selection params
+        cfg = {"method": fsel_method}
+
+        if fsel_method in self._supported_feat_sel_methods:
+            cfg.update(self._supported_feat_sel_methods[fsel_method]["defaults"])
+
+        # overide with any user-specified config values
+        cfg.update(fsel_params)
 
         return cfg
 
@@ -457,6 +499,7 @@ class SnakefileRenderer:
             PackageLoader("snakes", "templates"),
             PackageLoader("snakes", "templates/annotations"),
             PackageLoader("snakes", "templates/actions"),
+            PackageLoader("snakes", "templates/feature_selection"),
             PackageLoader("snakes", "templates/gene_sets"),
             PackageLoader("snakes", "templates/training_set"),
             PackageLoader("snakes", "templates/actions/aggregate"),

@@ -1,19 +1,10 @@
-def aggregate_training_sets_input(wildcards):
-    checkpoint_output = checkpoints.create_training_sets.get(**wildcards).output[0]
-    return expand("{{ output_dir }}/training_sets/{response}.csv", 
-                  response=glob_wildcards("{{ output_dir }}/training_sets/{response}.csv").response)
-
-rule aggregate_training_sets:
-    input: aggregate_training_sets_input
-    output: touch('final.csv')
-
 checkpoint create_training_sets:
   input:
     features={{ wrangler.training_set.input.features }},
     response="{{ wrangler.training_set.input.response }}"
-  output: {{ wrangler.training_set.output }}
+  output: directory("{{ wrangler.training_set.output }}")
   params:
-    output_dir="{{ output_dir }}/training_sets",
+    output_dir="{{ wrangler.training_set.output }}",
     allow_mismatched_indices={{ wrangler.training_set.options['allow_mismatched_indices'] }},
     include_column_prefix={{ wrangler.training_set.options['include_column_prefix'] }}
   run:
@@ -81,5 +72,6 @@ checkpoint create_training_sets:
         dat.name = 'response'
 
         # add response data column to end of feature data and save to disk
-        feature_dat.join(dat).to_csv(os.path.join(params.output_dir, "{}.csv".format(col)))
+        outfile = os.path.join(params.output_dir, "{}.csv".format(col))
+        feature_dat.join(dat).to_csv(outfile)
 

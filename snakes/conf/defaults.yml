@@ -21,4 +21,5 @@ training_sets:
     allow_mismatched_indices: false
     include_column_prefix: true
 
+feature_selection: []
 

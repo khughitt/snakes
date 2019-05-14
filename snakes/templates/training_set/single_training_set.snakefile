@@ -20,4 +20,4 @@ rule create_training_sets:
     response_dat = pd.read_csv(input.response, index_col=0)
 
     # combine into a single training set and save
-    feature_dat.join(response_dat).to_csv(output[0], index_col=0)
+    feature_dat.join(response_dat).to_csv(output[0])

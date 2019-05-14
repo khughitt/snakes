@@ -14,6 +14,7 @@ import os
 import re
 import sys
 import pandas as pd
+import pathlib
 from collections import OrderedDict
 from snakes.rules import *
 
@@ -22,7 +23,10 @@ class SnakeWrangler:
     def __init__(self, output_dir):
         """SnakeWrangler constructor"""
         self.output_dir = output_dir
+
         self.datasets = {}
+        self.training_set = None
+        self.feature_selection = []
 
     def add_actions(self, dataset_name, actions, parent_id=None, **kwargs):
         """
@@ -134,23 +138,57 @@ class SnakeWrangler:
         response_filepath = self.get_output(response)
         input["response"] = response_filepath
 
-        output_dir = os.path.join(self.output_dir, "training_sets")
+        output_dir = os.path.join(self.output_dir, "training_sets", "raw")
 
-        # load response dataframe, check dimensions, and add appropriate rule
-        # response_dat = pd.read_csv(response_filepath, index_col=0)
-
-        # if response_dat.shape[1] == 1:
-        #     # for response dataframes with a single column, output is a single file;
-        #     # most common scenario..
-        #     output = '"{}"'.format(os.path.join(output_dir, "training_set.csv"))
-        #     rule = TrainingSetRule(input, output)
-        # else:
-        # for multi-column response dataframes, a training set directory is passed
-        # as output
-        output = 'directory("{}")'.format(output_dir)
-        rule = MultiTrainingSetRule(input, output, options)
+        rule = MultiTrainingSetRule(input, output_dir, options)
 
         self.training_set = rule
+
+    def add_feature_selection_rules(self, feature_selections):
+        """Adds a training set-related SnakemakeRule"""
+        # initial input from training set creation step
+        input_dir = os.path.join(self.output_dir, "training_sets", "raw")
+        input = os.path.join(input_dir, "{training_set}.csv")
+
+        for fsel in feature_selections:
+            # determine unique snakemake rule name to use
+            if "id" in fsel:
+                rule_id = fsel["id"]
+                del fsel["id"]
+
+                # check to make sure user-specified id isn't already in use
+                if rule_id in self.get_all_rule_ids():
+                    sys.exit(
+                        '[ERROR] feature_selection id "{}" is already being used; '
+                        "please choose a different name".format(rule_id)
+                    )
+            else:
+                rule_id = self._get_feature_selection_rule_id(fsel["method"])
+
+            # determine output and template filepaths
+            filename = "{training_set}" + f"_{rule_id}.csv"
+
+            output = pathlib.Path(input).parent.parent / "processed" / filename
+            template = f"{fsel['method']}.snakefile"
+
+            # create SnakemakeRule
+            rule = FeatureSelectionRule(
+                rule_id, input, output, template=template, **fsel
+            )
+            self.feature_selection.append(rule)
+
+            input = output
+
+    def get_feature_selection_output(self):
+        """Gets the output path for the last feature selection step"""
+        # get output of final feature selection step
+        if len(self.feature_selection) > 0:
+            output = self.feature_selection[-1].output
+        else:
+            # if not feature selection was performed, use raw training set
+            output = self.training_set.output
+
+        return output
 
     def get_localrules(self):
         """Returns a list of all rules which should be run locally"""
@@ -176,6 +214,27 @@ class SnakeWrangler:
 
         return "['{}']".format("', '".join(terminal_rules))
 
+    def _get_feature_selection_rule_id(self, feat_selection_method):
+        """Determines a unique rule identifier to assign to a given feature selection
+        rule"""
+        # base rule id: <feature_selection_method>
+        rule_id = feat_selection_method
+
+        # only allow letters, number, and underscores in rule names
+        rule_id = re.sub(r"[^\w]", "_", rule_id)
+
+        existing_ids = self.get_all_rule_ids()
+
+        # if id is already being used, append first available numeric suffix
+        id_counter = 2
+
+        while rule_id in existing_ids:
+            rule_id = "_".join([feat_selection_method, str(id_counter)])
+            rule_id = re.sub(r"[^\w]", "_", rule_id)
+            id_counter += 1
+
+        return rule_id
+
     def _get_action_rule_id(self, dataset_name, action_name):
         """Determines a unique rule identifier to assign to a given action"""
         # base rule id: <dataset_name>_<action>
@@ -191,6 +250,7 @@ class SnakeWrangler:
 
         while rule_id in existing_ids:
             rule_id = "_".join([dataset_name, action_name, str(id_counter)])
+            rule_id = re.sub(r"[^\w]", "_", rule_id)
             id_counter += 1
 
         return rule_id

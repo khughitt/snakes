@@ -1,0 +1,10 @@
+######################################################
+#
+# Snakes feature selection required/default parameters
+#
+######################################################
+min_variance:
+  required: []
+  defaults:
+    quantile: null
+    value: null
