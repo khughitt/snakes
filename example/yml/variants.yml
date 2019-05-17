@@ -18,7 +18,7 @@ path: 'example/data/features/variants.csv'
 # Variant data processing steps
 #
 actions:
-  - filter_columns_name_not_in:
+  - filter_cols_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_min_nonzero:
       value: 2

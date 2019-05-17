@@ -20,12 +20,12 @@ cluster_hclust:
     col_name: 'str'
   defaults:
     col_name: 'clusters'
-filter_columns_name_in:
+filter_cols_name_in:
   required:
     names: 'list'
   defaults:
     names: []
-filter_columns_name_not_in:
+filter_cols_name_not_in:
   required:
     names: 'list'
   defaults:
@@ -47,6 +47,16 @@ filter_rows_col_not_na:
     col: 'str'
   defaults:
     col: null
+filter_rows_col_in: 
+  required:
+    col: 'str'
+    values: 'list'
+  defaults: {}
+filter_rows_col_not_in: 
+  required:
+    col: 'str'
+    values: 'list'
+  defaults: {}
 filter_rows_group_func_ge: 
   required:
     group: 'str'

@@ -24,7 +24,7 @@ path: 'example/data/response/drug_curves.csv'
 # Drug screen data processing steps
 #
 actions:
-  - filter_columns_name_in:
+  - filter_cols_name_in:
       names: ['drug_id', 'ac50', 'curve_slope']
   - filter_rows_name_not_in:
       names: ['KMS20_JCRB']
@@ -39,7 +39,7 @@ actions:
       id: 'filter_min_curves_remaining'
       group: 'drug_id'
       size: 3 
-  - filter_columns_name_not_in:
+  - filter_cols_name_not_in:
       names: ['curve_slope']
   - filter_rows_group_func_ge:
       id: 'filter_min_variability'

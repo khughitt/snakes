@@ -5,7 +5,7 @@
 \__ \ | | | (_| |   <  __/\__ \
 |___/_| |_|\__,_|_|\_\___||___/ v0.1 alpha
 
-Data integration and machine learning pipeline built on Snakemake
+Data integration and machine learning pipelines built on Snakemake
 ```
 
 # Table of contents
@@ -183,7 +183,7 @@ path: 'example/data/features/rnaseq.csv'
 # RNA-Seq data processing steps
 #
 actions:
-  - filter_columns_name_not_in:
+  - filter_cols_name_not_in:
       names: ['KMS20_JCRB']
   - filter_rows_var_gt:
       name: 'exclude_zero_variance'

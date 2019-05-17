@@ -115,9 +115,9 @@ def filter_rows_col_val_not_in(df, col, values):
     """
     Removes all rows for which a column is one of a specified set of values
     """
-    # check to make sure data is non-empty after filtering step
     df = df[~df[col].isin(values)]
 
+    # check to make sure data is non-empty after filtering step
     if df.empty:
         raise EmptyDataError("No data remaining after filter applied")
 
