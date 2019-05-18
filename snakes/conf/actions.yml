@@ -14,6 +14,12 @@ aggregate_gene_sets:
     data_key: null
     gmt_key: null
     func: 'sum'
+cross_cor:
+  required:
+    dataset: 'str'
+  defaults:
+    transpose: false
+    method: 'pearson'
 cluster_hclust:
   required:
     num_clusters: 'int'

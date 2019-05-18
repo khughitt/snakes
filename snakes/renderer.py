@@ -506,6 +506,7 @@ class SnakefileRenderer:
             PackageLoader("snakes", "templates/actions/aggregate"),
             PackageLoader("snakes", "templates/actions/cluster"),
             PackageLoader("snakes", "templates/actions/filter"),
+            PackageLoader("snakes", "templates/actions/integrate"),
             PackageLoader("snakes", "templates/actions/impute"),
             PackageLoader("snakes", "templates/actions/load"),
             PackageLoader("snakes", "templates/actions/project"),

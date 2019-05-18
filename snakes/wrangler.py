@@ -117,6 +117,10 @@ class SnakeWrangler:
             if not action["filename"]:
                 del action["filename"]
 
+            # if action includes a 'dataset' argument, expand to full path
+            if "dataset" in action:
+                action["dataset"] = self.get_output(action["dataset"])
+
             # create new ActionRule or GroupedActionRule instance
             if action_name == "group":
                 rule = GroupedActionRule(
