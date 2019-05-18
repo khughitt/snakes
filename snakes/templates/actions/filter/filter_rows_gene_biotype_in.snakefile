@@ -1,3 +1,5 @@
+    input: '{{ action.input }}'
+    output: '{{ action.output }}'
     params:
         args = {{ action.params }}
     script:

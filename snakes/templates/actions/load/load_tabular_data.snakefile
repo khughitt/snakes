@@ -1,3 +1,5 @@
+    input: '{{ action.input }}'
+    output: '{{ action.output }}'
     run:
 {% block load_data %}{% endblock %}
 {% if config.development.enabled and config.development.sample_row_frac < 1 %}

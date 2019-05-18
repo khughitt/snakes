@@ -159,6 +159,9 @@ class SnakefileRenderer:
 
             self._wrangler.add_feature_selection_rules(fsel_cfgs)
 
+        # expand paths for any dataset parameters
+        self._wrangler.expand_dataset_paths()
+
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 

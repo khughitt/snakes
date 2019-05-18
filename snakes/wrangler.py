@@ -117,10 +117,6 @@ class SnakeWrangler:
             if not action["filename"]:
                 del action["filename"]
 
-            # if action includes a 'dataset' argument, expand to full path
-            if "dataset" in action:
-                action["dataset"] = self.get_output(action["dataset"])
-
             # create new ActionRule or GroupedActionRule instance
             if action_name == "group":
                 actions = action["actions"]
@@ -195,6 +191,19 @@ class SnakeWrangler:
             self.feature_selection.append(rule)
 
             input = output
+
+    def expand_dataset_paths(self):
+        """
+        Checks for rules with a 'dataset' parameter refering to the output from
+        another rule and replaces the dataset id with the corresponding output path.
+        """
+        for dataset_name in self.datasets:
+            for rule_id in self.datasets[dataset_name]:
+                if "dataset" in self.datasets[dataset_name][rule_id].params:
+                    output = self.get_output(
+                        self.datasets[dataset_name][rule_id].params["dataset"]
+                    )
+                    self.datasets[dataset_name][rule_id].params["dataset"] = output
 
     def get_feature_selection_output(self):
         """Gets the output path for the last feature selection step"""

@@ -32,6 +32,7 @@ import yaml
 import numpy as np
 import pandas as pd
 import pathlib
+import warnings
 from snakes import clustering, filters, gene_sets 
 from snakes.rules import ActionRule, GroupedActionRule
 
@@ -54,14 +55,14 @@ rule all:
 ################################################################################
   {% for rule_id, action in wrangler.datasets[dataset_name].items() %}
 rule {{ rule_id }}:
-    input: '{{ action.input }}'
-    output: '{{ action.output }}'
     {% if not action.groupable and not action.groupped %}
       {# ============================== #}
       {# =   ACTION (Non-groupable)   = #}
       {# ============================== #}
       {%- include action.template %}
     {% else %}
+    input: '{{ action.input }}'
+    output: '{{ action.output }}'
     run:
         dat = pd.read_csv(input[0], index_col=0)
         {% if action.groupped %}
@@ -128,7 +129,7 @@ rule collect_results:
       data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
       training_sets=aggregate_training_sets_input 
     output: touch("{{ output_dir }}/finished")
-{% else %}
+{%- else %}
 rule collect_results:
     input:
       data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),

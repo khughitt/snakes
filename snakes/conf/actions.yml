@@ -11,10 +11,11 @@ aggregate_gene_sets:
     func: 'str'
   defaults:
     func: 'sum'
-cross_cor:
+integrate_cross_cor:
   required:
     dataset: 'str'
   defaults:
+    groupable: false
     transpose: false
     method: 'pearson'
 cluster_hclust:
