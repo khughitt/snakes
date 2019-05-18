@@ -438,8 +438,9 @@ class SnakefileRenderer:
             # check for required parameters
             for param, expected_type in required_params.items():
                 if param not in entry or not entry[param]:
-                    msg = "[ERROR] Missing required {} {} parameter '{}'"
-                    sys.exit(msg.format("actions", entry["action_name"], param))
+                    msg = "[ERROR] Missing required parameter '{}' for {}"
+                    breakpoint()
+                    sys.exit(msg.format(param, entry["action_name"]))
                 elif not isinstance(entry[param], eval(expected_type)):
                     msg = '[ERROR] Parameter "{}" in {} is of unexpected type: "{}" (expected: "{}")'
                     sys.exit(

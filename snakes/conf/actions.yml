@@ -152,6 +152,11 @@ pivot_wide:
     columns: 'str'
     values: 'str'
   defaults: {}
+rename_cols_replace:
+  required:
+    old: 'str'
+    new: 'str'
+  defaults: {}
 transform_zscore:
   required: {}
   defaults:

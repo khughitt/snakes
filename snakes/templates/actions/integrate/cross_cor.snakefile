@@ -6,4 +6,6 @@
         dat2 = dat2.T
         {% endif %}
 
+        # line up the column names
+
         dat = dat2.apply(lambda x: dat.corrwith(x), method="{{ action.params['method'] }}")
