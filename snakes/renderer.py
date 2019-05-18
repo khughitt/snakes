@@ -165,6 +165,7 @@ class SnakefileRenderer:
         # default dataset parameters
         dataset = {
             "file_type": "",
+            "compression": None,
             "encoding": "utf-8",
             "path": "",
             "name": "",
@@ -207,6 +208,10 @@ class SnakefileRenderer:
                 dataset["sep"] = ","
             elif ext in [".tsv", ".tab", ".txt"]:
                 dataset["sep"] = "\t"
+
+        # compression flag
+        if dataset["path"].endswith("gz"):
+            dataset["compression"] = "gzip"
 
         # if a str index column value is specified, wrap in quotation marks so that it is handled
         # properly in templates

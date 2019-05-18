@@ -51,11 +51,17 @@ class SnakeWrangler:
             template_filename = "load_{}".format(kwargs["file_type"])
             template = "actions/load/{}.snakefile".format(template_filename)
 
+            # determine output filepath to use
+            outfile = "/".join([self.output_dir, "data", dataset_name, "raw.csv"])
+
+            if kwargs["compression"] == "gzip":
+                outfile = outfile + ".gz"
+
             rule = ActionRule(
                 rule_id=rule_id,
                 parent_id=None,
                 input=kwargs["path"],
-                output="/".join([self.output_dir, "data", dataset_name, "raw.csv"]),
+                output=outfile,
                 local=True,
                 template=template,
                 groupable=False,
@@ -100,6 +106,10 @@ class SnakeWrangler:
                 output_filename = action["filename"]
             else:
                 output_filename = "{}.csv".format(rule_id)
+
+            # determine output filepath to use
+            if input.endswith(".gz"):
+                output_filename = output_filename + ".gz"
 
             output = os.path.join(os.path.dirname(input), output_filename)
 
