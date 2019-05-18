@@ -29,11 +29,13 @@ cluster_hclust:
 filter_cols_name_endswith:
   required:
     suffix: 'str'
-  defaults: {}
+  defaults:
+    drop: true 
 filter_cols_name_startswith:
   required:
     prefix: 'str'
-  defaults: {}
+  defaults:
+    drop: true 
 filter_cols_name_in:
   required:
     names: 'list'
