@@ -123,8 +123,11 @@ class SnakeWrangler:
 
             # create new ActionRule or GroupedActionRule instance
             if action_name == "group":
+                actions = action["actions"]
+                del action["actions"]
+
                 rule = GroupedActionRule(
-                    rule_id, parent_id, action["actions"], input, output, **action
+                    rule_id, parent_id, actions, input, output, **action
                 )
             else:
                 action_type = action_name.split("_")[0]

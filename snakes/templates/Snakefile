@@ -69,7 +69,8 @@ rule {{ rule_id }}:
             {# =   ACTION GROUP   = #}
             {# ==================== #}
             {% for group_action in action.actions %}
-                {%- include action.actions[group_action].template %}
+                {%- set action = action.actions[group_action] %}
+                {%- include action.template %}
             {% endfor %}
         {% else %}
             {# ============== #}

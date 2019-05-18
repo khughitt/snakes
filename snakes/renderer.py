@@ -353,7 +353,7 @@ class SnakefileRenderer:
         required_params = {"name": str, "version": str, "datasets": list}
 
         for param, expected_type in required_params.items():
-            if param not in self.config or not self.config[param]:
+            if param not in self.config:
                 msg = (
                     "Config error: missing required configuration parameter in {}: '{}'"
                 )
@@ -371,7 +371,7 @@ class SnakefileRenderer:
 
         # check for required parameters
         for param, expected_type in required_params.items():
-            if param not in dataset_cfg or not dataset_cfg[param]:
+            if param not in dataset_cfg:
                 msg = (
                     "Config error: missing required configuration parameter in {}: '{}'"
                 )
@@ -437,7 +437,7 @@ class SnakefileRenderer:
 
             # check for required parameters
             for param, expected_type in required_params.items():
-                if param not in entry or not entry[param]:
+                if param not in entry:
                     msg = "[ERROR] Missing required parameter '{}' for {}"
                     breakpoint()
                     sys.exit(msg.format(param, entry["action_name"]))

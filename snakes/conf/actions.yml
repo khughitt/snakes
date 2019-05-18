@@ -10,9 +10,6 @@ aggregate_gene_sets:
     gmt_key: 'str'
     func: 'str'
   defaults:
-    gmt: null
-    data_key: null
-    gmt_key: null
     func: 'sum'
 cross_cor:
   required:
@@ -61,8 +58,7 @@ filter_rows_gene_biotype_not_in:
 filter_rows_col_not_na: 
   required:
     col: 'str'
-  defaults:
-    col: null
+  defaults: {}
 filter_rows_col_in: 
   required:
     col: 'str'
@@ -78,10 +74,8 @@ filter_rows_group_func_ge:
     group: 'str'
     col: 'str'
     func: 'str'
+  optional:
   defaults:
-    group: null
-    col: null
-    func: null
     quantile: null
     value: null
 filter_rows_group_func_le: 
@@ -90,9 +84,6 @@ filter_rows_group_func_le:
     col: 'str'
     func: 'str'
   defaults:
-    group: null
-    col: null
-    func: null
     quantile: null
     value: null
 filter_rows_max_na:
@@ -124,7 +115,6 @@ filter_rows_col_gt:
   required:
     col: 'str'
   defaults:
-    col: null
     quantile: null
     value: null
 filter_rows_name_in: 
