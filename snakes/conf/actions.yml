@@ -26,6 +26,14 @@ cluster_hclust:
     col_name: 'str'
   defaults:
     col_name: 'clusters'
+filter_cols_name_endswith:
+  required:
+    suffix: 'str'
+  defaults: {}
+filter_cols_name_startswith:
+  required:
+    prefix: 'str'
+  defaults: {}
 filter_cols_name_in:
   required:
     names: 'list'
