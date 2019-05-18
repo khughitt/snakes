@@ -83,12 +83,14 @@ rule {{ rule_id }}:
   {% endfor %}
 {% endfor %}
 
+{% if "features" in config["training_sets"] %}
 ################################################################################
 #
 # Training set construction
 #
 ################################################################################
 {% include wrangler.training_set.template %}
+{% endif %}
 
 {% if wrangler.feature_selection | length > 0 %}
 ################################################################################
@@ -103,8 +105,6 @@ rule {{ rule.rule_id }}:
   params: {{ rule.params }}
 {% include rule.template %}
 {% endfor %}
-{% endif %}
-
 
 ################################################################################
 #
@@ -127,6 +127,12 @@ rule collect_results:
       data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
       training_sets=aggregate_training_sets_input 
     output: touch("{{ output_dir }}/finished")
+{% else %}
+rule collect_results:
+    input:
+      data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
+    output: touch("{{ output_dir }}/finished")
+{% endif %}
 
 ################################################################################
 #

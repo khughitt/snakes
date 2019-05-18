@@ -137,25 +137,27 @@ class SnakefileRenderer:
         self.config["datasets"] = datasets
 
         # validate and parse training sets configuration
-        self._validate_training_sets_config()
+        if "features" in self.config["training_sets"]:
+            self._validate_training_sets_config()
 
-        self._wrangler.add_trainingset_rule(
-            self.config["training_sets"]["features"],
-            self.config["training_sets"]["response"],
-            self.config["training_sets"]["options"],
-        )
+            self._wrangler.add_trainingset_rule(
+                self.config["training_sets"]["features"],
+                self.config["training_sets"]["response"],
+                self.config["training_sets"]["options"],
+            )
 
         # validate and parse feature selection configuration
-        fsel_cfgs = []
+        if len(self.config["feature_selection"]) > 0:
+            fsel_cfgs = []
 
-        for fsel_cfg in self.config["feature_selection"]:
-            fsel_cfgs.append(self._parse_feature_selection(fsel_cfg))
+            for fsel_cfg in self.config["feature_selection"]:
+                fsel_cfgs.append(self._parse_feature_selection(fsel_cfg))
 
-        # TODO
-        # self._validate_feature_selection_config()
-        self.config["feature_selection"] = fsel_cfgs
+            # TODO
+            # self._validate_feature_selection_config()
+            self.config["feature_selection"] = fsel_cfgs
 
-        self._wrangler.add_feature_selection_rules(fsel_cfgs)
+            self._wrangler.add_feature_selection_rules(fsel_cfgs)
 
     def _parse_dataset_config(self, user_cfg):
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
@@ -189,7 +191,7 @@ class SnakefileRenderer:
 
         # if data source not specified, attempt to guess from file extension
         if dataset["file_type"] == "":
-            if ext in [".csv", ".tsv", ".tab"]:
+            if ext in [".csv", ".txt", ".tsv", ".tab"]:
                 # comma-separated / tab-delmited
                 dataset["file_type"] = "csv"
             elif ext in [".xls", ".xlsx"]:
@@ -203,7 +205,7 @@ class SnakefileRenderer:
         if dataset["file_type"] == "csv" and dataset["sep"] == "":
             if ext in [".csv"]:
                 dataset["sep"] = ","
-            elif ext in [".tsv", ".tab"]:
+            elif ext in [".tsv", ".tab", ".txt"]:
                 dataset["sep"] = "\t"
 
         # if a str index column value is specified, wrap in quotation marks so that it is handled
@@ -294,7 +296,6 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(action_params) != dict:
-            breakpoint()
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(action_name))
 
@@ -344,12 +345,7 @@ class SnakefileRenderer:
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
-        required_params = {
-            "name": str,
-            "version": str,
-            "datasets": list,
-            "training_sets": dict,
-        }
+        required_params = {"name": str, "version": str, "datasets": list}
 
         for param, expected_type in required_params.items():
             if param not in self.config or not self.config[param]:
