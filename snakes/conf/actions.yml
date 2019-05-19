@@ -15,9 +15,10 @@ integrate_cross_cor:
   required:
     dataset: 'str'
   defaults:
-    groupable: false
+    axis: 0
     transpose: false
     method: 'pearson'
+    groupable: false
 cluster_hclust:
   required:
     num_clusters: 'int'
