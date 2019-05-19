@@ -98,6 +98,16 @@ filter_rows_min_nonzero:
   defaults:
     quantile: null
     value: null
+filter_rows_name_endswith:
+  required:
+    suffix: 'str'
+  defaults:
+    drop: true 
+filter_rows_name_startswith:
+  required:
+    prefix: 'str'
+  defaults:
+    drop: true 
 filter_rows_sum_gt:
   required: {}
   defaults:
