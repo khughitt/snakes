@@ -85,6 +85,22 @@ rule {{ rule_id }}:
   {% endfor %}
 {% endfor %}
 
+{% if wrangler.reports | length > 0 %}
+################################################################################
+#
+# Report generation 
+#
+################################################################################
+{% for rule_id, report in wrangler.reports.items() %}
+rule {{ rule_id }}:
+  input: "{{ report.input }}"
+  output: "{{ report.output }}"
+  params: {{ report.params }}
+  script: "{{ report.rmd }}"
+
+{% endfor %}
+{% endif %}
+
 {% if "features" in config["training_sets"] %}
 ################################################################################
 #
@@ -115,7 +131,7 @@ rule {{ rule.rule_id }}:
 ################################################################################
 def aggregate_training_sets_input(wildcards):
     # trigger dag re-evaluation
-    trash = checkpoints.create_training_sets.get(**wildcards)
+    tmp_ = checkpoints.create_training_sets.get(**wildcards)
 
     # output of final feature selection step, or the training set construction
     # step if no feature selection was applied
@@ -126,13 +142,13 @@ def aggregate_training_sets_input(wildcards):
 
 rule collect_results:
     input:
-      data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
-      training_sets=aggregate_training_sets_input 
+      expand("{{ output_dir }}/{datasets}", datasets={{ wrangler.get_terminal_rules() }}),
+      aggregate_training_sets_input 
     output: touch("{{ output_dir }}/finished")
 {%- else %}
 rule collect_results:
     input:
-      data=expand("{{ output_dir }}/data/{terminal_datasets}", terminal_datasets={{ wrangler.get_terminal_rules() }}),
+      expand("{{ output_dir }}/{datasets}", datasets={{ wrangler.get_terminal_rules() }}),
     output: touch("{{ output_dir }}/finished")
 {% endif %}
 

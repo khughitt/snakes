@@ -33,6 +33,10 @@ class SnakefileRenderer:
         with open(os.path.join(self._conf_dir, "actions.yml")) as fp:
             self._supported_actions = yaml.load(fp, Loader=yaml.FullLoader)
 
+        # load reports required / default parameters
+        with open(os.path.join(self._conf_dir, "reports.yml")) as fp:
+            self._supported_reports = yaml.load(fp, Loader=yaml.FullLoader)
+
         # load feature selection required / default parameters
         with open(os.path.join(self._conf_dir, "feature_selection.yml")) as fp:
             self._supported_feat_sel_methods = yaml.load(fp, Loader=yaml.FullLoader)
@@ -113,7 +117,11 @@ class SnakefileRenderer:
         output_dir = os.path.join(
             os.path.expanduser(self.config["output_dir"]), self.config["version"]
         )
-        self._wrangler = SnakeWrangler(output_dir)
+
+        # root snakes report directory
+        report_dir = os.path.abspath(resource_filename(__name__, "reports"))
+
+        self._wrangler = SnakeWrangler(output_dir, report_dir)
 
         # load dataset-specific configurations; each should be specified either as a filepath to a
         # dataset-specific yaml file, or as a dict instance
@@ -135,6 +143,11 @@ class SnakefileRenderer:
             datasets[cfg["name"]] = cfg
 
         self.config["datasets"] = datasets
+
+        # validate and parse reports section, if present
+        if len(self.config["reports"]) > 0:
+            self._parse_reports_config(self.config["reports"])
+            self._wrangler.add_report_rules(self.config["reports"])
 
         # validate and parse training sets configuration
         if "features" in self.config["training_sets"]:
@@ -349,6 +362,31 @@ class SnakefileRenderer:
         cfg.update(fsel_params)
 
         return cfg
+
+    def _parse_reports_config(self, reports_cfg):
+        """Parses a reports config section"""
+        # check to make sure parameters specified as a dict (in case user accidentally uses
+        # a list in the yaml)
+        if type(reports_cfg) != dict:
+            breakpoint()
+            sys.exit(
+                "Config error: reports configuration must be specified as a YAML dictionary."
+            )
+
+        # iterate over report config entries and parse/validate
+        for report_name in reports_cfg["report_type"]:
+            # default report arguments
+            cfg = {"format": "html_document", "theme": "theme_bw", "digits": 2}
+
+            if report_name in self._supported_reports:
+                cfg.update(self._supported_reports[report_name]["defaults"])
+
+                # add targets
+                cfg["targets"] = reports_cfg["report_type"][report_name]
+
+            reports_cfg["report_type"][report_name] = cfg
+
+        return reports_cfg
 
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""

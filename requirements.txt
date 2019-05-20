@@ -4,6 +4,9 @@ numpy
 pandas
 pyyaml
 r-base
+r-janitor
+r-rmarkdown
+r-tidyverse
 bioconductor-biomart
 scikit-learn
 scipy

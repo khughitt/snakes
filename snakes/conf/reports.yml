@@ -1,0 +1,10 @@
+############################################
+#
+# Snakes report required/default parameters
+#
+############################################
+general_eda:
+  required: {}
+  defaults:
+    rmd: 'general/general_eda.Rmd'
+    title: 'Exploratory Data Analysis (General)'

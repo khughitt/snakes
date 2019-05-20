@@ -20,11 +20,13 @@ from snakes.rules import *
 
 
 class SnakeWrangler:
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, report_dir):
         """SnakeWrangler constructor"""
         self.output_dir = output_dir
+        self.report_dir = report_dir
 
         self.datasets = {}
+        self.reports = {}
         self.training_set = None
         self.feature_selection = []
 
@@ -192,11 +194,43 @@ class SnakeWrangler:
 
             input = output
 
+    def add_report_rules(self, reports_cfg):
+        """Adds one or more ReportRule instances to the wrangler"""
+        output_dir = os.path.join(self.output_dir, "reports")
+
+        # iterate over report types
+        for report_name in reports_cfg["report_type"]:
+            # iterate over target datasets
+            for target_dataset in reports_cfg["report_type"][report_name]["targets"]:
+                # get report rule id
+                rule_id = f"report_{report_name}_{target_dataset}"
+
+                # get output filepath
+                output = os.path.join(output_dir, f"{rule_id}.html")
+
+                rmd_path = os.path.join(
+                    self.report_dir, reports_cfg["report_type"][report_name]["rmd"]
+                )
+
+                # create new ReportRule instance and add to wrangler
+                # rule_id, input, output, local=False, template=None
+                rule = ReportRule(
+                    rule_id,
+                    input=target_dataset,
+                    output=output,
+                    rmd=rmd_path,
+                    title=reports_cfg["report_type"][report_name]["title"],
+                    theme=reports_cfg["report_type"][report_name]["theme"],
+                )
+
+                self.reports[rule_id] = rule
+
     def expand_dataset_paths(self):
         """
         Checks for rules with a 'dataset' parameter refering to the output from
         another rule and replaces the dataset id with the corresponding output path.
         """
+        # expand action dataset parameters
         for dataset_name in self.datasets:
             for rule_id in self.datasets[dataset_name]:
                 if "dataset" in self.datasets[dataset_name][rule_id].params:
@@ -204,6 +238,10 @@ class SnakeWrangler:
                         self.datasets[dataset_name][rule_id].params["dataset"]
                     )
                     self.datasets[dataset_name][rule_id].params["dataset"] = output
+
+        # expand report inputs
+        for rule_id in self.reports:
+            self.reports[rule_id].input = self.get_output(self.reports[rule_id].input)
 
     def get_feature_selection_output(self):
         """Gets the output path for the last feature selection step"""
@@ -231,11 +269,17 @@ class SnakeWrangler:
         """Returns a list of the final rules in each dataset-specific pipeline"""
         terminal_rules = []
 
+        # get terminal dataset rules
         for dataset_name in self.datasets:
             key = next(reversed(self.datasets[dataset_name]))
             out = self.datasets[dataset_name][key].output.replace(
-                "{}/data/".format(self.output_dir), ""
+                self.output_dir + "/", ""
             )
+            terminal_rules.append(out)
+
+        # add report rules
+        for report in self.reports.values():
+            out = report.output.replace(self.output_dir + "/", "")
             terminal_rules.append(out)
 
         return "['{}']".format("', '".join(terminal_rules))

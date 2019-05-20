@@ -1,0 +1,154 @@
+---
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+params:
+  rmd: ""
+  title: "EDA: General (Numeric Matrix)"
+  digits: 2
+title: "`r params$title`"
+output:
+  html_document:
+    theme: journal
+    highlight: textmate
+    df_print: kable
+    toc: true
+    toc_depth: 2
+    code_folding: hide 
+---
+
+```{r load_knitr, include = FALSE}
+library(knitr)
+opts_chunk$set(message = FALSE)
+```
+
+```{r setup}
+library(janitor)
+library(tidyverse)
+
+dat <- as.matrix(read.csv(snakemake@input[[1]], row.names = 1))
+```
+
+```{r helper_function}
+# helper function to round numbers, including trailing zeros
+round_ <- function(x) {
+    formatC(round(x, params$digits), params$digits, format = "f")
+}
+```
+
+## Dimensions
+
+- \# rows: `r nrow(dat)`
+- \# cols: `r ncol(dat)`
+
+## Distribution
+
+```{r}
+qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.75) +
+  xlab("Value") + 
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- min: `r round_(min(dat, na.rm = TRUE))`
+- mean: `r round_(median(dat, na.rm = TRUE))`
+- median: `r round_(median(dat, na.rm = TRUE))`
+- max: `r round_(max(dat, na.rm = TRUE))`
+- quartiles: `r round_(quantile(dat, na.rm = TRUE))`
+
+## Values
+
+- \# missing values: `r sum(is.na(dat))`
+- \# zeros: `r sum(dat == 0, na.rm = TRUE)`
+- \# positive values: `r sum(dat > 0, na.rm = TRUE)`
+- \# negative values: `r sum(dat < 0, na.rm = TRUE)`
+
+## Columns
+
+**Column types**:
+
+```{r column_types}
+type <- apply(dat, 2, class)
+tabyl(type)
+```
+
+**Column statistics**:
+
+```{r}
+col_means    <- round_(range(apply(dat, 2, mean, na.rm = TRUE)))
+col_medians  <- round_(range(apply(dat, 2, median, na.rm = TRUE)))
+col_std_devs <- round_(range(apply(dat, 2, sd, na.rm = TRUE)))
+```
+
+- Column mean (min): `r col_means[1]`
+- Column mean (max): `r col_means[2]`
+- Column median (min): `r col_medians[1]`
+- Column median (max): `r col_medians[2]`
+- Column stdev (min): `r col_std_devs[1]`
+- Column stdev (max): `r col_std_devs[2]`
+
+## Rows
+
+**Row statistics**:
+
+```{r}
+row_means    <- round_(range(apply(dat, 2, mean, na.rm = TRUE)))
+row_medians  <- round_(range(apply(dat, 2, median, na.rm = TRUE)))
+row_std_devs <- round_(range(apply(dat, 2, sd, na.rm = TRUE)))
+#row_outliers <- self$detect_row_outliers()
+
+# clip outlier lists if more than a few
+#if (length(row_outliers) > 5) {
+#    row_outliers <- c(head(row_outliers, 5), '...')
+#}
+#if (length(col_outliers) > 5) {
+#    col_outliers <- c(head(col_outliers, 5), '...')
+#}
+```
+
+- Row mean (min): `r row_means[1]`
+- Row mean (max): `r row_means[2]`
+- Row median (min): `r row_medians[1]`
+- Row median (max): `r row_medians[2]`
+- Row stdev (min): `r row_std_devs[1]`
+- Row stdev (max): `r row_std_devs[2]`
+
+## Outliers
+
+### Column outliers
+
+```{r, results = 'asis'}
+# compute column pairwise correlation matrix
+column_cor_mat <- cor(dat)
+
+# detect column outliers (> 2 stdevs away)
+median_column_cors <- apply(column_cor_mat, 2, median)
+cutoff <- mean(median_column_cors) - (2 * sd(median_column_cors))
+
+col_outliers <- colnames(dat)[median_column_cors < cutoff]
+
+if (length(col_outliers) > 0) {
+  cat(paste0('- ', str_flatten(col_outliers, '\n- '), '\n'))
+} else {
+  cat('- None\n')
+}
+```
+
+### Row outliers
+
+```{r, results = 'asis'}
+# compute row pairwise correlation matrix
+row_cor_mat <- cor(t(dat))
+
+# detect row outliers (> 2 stdevs away)
+median_row_cors <- apply(row_cor_mat, 1, median)
+cutoff <- mean(median_row_cors) - (2 * sd(median_row_cors))
+
+row_outliers <- colnames(dat)[median_row_cors < cutoff]
+
+if (length(row_outliers) > 0) {
+  cat(paste0('- ', str_flatten(row_outliers, '\n- '), '\n'))
+} else {
+  cat('- None\n')
+}
+```
+
+

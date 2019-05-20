@@ -88,6 +88,17 @@ class MultiTrainingSetRule(SnakemakeRule):
         self.options = options
 
 
+class ReportRule(SnakemakeRule):
+    def __init__(self, rule_id, input, output, rmd, local=False, **kwargs):
+        """Creates a new ReportRule instance from a dict representation"""
+        super().__init__(rule_id, None, input, output, local, **kwargs)
+
+        self.rmd = rmd
+
+        # include rmd in params as well (expected by snakemake)
+        self.params["rmd"] = rmd
+
+
 class GroupedActionRule:
     def __init__(
         self, rule_id, parent_id, group_actions, input, output, local=False, **kwargs

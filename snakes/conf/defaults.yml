@@ -14,7 +14,11 @@ random_seed: 1
 verbose: false
 
 actions: []
+
 datasets: []
+
+reports:
+  targets: []
 
 training_sets:
   options:
