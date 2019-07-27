@@ -145,7 +145,7 @@ class SnakefileRenderer:
         self.config["datasets"] = datasets
 
         # validate and parse reports section, if present
-        if len(self.config["reports"]) > 0:
+        if len(self.config["reports"]['targets']) > 0:
             self._parse_reports_config(self.config["reports"])
             self._wrangler.add_report_rules(self.config["reports"])
 
@@ -510,7 +510,6 @@ class SnakefileRenderer:
 
         for target_id in target_ids:
             if target_id not in rule_ids:
-                breakpoint()
                 msg = "[ERROR] Unknown target action id specified: '{}'"
                 sys.exit(msg.format(target_id))
 

@@ -160,4 +160,3 @@ rule collect_results:
 localrules: {{ wrangler.get_localrules() }}
 
 {# vim: set softtabstop=2 shiftwidth=2 tabstop=2 filetype=snakemake: #}
-E
