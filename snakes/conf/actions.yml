@@ -45,6 +45,7 @@ filter_cols_name_not_in:
     names: 'list'
   defaults:
     names: []
+    errors: 'ignore'
 filter_rows_gene_biotype_in:
   required:
     gene_biotypes: 'list'
