@@ -551,6 +551,7 @@ class SnakefileRenderer:
             PackageLoader("snakes", "templates/actions/integrate"),
             PackageLoader("snakes", "templates/actions/impute"),
             PackageLoader("snakes", "templates/actions/load"),
+            PackageLoader("snakes", "templates/actions/map"),
             PackageLoader("snakes", "templates/actions/project"),
             PackageLoader("snakes", "templates/actions/transform"),
         ]
@@ -575,12 +576,16 @@ class SnakefileRenderer:
         # root snakes script directory
         script_dir = os.path.abspath(resource_filename(__name__, "src"))
 
+        # root data directory
+        data_dir = os.path.abspath(resource_filename(__name__, "data"))
+
         # render template
         snakefile = template.render(
             config=self.config,
             wrangler=self._wrangler,
             date_str=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             script_dir=script_dir,
+            data_dir=data_dir
         )
 
         # save rendered snakefile to disk

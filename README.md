@@ -242,8 +242,9 @@ dependencies that should be installed:
 ```
 conda create -n snakes \
   --file requirements.txt \
-  --channel bioconda \
-  --channel conda-forge
+  --channel defaults \
+  --channel conda-forge \
+  --channel bioconda
 ```
 
 Finally, activate the new environment and install snakes in development mode using:

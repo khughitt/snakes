@@ -149,6 +149,13 @@ impute_knn:
   defaults:
     k: 5
     groupable: false
+map_gene_ids:
+  required:
+    from: 'str'
+    to: 'str'
+  defaults:
+    mapping: 'grch38'
+    collapse: 'sum'
 pivot_wide:
   required:
     columns: 'str'
