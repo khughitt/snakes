@@ -1,19 +1,25 @@
         # load gmt file
-        entries = [x.rstrip('\n') for x in open('{{ action.params["gmt"] }}').readlines()]
+        gmt_file = '{{ action.params["gmt"] }}'
 
-        # gmt file column indices
-        GENE_SET_NAME  = 0
-        GENE_SET_START = 2
+        if gmt_file.endswith('.gz'):
+            fp = gzip.open(gmt_file, 'rt')
+        else:
+            fp = open(gmt_file, 'r')
 
         # iterate of gmt entries and construct a dictionary mapping from gene set names to lists
         # the genes they contain
         gsets = {}
 
-        for entry in entries:
+        # gmt file column indices
+        GENE_SET_NAME  = 0
+        GENE_SET_START = 2
+
+        for line in fp:
             # split line and retrieve gene set name and a list of genes in the set
-            fields = entry.split('\t')
+            fields = line.rstrip('\n').split('\t')
             gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
+        fp.close()
         {% if action.params["gmt_key"] != action.params["data_key"] %}
         # map gene identifiers
         import mygene
