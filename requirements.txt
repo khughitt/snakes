@@ -8,6 +8,7 @@ r-base=3.5.1
 r-janitor
 r-rmarkdown
 r-tidyverse
+r-vim
 bioconductor-biomart
 scikit-learn
 scipy
