@@ -5,10 +5,13 @@ numpy
 pandas
 pyyaml
 r-base=3.5.1
+r-caret
 r-janitor
 r-rmarkdown
+r-pma
 r-tidyverse
 r-vim
+r-wgcna
 bioconductor-biomart
 scikit-learn
 scipy

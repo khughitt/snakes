@@ -13,7 +13,7 @@ suppressMessages(library(readr))
 params <- snakemake@params[['args']]
 
 # load data
-dat <- read_csv(snakemake@input[[1]])
+dat <- read_csv(snakemake@input[[1]], col_types = cols())
 
 # add data to function arguments
 params[['data']] <- as.data.frame(dat[, -1])

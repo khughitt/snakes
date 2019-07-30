@@ -25,4 +25,4 @@ include_genes <- genes[genes$gene_biotype %in% params['gene_biotypes'], ]$ensemb
 dat <- dat[rownames(dat) %in% include_genes, ]
 
 # save result
-write.csv(dat, file=snakemake@output[[1]], quote = FALSE)
+write.csv(dat, file=snakemake@output[[1]], quote = TRUE)

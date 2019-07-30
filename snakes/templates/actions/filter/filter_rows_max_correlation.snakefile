@@ -3,6 +3,6 @@
     params:
         args = {{ action.params }}
     script:
-        '{{ script_dir }}/filter/filter_rows_gene_biotype_in.R' 
+        '{{ script_dir }}/filter/filter_rows_max_correlation.R' 
 
 

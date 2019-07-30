@@ -47,6 +47,15 @@ filter_cols_name_not_in:
   defaults:
     names: []
     errors: 'ignore'
+filter_rows_max_correlation:
+  required: {}
+  defaults:
+    cutoff: 0.9
+    method: wgcna
+    nthreads: 0
+    use: 'pairwise.complete.obs'
+    verbose: false
+    groupable: false
 filter_rows_gene_biotype_in:
   required:
     gene_biotypes: 'list'
