@@ -22,12 +22,10 @@ Data integration and machine learning pipelines built on Snakemake
 
 # Development status
 
-**April 2019**:
-
-Snakes is currently undergoing active development and is likely to change
-significantly in the coming weeks. A more complete version of the targeted functionality is planned
-for Spring/Summer 2019. In the meantime, if you are interested in contributing to the effort, feel
-free to reach out!
+Snakes is currently undergoing active development and is likely to change significantly
+in the coming weeks. A more complete version of the targeted functionality is planned
+for Fall/Winter 2019. In the meantime, if you are interested in contributing to the
+effort, feel free to reach out!
 
 # Overview
 
@@ -272,7 +270,7 @@ snakemake
 
 Most of the below have already been implemented prototype R version of software. Expect them to be
 added in the coming months, with a target "release date" for the major functionality of
-Spring/Summer 2019.
+Fall/Winter 2019.
 
 - [ ] Dimension reduction methods (PCA, NMF, t-SNE, UMAP)
 - [ ] Visualization
