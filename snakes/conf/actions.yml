@@ -11,6 +11,7 @@ aggregate_gene_sets:
     func: 'str'
   defaults:
     func: 'sum'
+    min_size: 5
 integrate_cross_cor:
   required:
     dataset: 'str'

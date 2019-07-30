@@ -29,6 +29,7 @@ class SnakeWrangler:
         self.reports = {}
         self.training_set = None
         self.feature_selection = []
+        self.data_integration = []
 
     def add_actions(self, dataset_name, actions, parent_id=None, **kwargs):
         """
@@ -194,6 +195,44 @@ class SnakeWrangler:
 
             input = output
 
+    def add_data_integration_rules(self, data_integrations):
+        """Adds a data integration-related SnakemakeRule"""
+        # initial input from training set creation step
+        # input_dir = os.path.join(self.output_dir, "training_sets", "raw")
+        # input = os.path.join(input_dir, "{training_set}.csv")
+        for data_int in data_integrations:
+            # determine unique snakemake rule name to use
+            if "id" in data_int:
+                rule_id = data_int["id"]
+                del data_int["id"]
+
+                # check to make sure user-specified id isn't already in use
+                if rule_id in self.get_all_rule_ids():
+                    sys.exit(
+                        '[ERROR] data_integration id "{}" is already being used; '
+                        "please choose a different name".format(rule_id)
+                    )
+            else:
+                rule_id = self._get_data_integration_rule_id(data_int['datasets'], data_int["type"])
+
+            # get input filepaths
+            # TODO: validate existence of specified keys..
+            inputs = [self.get_output(id_) for id_ in data_int['datasets']]
+            del data_int['datasets']
+
+            # determine output and template filepaths
+            filename = f"{rule_id}.csv"
+            output = os.path.join(self.output_dir, "data_integration", filename)
+
+            template = f"integrate_{data_int['type']}.snakefile"
+            del data_int['type']
+
+            # create SnakemakeRule
+            rule = DataIntegrationRule(
+                rule_id, inputs, output, template=template, **data_int
+            )
+            self.data_integration.append(rule)
+
     def add_report_rules(self, reports_cfg):
         """Adds one or more ReportRule instances to the wrangler"""
         output_dir = os.path.join(self.output_dir, "reports")
@@ -305,6 +344,27 @@ class SnakeWrangler:
 
         return rule_id
 
+    def _get_data_integration_rule_id(self, datasets, data_integration_type):
+        """Determines a unique rule identifier to assign to a given data integration 
+        rule"""
+        # base rule id: <dataset1>...<datasetn>_<data_integration_type>
+        rule_id = "_".join(datasets + [data_integration_type])
+
+        # only allow letters, number, and underscores in rule names
+        rule_id = re.sub(r"[^\w]", "_", rule_id)
+
+        existing_ids = self.get_all_rule_ids()
+
+        # if id is already being used, append first available numeric suffix
+        id_counter = 2
+
+        while rule_id in existing_ids:
+            rule_id = "_".join([data_integration_type, str(id_counter)])
+            rule_id = re.sub(r"[^\w]", "_", rule_id)
+            id_counter += 1
+
+        return rule_id
+
     def _get_action_rule_id(self, dataset_name, action_name):
         """Determines a unique rule identifier to assign to a given action"""
         # base rule id: <dataset_name>_<action>
@@ -340,3 +400,4 @@ class SnakeWrangler:
             for rule_id in self.datasets[dataset_name]:
                 if rule_id == target_id:
                     return self.datasets[dataset_name][rule_id].output
+

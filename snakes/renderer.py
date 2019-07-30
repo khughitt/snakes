@@ -41,6 +41,10 @@ class SnakefileRenderer:
         with open(os.path.join(self._conf_dir, "feature_selection.yml")) as fp:
             self._supported_feat_sel_methods = yaml.load(fp, Loader=yaml.FullLoader)
 
+        # load data integration required / default parameters
+        with open(os.path.join(self._conf_dir, "data_integration.yml")) as fp:
+            self._supported_data_int_types = yaml.load(fp, Loader=yaml.FullLoader)
+
         self._load_config(config_filepath, **kwargs)
 
     @staticmethod
@@ -164,13 +168,26 @@ class SnakefileRenderer:
             fsel_cfgs = []
 
             for fsel_cfg in self.config["feature_selection"]:
-                fsel_cfgs.append(self._parse_feature_selection(fsel_cfg))
+                fsel_cfgs.append(self._parse_feature_selection_config(fsel_cfg))
 
             # TODO
             # self._validate_feature_selection_config()
             self.config["feature_selection"] = fsel_cfgs
 
             self._wrangler.add_feature_selection_rules(fsel_cfgs)
+
+        # validate and parse data integration configuration
+        if len(self.config["data_integration"]) > 0:
+            data_int_cfgs = []
+
+            for data_int_cfg in self.config["data_integration"]:
+                data_int_cfgs.append(self._parse_data_integration_config(data_int_cfg))
+
+            # TODO
+            # self._validate_data_integration_config()
+            self.config["data_integration"] = data_int_cfgs
+
+            self._wrangler.add_data_integration_rules(data_int_cfgs)
 
         # expand paths for any dataset parameters
         self._wrangler.expand_dataset_paths()
@@ -336,7 +353,7 @@ class SnakefileRenderer:
 
         return cfg
 
-    def _parse_feature_selection(self, fsel_cfg):
+    def _parse_feature_selection_config(self, fsel_cfg):
         """Parses a single feature selection config section"""
         # if no parameters specified, add placeholder empty dict
         if isinstance(fsel_cfg, str):
@@ -348,7 +365,6 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(fsel_params) != dict:
-            breakpoint()
             msg = "Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(fsel_method))
 
@@ -360,6 +376,28 @@ class SnakefileRenderer:
 
         # overide with any user-specified config values
         cfg.update(fsel_params)
+
+        return cfg
+
+    def _parse_data_integration_config(self, data_int_cfg):
+        """Parses a single feature selection config section"""
+        # split into feature selection type and parameters
+        data_int_type, data_int_params = list(data_int_cfg.items())[0]
+
+        # check to make sure parameters specified as a dict (in case user accidentally uses
+        # a list in the yaml)
+        if type(data_int_params) != dict:
+            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            sys.exit(msg.format(data_int_type))
+
+        # get default feature selection params
+        cfg = {"datasets": [], "type": data_int_type}
+
+        if data_int_type in self._supported_data_int_types:
+            cfg.update(self._supported_data_int_types[data_int_type]["defaults"])
+
+        # overide with any user-specified config values
+        cfg.update(data_int_params)
 
         return cfg
 

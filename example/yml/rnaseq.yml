@@ -48,6 +48,7 @@ actions:
         gmt: 'example/data/gene_sets/go.gmt'
         data_key: 'ensembl.gene'
         gmt_key: 'entrezgene'
+        min_size: 10
         func: 'sum'
     - transpose_data:
         id: 'rnaseq_go_terms_sum_final'

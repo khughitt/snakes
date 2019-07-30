@@ -1,0 +1,10 @@
+######################################################
+#
+# Snakes data integration required/default parameters
+#
+######################################################
+cca:
+  required:
+    datasets: list
+  defaults:
+    method: 'cca'

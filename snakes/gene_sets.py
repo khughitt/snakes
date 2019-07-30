@@ -6,7 +6,7 @@ import pandas as pd
 from . import aggregation
 
 
-def gene_set_apply(df, gene_sets, func):
+def gene_set_apply(df, gsets, func):
     """
     Aggregates a dataset by specified gene sets and applies a function to the values within each
     gene set to arrive at a new dataset.
@@ -15,7 +15,7 @@ def gene_set_apply(df, gene_sets, func):
     ---------
     df : pandas.DataFrame
         DataFrame indexed by genes.
-    gene_sets : dict
+    gsets : dict
         A dictionary mapping from gene set names to lists of gene ids
     func : str
         Name of function or statistic to be applied to each set of gene values. Valid options
@@ -36,7 +36,7 @@ def gene_set_apply(df, gene_sets, func):
     matched_ids = []
 
     # iterate over gene sets and apply function
-    for gene_set, genes in sorted(gene_sets.items()):
+    for gene_set, genes in sorted(gsets.items()):
         df_subset = df.filter(genes, axis=0)
 
         # check to make sure some genes overlap before applying function

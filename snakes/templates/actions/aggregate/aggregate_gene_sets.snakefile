@@ -14,10 +14,18 @@
         GENE_SET_NAME  = 0
         GENE_SET_START = 2
 
+        # minimum number of genes required for a gene set to be used
+        MIN_GENES = {{ action.params['min_size'] }}
+
+        # iterate over gene sets, and those that meet the minimum size requirements
         for line in fp:
             # split line and retrieve gene set name and a list of genes in the set
             fields = line.rstrip('\n').split('\t')
-            gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
+
+            num_genes = len(fields) - 2
+
+            if num_genes > MIN_GENES:
+                gsets[fields[GENE_SET_NAME]] = fields[GENE_SET_START:len(fields)]
 
         fp.close()
         {% if action.params["gmt_key"] != action.params["data_key"] %}

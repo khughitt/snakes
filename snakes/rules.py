@@ -134,3 +134,35 @@ class GroupedActionRule:
                 template=template,
                 **action
             )
+
+class DataIntegrationRule:
+    def __init__(self, rule_id, inputs, output, local=False, template=None, **kwargs):
+        """Creates a new DataIntegrationRule instance from a dict representation"""
+        self.rule_id = rule_id
+        self.inputs = inputs
+        self.output = output
+        self.local = local
+        self.template = template
+        self.params = kwargs
+
+    def __repr__(self):
+        """Prints a string representation of DataIntegrationRule instance"""
+        template = """
+        DataIntegrationRule ({})
+        
+        - inputs      : {}
+        - output      : {}
+        - local       : {}
+        - template    : {}
+        - params      : {}
+        """
+
+        return template.format(
+            self.rule_id,
+            self.inputs,
+            self.output,
+            self.local,
+            self.template,
+            self.params,
+        )
+

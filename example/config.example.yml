@@ -81,10 +81,9 @@ feature_selection:
 # Data integration
 #
 ################################################################################
-#data_integration:
-#  - type: 'correlation'
-#    datasets:
-#        - 'rnaseq_sample_pca_cormat'
-#        - 'ac50_sample_pca_cormat'
-#    method: 'pearson'
+data_integration:
+  - cca:
+      datasets:
+        - 'rnaseq_go_sum'
+        - 'cnv_final'
 
