@@ -231,6 +231,10 @@ class SnakefileRenderer:
             elif ext in [".xls", ".xlsx"]:
                 # excel spreadsheet
                 dataset["file_type"] = "xls"
+            elif ext in [".feather"]:
+                dataset["file_type"] = "feather"
+            elif ext in [".parquet"]:
+                dataset["file_type"] = "parquet"
             else:
                 msg = "Config error: could not determine appropriate file_type for {}"
                 sys.exit(msg.format(dataset["path"]))
@@ -295,7 +299,7 @@ class SnakefileRenderer:
         Loads actions config section
 
         The "actions_cfg" parameter should be a list of strings (action name with no
-        parametes), and dicts (i.e. "{'action_name': { params }}").
+        parameters), and dicts (i.e. "{'action_name': { params }}").
 
         A special case is "branch" actions which themselves contain a nested list of
         actions, e.g.:
