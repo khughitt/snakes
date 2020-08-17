@@ -55,7 +55,7 @@ class SnakeWrangler:
             template = "actions/load/{}.snakefile".format(template_filename)
 
             # determine output filepath to use
-            outfile = "/".join([self.output_dir, "data", dataset_name, "raw.csv"])
+            outfile = "/".join([self.output_dir, "data", dataset_name, "input.csv"])
 
             if kwargs["compression"] == "gzip":
                 outfile = outfile + ".gz"
@@ -154,7 +154,7 @@ class SnakeWrangler:
         response_filepath = self.get_output(response)
         input["response"] = response_filepath
 
-        output_dir = os.path.join(self.output_dir, "training_sets", "raw")
+        output_dir = os.path.join(self.output_dir, "training_sets", "input")
 
         rule = MultiTrainingSetRule(input, output_dir, options)
 
@@ -163,7 +163,7 @@ class SnakeWrangler:
     def add_feature_selection_rules(self, feature_selections):
         """Adds a training set-related SnakemakeRule"""
         # initial input from training set creation step
-        input_dir = os.path.join(self.output_dir, "training_sets", "raw")
+        input_dir = os.path.join(self.output_dir, "training_sets", "input")
         input = os.path.join(input_dir, "{training_set}.csv")
 
         for fsel in feature_selections:
@@ -198,7 +198,7 @@ class SnakeWrangler:
     def add_data_integration_rules(self, data_integrations):
         """Adds a data integration-related SnakemakeRule"""
         # initial input from training set creation step
-        # input_dir = os.path.join(self.output_dir, "training_sets", "raw")
+        # input_dir = os.path.join(self.output_dir, "training_sets", "input")
         # input = os.path.join(input_dir, "{training_set}.csv")
         for data_int in data_integrations:
             # determine unique snakemake rule name to use
@@ -288,7 +288,7 @@ class SnakeWrangler:
         if len(self.feature_selection) > 0:
             output = self.feature_selection[-1].output
         else:
-            # if not feature selection was performed, use raw training set
+            # if not feature selection was performed, use input training set
             output = self.training_set.output
 
         return output
