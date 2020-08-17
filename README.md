@@ -169,7 +169,7 @@ datasets:
 
 # General
 name: rnaseq
-xid: ensgene
+xid: ensembl_gene_id
 yid: sample_id
 
 #

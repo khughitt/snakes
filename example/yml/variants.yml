@@ -6,7 +6,7 @@
 
 # General
 name: variants
-xid: ensgene
+xid: ensembl_gene_id
 yid: sample_id
 
 #

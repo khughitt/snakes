@@ -28,7 +28,6 @@ class SnakemakeRule:
         - template    : {}
         - params      : {}
         """
-
         return template.format(
             self.rule_id,
             self.parent_id,
