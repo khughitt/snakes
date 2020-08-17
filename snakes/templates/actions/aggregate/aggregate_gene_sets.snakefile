@@ -61,5 +61,5 @@
 
         # update row names to include dataset, gene set, and function applied
         #dat.index = ["_".join([gset_id_prefix, gene_set, func]) for gene_set in dat.index]
-        #dat.to_csv(output[0], index_label='gene_set_id')
+        #dat.to_feather(output[0], compression='lz4')
 

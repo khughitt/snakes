@@ -7,13 +7,13 @@
         raise ValueError(msg)
 
     # load training set data
-    dat = pd.read_csv(input[0], index_col=0)
+    dat = pd.read_feather(input[0])
 
     # get names of feature columns
     feat_cols = dat.columns[:-1]
 
     # compute variance of each column
-    col_vars = dat.drop('response', axis=1).var()
+    col_vars = dat.drop(dat.columns[0], axis=1).var()
 
     # determine cutoff to use
     if params['value'] is not None:
@@ -22,5 +22,6 @@
         cutoff = col_vars.quantile(params['quantile'])
 
     # apply filter and save result
-    cols_to_keep = dat[feat_cols].loc[:, col_vars >= cutoff].columns
-    dat[cols_to_keep].to_csv(output[0])
+    cols_to_keep = [dat.columns[0]] + dat[feat_cols].loc[:, col_vars >= cutoff].columns
+
+    dat[cols_to_keep].to_feather(output[0], compression='lz4')

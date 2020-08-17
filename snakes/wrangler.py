@@ -55,7 +55,7 @@ class SnakeWrangler:
             template = "actions/load/{}.snakefile".format(template_filename)
 
             # determine output filepath to use
-            outfile = "/".join([self.output_dir, "data", dataset_name, "input.csv"])
+            outfile = "/".join([self.output_dir, "data", dataset_name, "input.feather"])
 
             if kwargs["compression"] == "gzip":
                 outfile = outfile + ".gz"
@@ -108,7 +108,7 @@ class SnakeWrangler:
             if action["filename"] is not None:
                 output_filename = action["filename"]
             else:
-                output_filename = "{}.csv".format(rule_id)
+                output_filename = "{}.feather".format(rule_id)
 
             # determine output filepath to use
             if input.endswith(".gz"):
@@ -164,7 +164,7 @@ class SnakeWrangler:
         """Adds a training set-related SnakemakeRule"""
         # initial input from training set creation step
         input_dir = os.path.join(self.output_dir, "training_sets", "input")
-        input = os.path.join(input_dir, "{training_set}.csv")
+        input = os.path.join(input_dir, "{training_set}.feather")
 
         for fsel in feature_selections:
             # determine unique snakemake rule name to use
@@ -182,7 +182,7 @@ class SnakeWrangler:
                 rule_id = self._get_feature_selection_rule_id(fsel["method"])
 
             # determine output and template filepaths
-            filename = "{training_set}" + f"_{rule_id}.csv"
+            filename = "{training_set}" + f"_{rule_id}.feather"
 
             output = pathlib.Path(input).parent.parent / "processed" / filename
             template = f"{fsel['method']}.snakefile"
@@ -199,7 +199,7 @@ class SnakeWrangler:
         """Adds a data integration-related SnakemakeRule"""
         # initial input from training set creation step
         # input_dir = os.path.join(self.output_dir, "training_sets", "input")
-        # input = os.path.join(input_dir, "{training_set}.csv")
+        # input = os.path.join(input_dir, "{training_set}.feather")
         for data_int in data_integrations:
             # determine unique snakemake rule name to use
             if "id" in data_int:
@@ -221,7 +221,7 @@ class SnakeWrangler:
             del data_int['datasets']
 
             # determine output and template filepaths
-            filename = f"{rule_id}.csv"
+            filename = f"{rule_id}.feather"
             output = os.path.join(self.output_dir, "data_integration", filename)
 
             template = f"integrate_{data_int['type']}.snakefile"

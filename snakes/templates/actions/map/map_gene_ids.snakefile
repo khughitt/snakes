@@ -10,6 +10,15 @@
         # until issue can be looked at more closely.
         #
 
+        # Update: Aug 2020
+        #
+        # Since the effectiveness of mapping is highly dependent on the nature of the
+        # input data, a better approach may be to support several methods (e.g.
+        # mygene.info, annotables, and biomaRt), and allow the user to choose which
+        # one they prefer... alternatively, each method could be tested and the mapping
+        # with the highest success rate could be used)
+        #
+
         # query mygene for gene identifiers
         #res = mg.querymany(dat.index,
         #                   scopes='{{ action.params["from"] }}', 

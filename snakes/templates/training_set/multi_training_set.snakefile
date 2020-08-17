@@ -13,7 +13,8 @@ checkpoint create_training_sets:
         os.mkdir(params.output_dir, mode=0o755)
 
     # load feature data
-    feature_dat = pd.read_csv(input.features[0], index_col=0).sort_index()
+    feature_dat = pd.read_feather(input.features[0])
+    feature_dat = feature_dat.set_index(feature_dat.columns[0]).sort_index()
 
     # update column names (optional)
     if params.include_column_prefix:
@@ -22,7 +23,9 @@ checkpoint create_training_sets:
 
     if len(input.features) > 1:
         for filepath in input.features[1:]:
-            dat = pd.read_csv(filepath, index_col=0).sort_index()
+            dat = pd.read_feather(filepath)
+            dat = dat.set_index(dat.columns[0]).sort_index()
+
 
             # update column names (optional)
             if params.include_column_prefix:
@@ -52,7 +55,8 @@ checkpoint create_training_sets:
                 raise EmptyDataError(msg)
 
     # load response dataframe
-    response_dat = pd.read_csv(input.response, index_col=0).sort_index()
+    response_dat = pd.read_feather(input.response)
+    response_dat = response_dat.set_index(response_dat.columns[0]).sort_index()
 
     # check for index mismatches
     if not params.allow_mismatched_indices and not response_dat.index.equals(feature_dat.index):
@@ -72,6 +76,6 @@ checkpoint create_training_sets:
         dat.name = 'response'
 
         # add response data column to end of feature data and save to disk
-        outfile = os.path.join(params.output_dir, "{}.csv".format(col))
-        feature_dat.join(dat).to_csv(outfile)
+        outfile = os.path.join(params.output_dir, "{}.feather".format(col))
+        feature_dat.join(dat).reset_index().to_feather(outfile, compression='lz4')
 

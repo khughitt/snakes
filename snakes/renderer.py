@@ -246,7 +246,8 @@ class SnakefileRenderer:
             elif ext in [".tsv", ".tab", ".txt"]:
                 dataset["sep"] = "\t"
 
-        # compression flag
+        # compression flag for csv/tsv files
+        # for feather/parquet input datasets compression does not need to be specified
         if dataset["path"].endswith("gz"):
             dataset["compression"] = "gzip"
 

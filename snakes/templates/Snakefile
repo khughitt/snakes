@@ -65,7 +65,9 @@ rule {{ rule_id }}:
     input: '{{ action.input }}'
     output: '{{ action.output }}'
     run:
-        dat = pd.read_csv(input[0], index_col=0)
+        dat = pd.read_feather(input[0])
+        dat = dat.set_index(dat.columns[0])
+
         {% if action.groupped %}
             {# ==================== #}
             {# =   ACTION GROUP   = #}
@@ -80,7 +82,7 @@ rule {{ rule_id }}:
             {# ============== #}
             {%- include action.template %}
         {% endif %}
-        dat.to_csv(output[0])
+        dat.reset_index().to_feather(output[0], compression='lz4')
 
     {% endif %}
   {% endfor %}
@@ -148,7 +150,7 @@ def aggregate_training_sets_input(wildcards):
 
     # output of final feature selection step, or the training set construction
     # step if no feature selection was applied
-    tset_output = os.path.join("{{ wrangler.training_set.output }}", "{training_set}.csv")
+    tset_output = os.path.join("{{ wrangler.training_set.output }}", "{training_set}.feather")
     fsel_output = "{{ wrangler.get_feature_selection_output() }}"
 
     return expand(fsel_output, training_set=glob_wildcards(tset_output).training_set)

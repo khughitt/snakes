@@ -1,10 +1,12 @@
-python>=3.6
+python
 jinja2
+lz4
 mygene
 numpy
 pandas
+pyarrow>=1.0
 pyyaml
-r-base=3.5.1
+r-arrow
 r-caret
 r-janitor
 r-rmarkdown

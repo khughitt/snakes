@@ -10,6 +10,6 @@
         # sub-sample dataset columns
         dat = dat.sample(frac={{ config.development.sample_col_frac }}, random_state={{ config.random_seed }}, axis=1)
 {% endif %}
-        dat.to_csv(output[0], index_label='{{ dataset.xid }}')
+        dat.reset_index().to_feather(output[0], compression='lz4')
 
 

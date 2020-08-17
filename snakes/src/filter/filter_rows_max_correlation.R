@@ -22,7 +22,9 @@
 #'   whether or not to display verbose output (default: false)
 #'
 ################################################################################
+suppressMessages(library(arrow))
 suppressMessages(library(caret))
+suppressMessages(library(tibble))
 
 options(stringsAsFactors = FALSE)
 
@@ -30,7 +32,10 @@ options(stringsAsFactors = FALSE)
 params <- snakemake@params[['args']]
 
 # load data
-dat <- read.csv(snakemake@input[[1]], row.names = 1)
+id_col <- colnames(dat)[1]
+
+dat <- read_feather(snakemake@input[[1]]) %>%
+  column_to_rownames(id_col)
 
 # determine correlation method and arguments to use
 if (params[['cor_method']] == 'cor') {
@@ -52,8 +57,7 @@ cor_args$x <- t(dat)
 cor_mat <- do.call(cor_func, cor_args)
 
 # detect and remove correlated features
-ind <- caret::findCorrelation(cor_mat, cutoff = params[['cutoff']], 
-                              verbose = params[['verbose']])
+ind <- findCorrelation(cor_mat, cutoff = params[['cutoff']], verbose = params[['verbose']])
 
 if (length(ind) > 0) {
   message(sprintf("Removing %d / %d features with a correlation above %0.2f.",
@@ -63,5 +67,7 @@ if (length(ind) > 0) {
   message('No correlated features detected!')
 }
 
-# save result
-write.csv(dat, file=snakemake@output[[1]], quote = TRUE)
+# move rownames back to column and save outpu
+dat %>%
+  rownames_to_column(id_col) %>%
+  write_feather(snakemake@output[[1]], compression = 'lz4')

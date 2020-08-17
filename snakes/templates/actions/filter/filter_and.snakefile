@@ -34,10 +34,14 @@
 # For this approach, the data templates would need to be modified to mofified accordingly, as well.
 #
     run:
-        dat = pd.read_csv(input[0], index_col=0)
-        filters.filter_and('{{ action.params['filter1'] }}', 
-                           '{{ action.params['filter2'] }}', 
-                           fargs1={{ action.params['fargs1'] }}, 
-                           fargs2={{ action.params['fargs2'] }}).to_csv(output[0])
+        dat = pd.read_feather(input[0])
+        dat = dat.set_index(dat.columns[0])
+
+        dat = filters.filter_and('{{ action.params['filter1'] }}', 
+                                 '{{ action.params['filter2'] }}', 
+                                 fargs1={{ action.params['fargs1'] }}, 
+                                 fargs2={{ action.params['fargs2'] }})
+
+        dat.reset_index().to_feather(output[0], compression='lz4')
 
 

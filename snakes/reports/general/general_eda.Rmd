@@ -12,7 +12,7 @@ output:
     df_print: kable
     toc: true
     toc_depth: 2
-    code_folding: hide 
+    code_folding: hide
 ---
 
 ```{r load_knitr, include = FALSE}
@@ -21,16 +21,21 @@ opts_chunk$set(message = FALSE)
 ```
 
 ```{r setup}
+library(arrow)
 library(janitor)
 library(tidyverse)
 
-dat <- as.matrix(read.csv(snakemake@input[[1]], row.names = 1))
+dat <- read_feather(snakemake@input[[1]])
+
+dat <- dat %>%
+  column_to_rownames(colnames(dat)[1]) %>%
+  as.matrix()
 ```
 
 ```{r helper_function}
 # helper function to round numbers, including trailing zeros
 round_ <- function(x) {
-    formatC(round(x, params$digits), params$digits, format = "f")
+  formatC(round(x, params$digits), params$digits, format = "f")
 }
 ```
 
@@ -43,7 +48,7 @@ round_ <- function(x) {
 
 ```{r}
 qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.75) +
-  xlab("Value") + 
+  xlab("Value") +
   theme_bw() +
   theme(legend.position = 'none')
 ```

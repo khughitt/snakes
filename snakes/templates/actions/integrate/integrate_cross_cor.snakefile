@@ -8,12 +8,15 @@
         method="{{ action.params['method'] }}"
     run:
         # load datasets
-        dat = pd.read_csv(input[0], index_col=0)
-        dat2 = pd.read_csv(input[1], index_col=0)
+        X = pd.read_feather(input[0])
+        X = X.set_index(X.columns[0])
+
+        Y = pd.read_feather(input[1])
+        Y = Y.set_index(Y.columns[0])
 
         # transpose second dataframe, if requested
         if params.transpose:
-            dat2 = dat2.T
+            Y = Y.T
 
         # 
         # determine orientation to compute correlations along.
@@ -23,10 +26,10 @@
         #
 
         # get shared indices
-        shared_indices = sorted(list(set(dat.axes[params.axis]).intersection(dat2.axes[params.axis])))
+        shared_indices = sorted(list(set(X.axes[params.axis]).intersection(Y.axes[params.axis])))
 
         # determine the length of the longest index to be correlated
-        max_dim = max(len(dat.axes[params.axis]), len(dat2.axes[params.axis]))
+        max_dim = max(len(X.axes[params.axis]), len(Y.axes[params.axis]))
 
         if len(shared_indices) == 0:
             raise Exception("No matching indices found!")
@@ -38,15 +41,16 @@
         # limit dataframes to shared indices
         if params.axis == 0:
             # select shared rows
-            dat = dat.loc[shared_indices]
-            dat2 = dat2.loc[shared_indices]
+            X = X.loc[shared_indices]
+            Y = Y.loc[shared_indices]
         else:
             # select shared columns
-            dat = dat[shared_indices]
-            dat2 = dat2[shared_indices]
+            X = X[shared_indices]
+            Y = Y[shared_indices]
 
         # compute correlations and save result
-        dat = dat.apply(lambda x: dat2.corrwith(x, axis=params.axis,
-                                                method=params.method), axis=params.axis).to_csv(output[0])
+        X = X.apply(lambda x: Y.corrwith(x, axis=params.axis, method=params.method), axis=params.axis)
+
+        X.reset_index().to_feather(output[0], compression='lz4')
 
 
