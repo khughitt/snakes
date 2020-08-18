@@ -172,6 +172,13 @@ pivot_wide:
     columns: 'str'
     values: 'str'
   defaults: {}
+project_pca:
+  required: {}
+  defaults:
+    target: 'columns'
+    num_dims: 10
+    whiten: false
+    random_seed: 1
 rename_cols_replace:
   required:
     old: 'str'
