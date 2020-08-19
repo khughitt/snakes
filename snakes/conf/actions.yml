@@ -159,7 +159,6 @@ impute_knn:
   required: {}
   defaults:
     k: 5
-    groupable: false
 map_gene_ids:
   required:
     from: 'str'

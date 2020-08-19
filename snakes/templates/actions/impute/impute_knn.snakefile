@@ -1,7 +1,7 @@
-    input: '{{ action.input }}'
-    output: '{{ action.output }}'
-    params:
-        args = {{ action.params }}
-    script: '{{ script_dir }}/impute/impute_knn.R' 
+        from sklearn.impute import KNNImputer
+
+        imputer = KNNImputer(n_neighbors={{ action.params['k'] }})
+
+        dat[:] = imputer.fit_transform(dat)
 
 
