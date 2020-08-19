@@ -52,6 +52,7 @@ actions:
       index: null
       columns: 'drug_id'
       values: 'ac50'
+      reports: ['general_eda']
 
   #- branch:
   #  - dim_reduce_pca:

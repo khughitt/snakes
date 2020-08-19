@@ -37,6 +37,7 @@ actions:
         - transform_log2p
   - transform_zscore:
       axis: 1
+      reports: ['general_eda']
   - branch:
     - cluster_hclust:
         num_clusters: 4

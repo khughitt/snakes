@@ -20,10 +20,10 @@ from snakes.rules import *
 
 
 class SnakeWrangler:
-    def __init__(self, output_dir, report_dir):
+    def __init__(self, output_dir, report_cfgs):
         """SnakeWrangler constructor"""
         self.output_dir = output_dir
-        self.report_dir = report_dir
+        self.report_cfgs = report_cfgs
 
         self.datasets = {}
         self.reports = {}
@@ -76,7 +76,7 @@ class SnakeWrangler:
             # create OrderedDict and store load_data rule
             self.datasets[dataset_name] = OrderedDict({rule_id: rule})
 
-        # iterate over user-defined actions and add to wrangler
+        # next, iterate over user-defined actions and add to wrangler
         for action in actions:
             # dataset branch
             if isinstance(action, list):
@@ -114,7 +114,7 @@ class SnakeWrangler:
             if input.endswith(".gz"):
                 output_filename = output_filename + ".gz"
 
-            output = os.path.join(os.path.dirname(input), output_filename)
+            rule_output = os.path.join(os.path.dirname(input), output_filename)
 
             # drop unused filename params to clean up output
             if not action["filename"]:
@@ -126,14 +126,14 @@ class SnakeWrangler:
                 del action["actions"]
 
                 rule = GroupedActionRule(
-                    rule_id, parent_id, actions, input, output, **action
+                    rule_id, parent_id, actions, input, rule_output, **action
                 )
             else:
                 action_type = action_name.split("_")[0]
                 template = "actions/{}/{}.snakefile".format(action_type, action_name)
 
                 rule = ActionRule(
-                    rule_id, parent_id, input, output, template=template, **action
+                    rule_id, parent_id, input, rule_output, template=template, **action
                 )
 
             # add to dataset
@@ -141,6 +141,31 @@ class SnakeWrangler:
 
             # update parent node
             parent_id = rule_id
+
+            # if no report requested, stop here
+            if len(action["reports"]) == 0:
+                next
+
+            # otherwise, iterate over reports and add relevant rules
+            for report_name in action["reports"]:
+
+                # get report rule id
+                report_id = f"report_{report_name}_{rule_id}"
+
+                # get output filepath
+                report_output = os.path.join(self.output_dir, "reports", f"{report_id}.html")
+
+                # create new ReportRule instance and add to wrangler
+                rule = ReportRule(
+                    report_id,
+                    input=rule_output,
+                    output=report_output,
+                    rmd=self.report_cfgs[report_name]["rmd"],
+                    title=self.report_cfgs[report_name]["title"],
+                    theme="theme_bw"
+                )
+
+                self.reports[report_id] = rule
 
     def add_trainingset_rule(self, features, response, options):
         """Adds a training set-related SnakemakeRule"""
@@ -233,37 +258,6 @@ class SnakeWrangler:
             )
             self.data_integration.append(rule)
 
-    def add_report_rules(self, reports_cfg):
-        """Adds one or more ReportRule instances to the wrangler"""
-        output_dir = os.path.join(self.output_dir, "reports")
-
-        # iterate over report types
-        for report_name in reports_cfg["report_type"]:
-            # iterate over target datasets
-            for target_dataset in reports_cfg["report_type"][report_name]["targets"]:
-                # get report rule id
-                rule_id = f"report_{report_name}_{target_dataset}"
-
-                # get output filepath
-                output = os.path.join(output_dir, f"{rule_id}.html")
-
-                rmd_path = os.path.join(
-                    self.report_dir, reports_cfg["report_type"][report_name]["rmd"]
-                )
-
-                # create new ReportRule instance and add to wrangler
-                # rule_id, input, output, local=False, template=None
-                rule = ReportRule(
-                    rule_id,
-                    input=target_dataset,
-                    output=output,
-                    rmd=rmd_path,
-                    title=reports_cfg["report_type"][report_name]["title"],
-                    theme=reports_cfg["report_type"][report_name]["theme"],
-                )
-
-                self.reports[rule_id] = rule
-
     def expand_dataset_paths(self):
         """
         Checks for rules with a 'dataset' parameter refering to the output from
@@ -277,10 +271,6 @@ class SnakeWrangler:
                         self.datasets[dataset_name][rule_id].params["dataset"]
                     )
                     self.datasets[dataset_name][rule_id].params["dataset"] = output
-
-        # expand report inputs
-        for rule_id in self.reports:
-            self.reports[rule_id].input = self.get_output(self.reports[rule_id].input)
 
     def get_feature_selection_output(self):
         """Gets the output path for the last feature selection step"""

@@ -33,9 +33,17 @@ class SnakefileRenderer:
         with open(os.path.join(self._conf_dir, "actions.yml")) as fp:
             self._supported_actions = yaml.load(fp, Loader=yaml.FullLoader)
 
-        # load reports required / default parameters
+        # load supported reports
         with open(os.path.join(self._conf_dir, "reports.yml")) as fp:
-            self._supported_reports = yaml.load(fp, Loader=yaml.FullLoader)
+            self._report_cfgs = yaml.load(fp, Loader=yaml.FullLoader)
+
+            # root snakes report directory
+            report_dir = os.path.abspath(resource_filename(__name__, "reports"))
+
+            # add report path prefixed
+            for report in self._report_cfgs:
+                self._report_cfgs[report]['rmd'] = os.path.join(report_dir,
+                                                                self._report_cfgs[report]['rmd'])
 
         # load feature selection required / default parameters
         with open(os.path.join(self._conf_dir, "feature_selection.yml")) as fp:
@@ -122,10 +130,7 @@ class SnakefileRenderer:
             os.path.expanduser(self.config["output_dir"]), self.config["version"]
         )
 
-        # root snakes report directory
-        report_dir = os.path.abspath(resource_filename(__name__, "reports"))
-
-        self._wrangler = SnakeWrangler(output_dir, report_dir)
+        self._wrangler = SnakeWrangler(output_dir, self._report_cfgs)
 
         # load dataset-specific configurations; each should be specified either as a filepath to a
         # dataset-specific yaml file, or as a dict instance
@@ -147,11 +152,6 @@ class SnakefileRenderer:
             datasets[cfg["name"]] = cfg
 
         self.config["datasets"] = datasets
-
-        # validate and parse reports section, if present
-        if len(self.config["reports"]['targets']) > 0:
-            self._parse_reports_config(self.config["reports"])
-            self._wrangler.add_report_rules(self.config["reports"])
 
         # validate and parse training sets configuration
         if "features" in self.config["training_sets"]:
@@ -348,6 +348,7 @@ class SnakefileRenderer:
             "filename": None,
             "inline": True,
             "local": False,
+            "reports": []
         }
 
         if action_name in self._supported_actions:
@@ -406,31 +407,6 @@ class SnakefileRenderer:
 
         return cfg
 
-    def _parse_reports_config(self, reports_cfg):
-        """Parses a reports config section"""
-        # check to make sure parameters specified as a dict (in case user accidentally uses
-        # a list in the yaml)
-        if type(reports_cfg) != dict:
-            breakpoint()
-            sys.exit(
-                "Config error: reports configuration must be specified as a YAML dictionary."
-            )
-
-        # iterate over report config entries and parse/validate
-        for report_name in reports_cfg["report_type"]:
-            # default report arguments
-            cfg = {"format": "html_document", "theme": "theme_bw", "digits": 2}
-
-            if report_name in self._supported_reports:
-                cfg.update(self._supported_reports[report_name]["defaults"])
-
-                # add targets
-                cfg["targets"] = reports_cfg["report_type"][report_name]
-
-            reports_cfg["report_type"][report_name] = cfg
-
-        return reports_cfg
-
     def _validate_main_config(self):
         """Performs some basic check on config dict to make sure required settings are present."""
         #  check for required top-level parameters in main config
@@ -467,6 +443,7 @@ class SnakefileRenderer:
                 sys.exit(msg.format(config_file, param, expected_type))
 
         # check action sub-section of dataset config
+        # TODO Aug 18: check to make sure only valid report names specified
         self._validate_actions_config(
             dataset_cfg["actions"], os.path.basename(dataset_cfg["config_file"])
         )

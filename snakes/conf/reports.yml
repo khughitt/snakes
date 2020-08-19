@@ -4,7 +4,6 @@
 #
 ############################################
 general_eda:
-  required: {}
-  defaults:
-    rmd: 'general/general_eda.Rmd'
-    title: 'Exploratory Data Analysis (General)'
+  rmd: 'general/general_eda.Rmd'
+  title: 'Exploratory Data Analysis (General)'
+  # defaults:
