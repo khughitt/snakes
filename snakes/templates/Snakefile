@@ -56,9 +56,9 @@ rule all:
 ################################################################################
   {% for rule_id, action in wrangler.datasets[dataset_name].items() %}
 rule {{ rule_id }}:
-    {% if not action.groupable and not action.groupped %}
+    {% if not action.inline and not action.groupped %}
       {# ============================== #}
-      {# =   ACTION (Non-groupable)   = #}
+      {# =   ACTION (Non-inline)   = #}
       {# ============================== #}
       {%- include action.template %}
     {% else %}

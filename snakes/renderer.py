@@ -346,7 +346,7 @@ class SnakefileRenderer:
         cfg = {
             "action_name": action_name,
             "filename": None,
-            "groupable": True,
+            "inline": True,
             "local": False,
         }
 

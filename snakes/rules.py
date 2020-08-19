@@ -46,7 +46,7 @@ class ActionRule(SnakemakeRule):
         parent_id,
         input,
         output,
-        groupable=True,
+        inline=True,
         local=False,
         template=None,
         **kwargs
@@ -54,17 +54,17 @@ class ActionRule(SnakemakeRule):
         """Creates a new SnakemakeRule instance from a dict representation"""
         super().__init__(rule_id, parent_id, input, output, local, template, **kwargs)
 
-        self.groupable = groupable
+        self.inline = inline
         self.groupped = False
 
     def __repr__(self):
         """Prints a string representation of SnakemakeRule instance"""
 
         template = """
-        - groupable   : {}
+        - inline   : {}
         """
 
-        return super().__repr__() + template.format(self.groupable)
+        return super().__repr__() + template.format(self.inline)
 
 
 class FeatureSelectionRule(SnakemakeRule):

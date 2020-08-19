@@ -67,7 +67,7 @@ class SnakeWrangler:
                 output=outfile,
                 local=True,
                 template=template,
-                groupable=False,
+                inline=False,
             )
 
             # update parent id

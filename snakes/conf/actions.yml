@@ -19,7 +19,7 @@ integrate_cross_cor:
     axis: 0
     transpose: false
     method: 'pearson'
-    groupable: false
+    inline: false
 cluster_hclust:
   required:
     num_clusters: 'int'
@@ -55,19 +55,19 @@ filter_rows_max_correlation:
     nthreads: 0
     use: 'pairwise.complete.obs'
     verbose: false
-    groupable: false
+    inline: false
 filter_rows_gene_biotype_in:
   required:
     gene_biotypes: 'list'
   defaults:
     gene_biotypes: []
-    groupable: false
+    inline: false
 filter_rows_gene_biotype_not_in:
   required:
     gene_biotypes: 'list'
   defaults:
     gene_biotypes: []
-    groupable: false
+    inline: false
 filter_rows_col_not_na: 
   required:
     col: 'str'
