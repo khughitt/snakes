@@ -15,21 +15,27 @@ output:
     code_folding: hide
 ---
 
-```{r load_knitr, include = FALSE}
+<!--
+TODO:
+
+- generalize addition of multiple col annotations to heatmap plots
+
+-->
+
+```{r setup, include = FALSE}
 library(knitr)
-opts_chunk$set(message = FALSE)
+opts_chunk$set(echo = FALSE, message = FALSE, dpi = 120)
+set.seed(1)
+
+knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
 ```
 
-```{r setup}
+```{r load_libraries, include = FALSE}
 library(arrow)
 library(janitor)
+library(NMF)
 library(tidyverse)
-
-dat <- read_feather(snakemake@input[[1]])
-
-dat <- dat %>%
-  column_to_rownames(colnames(dat)[1]) %>%
-  as.matrix()
+library(viridis)
 ```
 
 ```{r helper_function}
@@ -37,18 +43,167 @@ dat <- dat %>%
 round_ <- function(x) {
   formatC(round(x, params$digits), params$digits, format = "f")
 }
+
+# helper function to load data from a of unknown type
+load_data <- function(x) {
+  if (endsWith(x, ".csv")) {
+    dat <- read_csv(x, col_types = cols())
+  } else if (endsWith(x, ".tsv")) {
+    dat <- read_tsv(x, col_types = cols())
+  } else if (endsWith(x, ".feather")) {
+    dat <- arrow::read_feather(x)
+  }
+
+  dat %>%
+    column_to_rownames(colnames(dat)[1])
+}
 ```
 
-## Dimensions
+```{r load_data}
+# load dataset and convert to a matrix
+dat <- read_feather(snakemake@input[[1]])
+
+dat <- dat %>%
+  column_to_rownames(colnames(dat)[1]) %>%
+  as.matrix()
+```
+
+```{r load_metadata}
+# load metadata
+col_mdata <- NULL
+row_mdata <- NULL
+
+if (snakemake@params$metadata$columns != '') {
+  col_mdata <- load_data(snakemake@params$metadata$columns)
+}
+
+if (snakemake@params$metadata$rows != '') {
+  row_mdata <- load_data(snakemake@params$metadata$rows)
+}
+```
+
+```{r load_styles}
+col_fill <- NULL
+row_fill <- NULL
+
+# load column styles
+if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
+  col_styles <- snakemake@params$styles$columns
+
+  # column fill color
+  if (length(col_styles$fill) > 0) {
+    col_fill <- col_styles$fill
+  }
+}
+
+# load row styles
+if (!is.null(row_mdata) && all(colnames(dat) %in% rownames(row_mdata))) {
+  row_styles <- snakemake@params$styles$rows
+
+  # row fill color
+  if (length(row_styles$fill) > 0) {
+    row_fill <- col_styles$fill
+  }
+}
+```
+
+## Overview
+
+```{r heatmap, fig.width = 1920/120, fig.height = 1400/120}
+# create an alternate version of the dataset with missing values removed
+
+# first, determine whether missing values are clustered among rows or columns, if
+# either..
+row_missing <- apply(dat, 1, function(x) {
+  sum(is.na(x))
+})
+
+col_missing <- apply(dat, 2, function(x) {
+  sum(is.na(x))
+})
+
+# as a heuristic, we will compare the percent of rows/columns with > 10% missing values
+# row10 <- sum(row_missing > (0.1 * nrow(dat)))
+# col10 <- sum(col_missing > (0.1 * ncol(dat)))
+
+# TODO: convert to a function that iteratively removes rows/columns based on which ones
+# have the most missing values?
+
+# for now, to keep things simple, we will just remove cols, then rows..
+col_mask <- col_missing <= 0.1 * ncol(dat)
+
+dat_complete <- dat[, col_mask]
+dat_complete <- dat_complete[complete.cases(dat_complete), ]
+
+# plot at most 500 rows/columns
+row_ind <- sample(nrow(dat_complete), min(nrow(dat_complete), 500))
+col_ind <- sample(ncol(dat_complete), min(ncol(dat_complete), 500))
+
+dat_subset <- as.matrix(dat_complete[row_ind, col_ind])
+
+dat_subset_log2 <- dat_subset
+dat_subset_log2[dat_subset_log2 < 0] <- 0
+dat_subset_log2 <- log2(dat_subset_log2 + 1)
+
+#
+# heatmap (raw)
+#
+heatmap_args <- list(
+  x = dat_subset,
+  color = viridis(100),
+  main = "Raw"
+)
+
+if (!is.null(col_fill)) {
+  col_feats <- pull(col_mdata, col_fill[1])
+  col_annot <- setNames(data.frame(col_feats[col_mask][col_ind]), coll_fill[1])
+
+  heatmap_args[["annCol"]] <- col_annot
+}
+do.call(aheatmap, heatmap_args)
+
+#
+# heatmap (log2)
+#
+heatmap_args <- list(
+  x = dat_subset_log2,
+  color = viridis(100),
+  main = "Log2"
+)
+
+# add annotation column, if specified
+if (!is.null(col_fill)) {
+  heatmap_args[["annCol"]] <- col_annot
+}
+do.call(aheatmap, heatmap_args)
+```
+
+**Dimensions**:
 
 - \# rows: `r nrow(dat)`
 - \# cols: `r ncol(dat)`
 
-## Distribution
+**Column types**:
 
-```{r}
+```{r column_types}
+col_type <- apply(dat, 2, class)
+tabyl(col_type)
+```
+
+## Values
+
+```{r density, warning = FALSE}
 qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.75) +
   xlab("Value") +
+  ggtitle("Distribution of data values") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+```{r density_log2, warning = FALSE}
+qplot(log2(pmax(0, as.numeric(as.matrix(dat))) + 2), geom = 'density', fill = I('blue'), alpha = 0.75) +
+  xlab("Value (Log2)") +
+  ggtitle("Distribution of data values (Logged)") +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -59,101 +214,334 @@ qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.
 - max: `r round_(max(dat, na.rm = TRUE))`
 - quartiles: `r round_(quantile(dat, na.rm = TRUE))`
 
-## Values
+```{r include = FALSE}
+na_mask <- is.na(dat)
+num_total <- length(na_mask)
 
-- \# missing values: `r sum(is.na(dat))`
-- \# zeros: `r sum(dat == 0, na.rm = TRUE)`
-- \# positive values: `r sum(dat > 0, na.rm = TRUE)`
-- \# negative values: `r sum(dat < 0, na.rm = TRUE)`
+# number zeros
+zero_mask <- dat == 0
+num_zero <- sum(zero_mask, na.rm = TRUE)
+pct_zero <- 100 * num_zero / num_total
 
-## Columns
+# number positive
+pos_mask <- dat > 0
+num_pos <- sum(pos_mask, na.rm = TRUE)
+pct_pos <- 100 * num_pos / num_total
 
-**Column types**:
-
-```{r column_types}
-type <- apply(dat, 2, class)
-tabyl(type)
+# number negative
+neg_mask <- dat < 0
+num_neg <- sum(neg_mask, na.rm = TRUE)
+pct_neg <- 100 * num_neg / num_total
 ```
 
-**Column statistics**:
+- \# zeros: `r sprintf("%d / %d (%0.2f)%%", num_zero, num_total, pct_zero)`
+- \# positive values: `r sprintf("%d / %d (%0.2f)%%", num_pos, num_total, pct_pos)`
+- \# negative values: `r sprintf("%d / %d (%0.2f)%%", num_neg, num_total, pct_neg)`
 
-```{r}
-col_means    <- round_(range(apply(dat, 2, mean, na.rm = TRUE)))
-col_medians  <- round_(range(apply(dat, 2, median, na.rm = TRUE)))
-col_std_devs <- round_(range(apply(dat, 2, sd, na.rm = TRUE)))
+## Missing Values
+
+**Overall**
+
+```{r missing_values, include = FALSE}
+# num missing
+num_missing <- sum(na_mask)
+pct_missing <- 100 * num_missing / num_total
 ```
 
-- Column mean (min): `r col_means[1]`
-- Column mean (max): `r col_means[2]`
-- Column median (min): `r col_medians[1]`
-- Column median (max): `r col_medians[2]`
-- Column stdev (min): `r col_std_devs[1]`
-- Column stdev (max): `r col_std_devs[2]`
+```{r heatmap_missing_values, fig.width = 1920/120, fig.height = 1400/120}
+row_ind <- sample(nrow(dat), min(nrow(dat), 500))
+col_ind <- sample(ncol(dat), min(ncol(dat), 500))
 
-## Rows
+if (num_missing > 0) {
+  heatmap_args <- list(
+    x = is.na(dat) * 1,
+    color = viridis(100),
+    main = "Missing values"
+  )
 
-**Row statistics**:
+  # add annotation column, if specified
+  if (!is.null(col_fill)) {
+    # TODO: generalize
+    col_feats <- pull(col_mdata, col_fill[1])
 
-```{r}
-row_means    <- round_(range(apply(dat, 2, mean, na.rm = TRUE)))
-row_medians  <- round_(range(apply(dat, 2, median, na.rm = TRUE)))
-row_std_devs <- round_(range(apply(dat, 2, sd, na.rm = TRUE)))
-#row_outliers <- self$detect_row_outliers()
+    heatmap_args[["annCol"]] <- setNames(data.frame(col_feats[col_ind]), col_fill[1])
+  }
 
-# clip outlier lists if more than a few
-#if (length(row_outliers) > 5) {
-#    row_outliers <- c(head(row_outliers, 5), '...')
-#}
-#if (length(col_outliers) > 5) {
-#    col_outliers <- c(head(col_outliers, 5), '...')
-#}
-```
-
-- Row mean (min): `r row_means[1]`
-- Row mean (max): `r row_means[2]`
-- Row median (min): `r row_medians[1]`
-- Row median (max): `r row_medians[2]`
-- Row stdev (min): `r row_std_devs[1]`
-- Row stdev (max): `r row_std_devs[2]`
-
-## Outliers
-
-### Column outliers
-
-```{r, results = 'asis'}
-# compute column pairwise correlation matrix
-column_cor_mat <- cor(dat)
-
-# detect column outliers (> 2 stdevs away)
-median_column_cors <- apply(column_cor_mat, 2, median)
-cutoff <- mean(median_column_cors) - (2 * sd(median_column_cors))
-
-col_outliers <- colnames(dat)[median_column_cors < cutoff]
-
-if (length(col_outliers) > 0) {
-  cat(paste0('- ', str_flatten(col_outliers, '\n- '), '\n'))
-} else {
-  cat('- None\n')
+  do.call(aheatmap, heatmap_args)
 }
 ```
 
-### Row outliers
+- \# missing values: `r sprintf("%d / %d (%0.2f)%%", num_missing, num_total, pct_missing)`
 
-```{r, results = 'asis'}
+```{r echo = FALSE, include = num_missing > 0, eval = num_missing > 0, results = 'asis'}
+cat("\n**Missing values by row**:\n")
+```
+
+```{r density_plot_missing_vals_by_row, include = num_missing > 0, eval = num_missing > 0}
+qplot(row_missing, geom = 'density', fill = I('purple'), alpha = 0.75) +
+  xlab("# NA") +
+  ggtitle("Distribution of row missing values") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+```{r table_missing_vals_by_row, results = 'asis', include = num_missing > 0, eval = num_missing > 0}
+data.frame(row = rownames(dat), num_missing = as.numeric(row_missing)) %>%
+  arrange(desc(num_missing)) %>%
+  head(10) %>%
+  kable()
+```
+
+```{r echo = FALSE, include = num_missing > 0, eval = num_missing > 0, results = 'asis'}
+cat("\n**Missing values by column**:\n")
+```
+
+```{r density_plot_missing_vals_by_col, include = num_missing > 0, eval = num_missing > 0}
+qplot(col_missing, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("# NA") +
+  ggtitle("Distribution of column missing values") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+```{r table_missing_vals_by_col, results = 'asis', include = num_missing > 0, eval = num_missing > 0}
+data.frame(col = colnames(dat), num_missing = as.numeric(col_missing)) %>%
+  arrange(desc(num_missing)) %>%
+  head(10) %>%
+  kable()
+```
+
+## Row Statistics
+
+**Row Means**
+
+```{r}
+row_means <- apply(dat, 1, mean, na.rm = TRUE)
+
+qplot(row_means, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Row mean") +
+  ggtitle("Distribution of row means") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Row mean (min): `r round_(min(row_means))`
+- Row mean (median): `r round_(median(row_means))`
+- Row mean (mean): `r round_(mean(row_means))`
+- Row mean (max): `r round_(max(row_means))`
+
+**Row Medians**
+
+```{r}
+row_medians <- apply(dat, 1, median, na.rm = TRUE)
+
+qplot(row_medians, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Row median") +
+  ggtitle("Distribution of row medians") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Row median (min): `r round_(min(row_medians))`
+- Row median (median): `r round_(median(row_medians))`
+- Row median (mean): `r round_(mean(row_medians))`
+- Row median (max): `r round_(max(row_medians))`
+
+**Row Standard Deviations**
+
+```{r}
+row_sds <- apply(dat, 1, sd, na.rm = TRUE)
+
+qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Row standard deviation") +
+  ggtitle("Distribution of row standard deviations") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Row stdev (min): `r round_(min(row_sds))`
+- Row stdev (median): `r round_(median(row_sds))`
+- Row stdev (mean): `r round_(mean(row_sds))`
+- Row stdev (max): `r round_(max(row_sds))`
+
+## Column Statistics
+
+**Column Means**
+
+```{r}
+col_means <- apply(dat, 2, mean, na.rm = TRUE)
+
+qplot(col_means, geom = 'density', fill = I('purple'), alpha = 0.75) +
+  xlab("Column mean") +
+  ggtitle("Distribution of column means") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Column mean (min): `r round_(min(col_means))`
+- Column mean (median): `r round_(median(col_means))`
+- Column mean (mean): `r round_(mean(col_means))`
+- Column mean (max): `r round_(max(col_means))`
+
+**Column Medians**
+
+```{r}
+col_medians <- apply(dat, 2, median, na.rm = TRUE)
+
+qplot(col_medians, geom = 'density', fill = I('purple'), alpha = 0.75) +
+  xlab("Column median") +
+  ggtitle("Distribution of column medians") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Column median (min): `r round_(min(col_medians))`
+- Column median (median): `r round_(median(col_medians))`
+- Column median (mean): `r round_(mean(col_medians))`
+- Column median (max): `r round_(max(col_medians))`
+
+**Column Standard Deviations**
+
+```{r}
+col_sds <- apply(dat, 2, sd, na.rm = TRUE)
+
+qplot(col_sds, geom = 'density', fill = I('purple'), alpha = 0.75) +
+  xlab("Column standard deviation") +
+  ggtitle("Distribution of column standard deviations") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Column stdev (min): `r round_(min(col_sds))`
+- Column stdev (median): `r round_(median(col_sds))`
+- Column stdev (mean): `r round_(mean(col_sds))`
+- Column stdev (max): `r round_(max(col_sds))`
+
+## Correlations
+
+### Row correlations
+
+```{r row_median_pairwise_correlations}
 # compute row pairwise correlation matrix
-row_cor_mat <- cor(t(dat))
+row_cor_mat <- coop::pcor(t(dat), use = 'pairwise.complete')
+median_row_cors <- apply(row_cor_mat, 1, median, na.rm = TRUE)
+```
 
-# detect row outliers (> 2 stdevs away)
-median_row_cors <- apply(row_cor_mat, 1, median)
-cutoff <- mean(median_row_cors) - (2 * sd(median_row_cors))
+```{r density_plot_row_correlations}
+qplot(median_row_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Median pairwise pearson correlation") +
+  ggtitle("Distribution of median pairwise correlations (rows)") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
 
-row_outliers <- colnames(dat)[median_row_cors < cutoff]
+```{r heatmap_row_correlations}
+ind <- sample(nrow(row_cor_mat), min(nrow(row_cor_mat), 500))
 
-if (length(row_outliers) > 0) {
-  cat(paste0('- ', str_flatten(row_outliers, '\n- '), '\n'))
-} else {
-  cat('- None\n')
+heatmap_args <- list(
+  x = row_cor_mat[ind, ind],
+  color = magma(100),
+  main = "Row correlation matrix (n = 500)"
+)
+
+# add annotation column, if specified
+if (!is.null(row_fill)) {
+  row_feats <- pull(row_mdata, row_fill[1])
+
+  heatmap_args[["annCol"]] <- setNames(data.frame(row_feats[row_ind]), row_fill[1])
 }
+
+do.call(aheatmap, heatmap_args)
+```
+
+**High-correlation rows**:
+
+Rows with the highest pairwise correlations with all other rows.
+
+```{r high_cor_rows, results = 'asis'}
+row_cor_dat <- data.frame(row = rownames(dat), cor = as.numeric(median_row_cors))
+
+row_cor_dat %>%
+    arrange(desc(cor)) %>%
+    head(10) %>%
+    kable()
+```
+
+**Low-correlation rows**:
+
+Rows with the lowest (or strongest inverse) pairwise correlations with all other rows.
+
+```{r low_cor_rows, results = 'asis'}
+row_cor_dat %>%
+    arrange(cor) %>%
+    head(10) %>%
+    kable()
+```
+
+
+### Column correlations
+
+```{r col_median_pairwise_correlations}
+# compute column pairwise correlation matrix
+col_cor_mat <- coop::pcor(dat, use = 'pairwise.complete')
+median_col_cors <- apply(col_cor_mat, 2, median, na.rm = TRUE)
+```
+
+```{r density_plot_col_correlations}
+qplot(median_col_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Median pairwise pearson correlation") +
+  ggtitle("Distribution of median pairwise correlations (columns)") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+```{r heatmap_col_correlations}
+ind <- sample(ncol(col_cor_mat), min(ncol(col_cor_mat), 500))
+
+heatmap_args <- list(
+  x = col_cor_mat[ind, ind],
+  color = magma(100),
+  main = "Column correlation matrix (n = 500)"
+)
+
+# add annotation column, if specified
+if (!is.null(col_fill)) {
+  col_feats <- pull(col_mdata, col_fill[1])
+
+  heatmap_args[["annCol"]] <- setNames(data.frame(col_feats[col_ind]), col_fill[1])
+}
+
+do.call(aheatmap, heatmap_args)
+```
+
+**High-correlation columns**:
+
+Columns with the highest pairwise correlations with all other columns.
+
+```{r high_cor_cols, results = 'asis'}
+col_cor_dat <- data.frame(col = colnames(dat), cor = as.numeric(median_col_cors))
+
+col_cor_dat %>%
+    arrange(desc(cor)) %>%
+    head(10) %>%
+    kable()
+```
+
+**Low-correlation columns**:
+
+Columns with the lowest (or strongest inverse) pairwise correlations with all other
+columns.
+
+```{r low_cor_cols, results = 'asis'}
+col_cor_dat %>%
+    arrange(cor) %>%
+    head(10) %>%
+    kable()
+```
+
+```{r}
+# TESTING
+save.image("~/tmp-rmd.rda")
 ```
 
 

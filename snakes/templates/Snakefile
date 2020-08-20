@@ -110,7 +110,9 @@ rule {{ action.rule_id }}:
 rule {{ rule_id }}:
   input: "{{ report.input }}"
   output: "{{ report.output }}"
-  params: {{ report.params }}
+  params:
+    metadata={{ report.params['metadata'] }},
+    styles={{ report.params['styles'] }}
   script: "{{ report.rmd }}"
 
 {% endfor %}

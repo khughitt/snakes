@@ -19,3 +19,7 @@
         colnames = ["PC" + str(i + 1) for i in range(dat.shape[1])]
         dat = pd.DataFrame(dat, index = row_index, columns = colnames)
 
+        # revert to original orientation for row-wise projections
+        if "{{ action.params['target'] }}" == "rows":
+            dat = dat.T
+

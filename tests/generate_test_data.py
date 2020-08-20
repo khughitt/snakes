@@ -59,7 +59,7 @@ pd.DataFrame(np.round(np.random.normal(size=(30, num_samples)), 2),
 drug_dat = pd.DataFrame(np.round(np.random.lognormal(mean=0, sigma=0.25, size = (5, num_samples)) * 50, 2),
              index = drug_ids, columns = sample_ids)
 
-na_mask = nan_mat = np.random.random(drug_dat.shape) < 0.1
+na_mask = np.random.random(drug_dat.shape) < 0.1
 drug_dat = drug_dat.mask(na_mask)
 
 drug_dat.to_csv('data/ac50.csv')

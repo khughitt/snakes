@@ -196,6 +196,7 @@ class SnakefileRenderer:
         """Loads a dataset config file and overides any global settings with any dataset-specific ones."""
 
         # default dataset parameters
+        # TODO: move to conf/
         dataset = {
             "file_type": "",
             "compression": None,
@@ -208,7 +209,19 @@ class SnakefileRenderer:
             "sheet": 0,
             "config_file": "",
             "index_col": 0,
-            "actions": [],
+            "metadata": {
+                "columns": "",
+                "rows": ""
+            },
+            "styles": {
+                "columns": {
+                    "fill": []
+                },
+                "rows": {
+                    "fill": []
+                }
+            },
+            "actions": []
         }
 
         logging.info("Parsing %s config", user_cfg["name"])

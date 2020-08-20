@@ -162,6 +162,8 @@ class SnakeWrangler:
                     output=report_output,
                     rmd=self.report_cfgs[report_name]["rmd"],
                     title=self.report_cfgs[report_name]["title"],
+                    metadata=kwargs["metadata"],
+                    styles=kwargs["styles"],
                     theme="theme_bw"
                 )
 
