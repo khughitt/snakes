@@ -156,7 +156,7 @@ heatmap_args <- list(
 
 if (!is.null(col_fill)) {
   col_feats <- pull(col_mdata, col_fill[1])
-  col_annot <- setNames(data.frame(col_feats[col_mask][col_ind]), coll_fill[1])
+  col_annot <- setNames(data.frame(col_feats[col_mask][col_ind]), col_fill[1])
 
   heatmap_args[["annCol"]] <- col_annot
 }
