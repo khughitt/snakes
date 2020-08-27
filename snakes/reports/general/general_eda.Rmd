@@ -138,6 +138,32 @@ if (!is.null(row_mdata) && all(colnames(dat) %in% rownames(row_mdata))) {
 }
 ```
 
+```{r variance_check}
+# remove any zero variance rows/columns since these are generally not that
+# informative and can cause problems with many methods
+row_vars <- apply(dat, 1, var, na.rm = TRUE)
+col_vars <- apply(dat, 2, var, na.rm = TRUE)
+
+if (sum(row_vars == 0) > 0) {
+  mask <- row_vars > 0
+  dat <- dat[mask, ]
+
+  print(sprintf("Excluding %d/%d rows with zero variance...", sum(!mask), length(mask)))
+}
+
+if (sum(col_vars == 0) > 0) {
+  mask <- col_vars > 0
+  dat <- dat[, mask]
+
+  print(sprintf("Excluding %d/%d columns with zero variance...", sum(!mask), length(mask)))
+}
+```
+
+```{r}
+# TESTING
+save.image("~/tmp-rmd.rda")
+```
+
 Overview
 --------
 
@@ -161,6 +187,9 @@ col_missing <- apply(dat, 2, function(x) {
 # TODO: convert to a function that iteratively removes rows/columns based on which ones
 # have the most missing values?
 
+# approach: compute _ratios_ of missing values for each col/row, remove one with
+# highest ratio, then repeat...
+
 # for now, to keep things simple, we will just remove cols, then rows..
 col_mask <- col_missing <= 0.1 * ncol(dat)
 
@@ -172,6 +201,15 @@ row_ind_complete <- sample(nrow(dat_complete), min(nrow(dat_complete), 1000))
 col_ind_complete <- sample(ncol(dat_complete), min(ncol(dat_complete), 1000))
 
 dat_subset <- as.matrix(dat_complete[row_ind_complete, col_ind_complete])
+
+# exclude any entries with zero variance; these will cause problems during 
+# several of the eda steps
+# mask <- apply(dat_subset, 1, var) > 0
+
+# if (sum(!mask) > 0) {
+#   print(sprintf("Excluding %d/%d entries with zero variance.", !mask, length(mask)))
+#   dat_subset <- dat_subset[mask, ]
+# }
 
 dat_subset_log2 <- dat_subset
 dat_subset_log2[dat_subset_log2 < 0] <- 0
@@ -198,7 +236,7 @@ if (!is.null(row_color)) {
   heatmap_args[["annRow"]] <- row_mdata[row_ind_complete, ] %>%
     select(row_color) %>%
     as.data.frame()
-  
+ 
   heatmap_args[["annColors"]] <- c(heatmap_args[["annColors"]], 
                                    get_color_map(heatmap_args[["annRow"]]))
 }
@@ -327,6 +365,13 @@ pct_missing <- 100 * num_missing / num_total
 # select row and column indices to for sub-sampling (including missing values)
 row_ind <- sample(nrow(dat), min(nrow(dat), 1000))
 col_ind <- sample(ncol(dat), min(ncol(dat), 1000))
+
+# create an alternate version of indices that exclude rows/columns with zero variance
+# row_mask <- apply(dat[row_ind, ], 1, var) > 0
+# col_mask <- apply(dat[col_ind, ], 2, var) > 0
+
+# row_ind_safe <- row_ind[row_mask]
+# col_ind_safe <- col_ind[col_mask]
 
 # determine column and row annotations for heatmaps based on the same subsampled data
 if (!is.null(col_color)) {
@@ -530,8 +575,20 @@ qplot(median_row_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
   theme(legend.position = 'none')
 ```
 
+```{r}
+# TESTING
+save.image("~/tmp-rmd.rda")
+```
+
 ```{r heatmap_row_correlations, fig.width = 1920/120, fig.height = 1400/120}
-heatmap_args$x <- row_cor_mat[row_ind, row_ind]
+# heatmap_dat <- row_cor_mat[row_ind_safe, row_ind_safe]
+heatmap_dat <- row_cor_mat[row_ind, row_ind]
+
+# drop na's resulting from zero variance rows
+# mask <- apply(heatmap_dat, 1, function(x) { sum(is.na(x)) }) != nrow(heatmap_dat)
+# heatmap_dat <- heatmap_dat[mask, mask]
+
+heatmap_args$x <- heatmap_dat
 heatmap_args$main <- sprintf("Row correlation matrix (n = %d)", nrow(row_cor_mat))
 heatmap_args$annCol <- NULL
 
@@ -608,6 +665,13 @@ qplot(median_col_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
 ```
 
 ```{r heatmap_col_correlations, fig.width = 1920/120, fig.height = 1400/120}
+heatmap_dat <- col_cor_mat[col_ind, col_ind]
+
+# drop na's resulting from zero variance columns
+# mask <- apply(heatmap_dat, 2, function(x) { sum(is.na(x)) }) != nrow(heatmap_dat)
+# heatmap_dat <- heatmap_dat[mask, mask]
+
+# heatmap_args$x <- col_cor_mat[col_ind_safe, col_ind_safe]
 heatmap_args$x <- col_cor_mat[col_ind, col_ind]
 heatmap_args$main <- sprintf("Column correlation matrix (n = %d)", nrow(col_cor_mat))
 heatmap_args$annRow <- NULL
@@ -676,11 +740,6 @@ tbl_out
 
 Projections
 -----------
-
-```{r}
-# TESTING
-save.image("~/tmp-rmd.rda")
-```
 
 ### PCA
 
@@ -765,8 +824,9 @@ kable(col_pca_summary[, 1:min(ncol(col_pca_summary), 10)], digits = 2)
 #### Row UMAP
 
 ```{r plot_umap_rows}
-# column-wise UMAP projections
-row_umap_dat <- as.data.frame(umap(dat_complete, scale = TRUE))
+# row-wise UMAP projections
+num_neighbors <- min(15, nrow(dat_complete) - 1)
+row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, scale = TRUE))
 
 colnames(row_umap_dat) <- paste0("UMAP", 1:2)
 rownames(row_umap_dat) <- rownames(dat_complete)
@@ -798,7 +858,8 @@ if (!is.null(row_color)) {
 
 ```{r plot_umap_columns}
 # column-wise UMAP projections
-col_umap_dat <- as.data.frame(umap(t(dat_complete), scale = TRUE))
+num_neighbors <- min(15, ncol(dat_complete) - 1)
+col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors, scale = TRUE))
 
 colnames(col_umap_dat) <- paste0("UMAP", 1:2)
 rownames(col_umap_dat) <- colnames(dat_complete)
