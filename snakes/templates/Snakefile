@@ -37,7 +37,7 @@ import warnings
 from snakes import clustering, filters, gene_sets 
 from snakes.rules import ActionRule, GroupedActionRule
 
-# create output directory, if needed
+# output directory
 output_dir = '{{ output_dir }}' 
 
 ################################################################################

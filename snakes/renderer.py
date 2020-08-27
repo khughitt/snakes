@@ -345,9 +345,12 @@ class SnakefileRenderer:
             action_params["actions"] = self._parse_actions_list(
                 action_params["actions"], dataset_name
             )
-        # branch meta-action
+        # "branch" meta-action
         elif action_name == "branch":
             return self._parse_actions_list(action_params, dataset_name)
+        # "input" meta-action
+        #  elif action_name == "input":
+        #      breakpoint()
 
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
@@ -486,6 +489,9 @@ class SnakefileRenderer:
             elif entry["action_name"] == "group":
                 # group
                 self._validate_actions_config(entry["actions"], config_file)
+                continue
+            elif entry["action_name"] == "input":
+                # skip validation for "input" meta-action, if present
                 continue
 
             # get expected path to template

@@ -76,6 +76,13 @@ class SnakeWrangler:
             # create OrderedDict and store load_data rule
             self.datasets[dataset_name] = OrderedDict({rule_id: rule})
 
+            # if "input" meta-rule specified, check for requested reports to generate
+            if actions[0]['action_name'] == 'input' and len(actions[0]['reports']) > 0:
+                for report_name in actions[0]["reports"]:
+                    self.add_report_rule(report_name, outfile, parent_id, **kwargs)
+
+                del actions[0]
+
         # next, iterate over user-defined actions and add to wrangler
         for action in actions:
             # dataset branch
@@ -148,26 +155,27 @@ class SnakeWrangler:
 
             # otherwise, iterate over reports and add relevant rules
             for report_name in action["reports"]:
+                self.add_report_rule(report_name, rule_output, parent_id, **kwargs)
 
-                # get report rule id
-                report_id = f"report_{report_name}_{rule_id}"
+    def add_report_rule(self, report_name, rule_output, rule_id, **kwargs):
+        """Add a single report rule to the pipeline"""
+        # get report rule id
+        report_id = f"report_{report_name}_{rule_id}"
 
-                # get output filepath
-                report_output = os.path.join(self.output_dir, "reports", f"{report_id}.html")
+        # get output filepath
+        report_output = os.path.join(self.output_dir, "reports", f"{report_id}.html")
 
-                # create new ReportRule instance and add to wrangler
-                rule = ReportRule(
-                    report_id,
-                    input=rule_output,
-                    output=report_output,
-                    rmd=self.report_cfgs[report_name]["rmd"],
-                    title=self.report_cfgs[report_name]["title"],
-                    metadata=kwargs["metadata"],
-                    styles=kwargs["styles"],
-                    theme="theme_bw"
-                )
-
-                self.reports[report_id] = rule
+        # create new ReportRule instance and add to wrangler
+        self.reports[report_id] = ReportRule(
+            report_id,
+            input=rule_output,
+            output=report_output,
+            rmd=self.report_cfgs[report_name]["rmd"],
+            title=self.report_cfgs[report_name]["title"],
+            metadata=kwargs["metadata"],
+            styles=kwargs["styles"],
+            theme="theme_bw"
+        )
 
     def add_trainingset_rule(self, features, response, options):
         """Adds a training set-related SnakemakeRule"""
