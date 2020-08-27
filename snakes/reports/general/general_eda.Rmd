@@ -312,6 +312,11 @@ Missing Values
 
 **Overall**
 
+```{r}
+# TESTING
+save.image("~/tmp-rmd.rda")
+```
+
 ```{r missing_values, include = FALSE}
 # num missing
 num_missing <- sum(na_mask)
@@ -339,6 +344,7 @@ if (num_missing > 0) {
   dat_missing <- is.na(dat) * 1
 
   heatmap_args$x <- dat_missing[row_ind, col_ind]
+  heatmap_args$distfun <- 'euclidean'
   heatmap_args$main <- "Missing values"
 
   do.call(aheatmap, heatmap_args)
