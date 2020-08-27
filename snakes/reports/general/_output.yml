@@ -1,0 +1,7 @@
+html_document:
+  code_folding: hide 
+  toc: true
+  toc_depth: 2
+  df_print: kable
+  theme: flatly
+  highlight: tango
