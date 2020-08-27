@@ -18,7 +18,7 @@ output:
 ```{r setup, include = FALSE}
 library(knitr)
 opts_chunk$set(echo = FALSE, message = FALSE, dpi = 120)
-set.seed(1)
+set.seed(snakemake@params$random_seed)
 
 knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
 ```

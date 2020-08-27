@@ -112,7 +112,8 @@ rule {{ rule_id }}:
   output: "{{ report.output }}"
   params:
     metadata={{ report.params['metadata'] }},
-    styles={{ report.params['styles'] }}
+    styles={{ report.params['styles'] }},
+    random_seed={{ config["random_seed"] }}
   script: "{{ report.rmd }}"
 
 {% endfor %}
