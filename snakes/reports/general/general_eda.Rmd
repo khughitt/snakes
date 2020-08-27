@@ -15,13 +15,6 @@ output:
     code_folding: hide
 ---
 
-<!--
-TODO:
-
-- generalize addition of multiple col annotations to heatmap plots
-
--->
-
 ```{r setup, include = FALSE}
 library(knitr)
 opts_chunk$set(echo = FALSE, message = FALSE, dpi = 120)
@@ -34,7 +27,9 @@ knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
 library(arrow)
 library(janitor)
 library(NMF)
+library(RColorBrewer)
 library(tidyverse)
+library(uwot)
 library(viridis)
 ```
 
@@ -56,6 +51,24 @@ load_data <- function(x) {
 
   dat %>%
     column_to_rownames(colnames(dat)[1])
+}
+
+# helper function to get a list of colormaps to use for a set of annotations
+get_color_map <- function(annot) {
+  cmap <- list()
+
+  for (x in colnames(annot)) {
+    # determine number of unique annotation values
+    num_levels <- length(unique(pull(annot, x)))
+
+    # for annotations with 8 or fewer levels, use Set2
+    if (num_levels <= 8) {
+      cmap[[x]] <- brewer.pal(8, 'Set2')
+    } else {
+      cmap[[x]] <- viridis(num_levels)
+    }
+  }
+  cmap
 }
 ```
 
@@ -83,16 +96,26 @@ if (snakemake@params$metadata$rows != '') {
 ```
 
 ```{r load_styles}
-col_fill <- NULL
-row_fill <- NULL
+col_annot <- NULL
+col_color <- NULL
+row_annot <- NULL
+row_color <- NULL
 
 # load column styles
 if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
   col_styles <- snakemake@params$styles$columns
 
+  # match data / metadata order
+  col_mdata <- col_mdata[match(rownames(col_mdata), colnames(dat)), ]
+
+  # column annotations to display in tables
+  col_annot <- col_mdata %>%
+    select(as.character(unlist(col_styles))) %>%
+    rownames_to_column('column_id')
+
   # column fill color
-  if (length(col_styles$fill) > 0) {
-    col_fill <- col_styles$fill
+  if (length(col_styles$color) > 0) {
+    col_color <- col_styles$color
   }
 }
 
@@ -100,16 +123,25 @@ if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
 if (!is.null(row_mdata) && all(colnames(dat) %in% rownames(row_mdata))) {
   row_styles <- snakemake@params$styles$rows
 
+  # match data / metadata order
+  row_mdata <- row_mdata[match(rownames(row_mdata), rownames(dat)), ]
+
+  # column annotations to display in tables
+  row_annot <- row_mdata %>%
+    select(as.character(unlist(row_styles))) %>%
+    rownames_to_column('row_id')
+
   # row fill color
-  if (length(row_styles$fill) > 0) {
-    row_fill <- col_styles$fill
+  if (length(row_styles$color) > 0) {
+    row_color <- col_styles$color
   }
 }
 ```
 
-## Overview
+Overview
+--------
 
-```{r heatmap, fig.width = 1920/120, fig.height = 1400/120}
+```{r heatmap_raw, fig.width = 1920/120, fig.height = 1400/120}
 # create an alternate version of the dataset with missing values removed
 
 # first, determine whether missing values are clustered among rows or columns, if
@@ -135,11 +167,11 @@ col_mask <- col_missing <= 0.1 * ncol(dat)
 dat_complete <- dat[, col_mask]
 dat_complete <- dat_complete[complete.cases(dat_complete), ]
 
-# plot at most 500 rows/columns
-row_ind <- sample(nrow(dat_complete), min(nrow(dat_complete), 500))
-col_ind <- sample(ncol(dat_complete), min(ncol(dat_complete), 500))
+# plot at most 1000 rows/columns
+row_ind_complete <- sample(nrow(dat_complete), min(nrow(dat_complete), 1000))
+col_ind_complete <- sample(ncol(dat_complete), min(ncol(dat_complete), 1000))
 
-dat_subset <- as.matrix(dat_complete[row_ind, col_ind])
+dat_subset <- as.matrix(dat_complete[row_ind_complete, col_ind_complete])
 
 dat_subset_log2 <- dat_subset
 dat_subset_log2[dat_subset_log2 < 0] <- 0
@@ -151,30 +183,66 @@ dat_subset_log2 <- log2(dat_subset_log2 + 1)
 heatmap_args <- list(
   x = dat_subset,
   color = viridis(100),
-  main = "Raw"
+  main = "Data Heatmap (Raw / Euclidean Distance)",
+  annColors = list()
 )
 
-if (!is.null(col_fill)) {
-  col_feats <- pull(col_mdata, col_fill[1])
-  col_annot <- setNames(data.frame(col_feats[col_mask][col_ind]), col_fill[1])
-
-  heatmap_args[["annCol"]] <- col_annot
+# add column and row annotations, if specified
+if (!is.null(col_color)) {
+  heatmap_args[["annCol"]] <- col_mdata[col_ind_complete, ] %>%
+    select(col_color) %>%
+    as.data.frame()
+  heatmap_args[["annColors"]] <- get_color_map(heatmap_args[["annCol"]])
+}
+if (!is.null(row_color)) {
+  heatmap_args[["annRow"]] <- row_mdata[row_ind_complete, ] %>%
+    select(row_color) %>%
+    as.data.frame()
+  
+  heatmap_args[["annColors"]] <- c(heatmap_args[["annColors"]], 
+                                   get_color_map(heatmap_args[["annRow"]]))
 }
 do.call(aheatmap, heatmap_args)
 
 #
+# heatmap (raw, pearson)
+#
+heatmap_args$distfun <- 'pearson'
+heatmap_args$main <- 'Data Heatmap (Raw / Pearson Correlation)'
+do.call(aheatmap, heatmap_args)
+
+#
+# heatmap (raw, spearman)
+#
+heatmap_args$distfun <- 'spearman'
+heatmap_args$main <- 'Data Heatmap (Raw / Spearman Correlation)'
+do.call(aheatmap, heatmap_args)
+```
+
+```{r heatmap_log2, fig.width = 1920/120, fig.height = 1400/120}
+#
 # heatmap (log2)
 #
-heatmap_args <- list(
-  x = dat_subset_log2,
-  color = viridis(100),
-  main = "Log2"
-)
+heatmap_args$x <- dat_subset_log2
+heatmap_args$distfun <- 'euclidean'
+heatmap_args$main <- 'Data Heatmap (Log2 / Euclidean Distance)'
 
-# add annotation column, if specified
-if (!is.null(col_fill)) {
-  heatmap_args[["annCol"]] <- col_annot
-}
+do.call(aheatmap, heatmap_args)
+
+#
+# heatmap (log2, pearson)
+#
+heatmap_args$distfun <- 'pearson'
+heatmap_args$main <- 'Data Heatmap (Log2 / Pearson Correlation)'
+
+do.call(aheatmap, heatmap_args)
+
+#
+# heatmap (log2, spearman)
+#
+heatmap_args$distfun <- 'spearman'
+heatmap_args$main <- 'Data Heatmap (Log2 / Spearman Correlation)'
+
 do.call(aheatmap, heatmap_args)
 ```
 
@@ -190,7 +258,8 @@ col_type <- apply(dat, 2, class)
 tabyl(col_type)
 ```
 
-## Values
+Values
+------
 
 ```{r density, warning = FALSE}
 qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.75) +
@@ -238,7 +307,8 @@ pct_neg <- 100 * num_neg / num_total
 - \# positive values: `r sprintf("%d / %d (%0.2f)%%", num_pos, num_total, pct_pos)`
 - \# negative values: `r sprintf("%d / %d (%0.2f)%%", num_neg, num_total, pct_neg)`
 
-## Missing Values
+Missing Values
+==============
 
 **Overall**
 
@@ -249,23 +319,27 @@ pct_missing <- 100 * num_missing / num_total
 ```
 
 ```{r heatmap_missing_values, fig.width = 1920/120, fig.height = 1400/120}
-row_ind <- sample(nrow(dat), min(nrow(dat), 500))
-col_ind <- sample(ncol(dat), min(ncol(dat), 500))
+# select row and column indices to for sub-sampling (including missing values)
+row_ind <- sample(nrow(dat), min(nrow(dat), 1000))
+col_ind <- sample(ncol(dat), min(ncol(dat), 1000))
+
+# determine column and row annotations for heatmaps based on the same subsampled data
+if (!is.null(col_color)) {
+  heatmap_args[["annCol"]] <- col_mdata[col_ind, ] %>%
+    select(col_color) %>%
+    as.data.frame()
+}
+if (!is.null(row_color)) {
+  heatmap_args[["annRow"]] <- row_mdata[row_ind, ] %>%
+    select(row_color) %>%
+    as.data.frame()
+}
 
 if (num_missing > 0) {
-  heatmap_args <- list(
-    x = is.na(dat) * 1,
-    color = viridis(100),
-    main = "Missing values"
-  )
+  dat_missing <- is.na(dat) * 1
 
-  # add annotation column, if specified
-  if (!is.null(col_fill)) {
-    # TODO: generalize
-    col_feats <- pull(col_mdata, col_fill[1])
-
-    heatmap_args[["annCol"]] <- setNames(data.frame(col_feats[col_ind]), col_fill[1])
-  }
+  heatmap_args$x <- dat_missing[row_ind, col_ind]
+  heatmap_args$main <- "Missing values"
 
   do.call(aheatmap, heatmap_args)
 }
@@ -286,10 +360,16 @@ qplot(row_missing, geom = 'density', fill = I('purple'), alpha = 0.75) +
 ```
 
 ```{r table_missing_vals_by_row, results = 'asis', include = num_missing > 0, eval = num_missing > 0}
-data.frame(row = rownames(dat), num_missing = as.numeric(row_missing)) %>%
+tbl_out <- data.frame(row_id = rownames(dat), num_missing = as.numeric(row_missing)) %>%
   arrange(desc(num_missing)) %>%
-  head(10) %>%
-  kable()
+  head(10)
+
+if (!is.null(row_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(row_annot, by = 'row_id')
+}
+
+tbl_out
 ```
 
 ```{r echo = FALSE, include = num_missing > 0, eval = num_missing > 0, results = 'asis'}
@@ -305,13 +385,20 @@ qplot(col_missing, geom = 'density', fill = I('green'), alpha = 0.75) +
 ```
 
 ```{r table_missing_vals_by_col, results = 'asis', include = num_missing > 0, eval = num_missing > 0}
-data.frame(col = colnames(dat), num_missing = as.numeric(col_missing)) %>%
+tbl_out <- data.frame(column_id = colnames(dat), num_missing = as.numeric(col_missing)) %>%
   arrange(desc(num_missing)) %>%
-  head(10) %>%
-  kable()
+  head(10)
+
+if (!is.null(col_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(col_annot, by = 'column_id')
+}
+
+tbl_out
 ```
 
-## Row Statistics
+Row Statistics
+--------------
 
 **Row Means**
 
@@ -364,7 +451,8 @@ qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
 - Row stdev (mean): `r round_(mean(row_sds))`
 - Row stdev (max): `r round_(max(row_sds))`
 
-## Column Statistics
+Column Statistics
+-----------------
 
 **Column Means**
 
@@ -417,7 +505,8 @@ qplot(col_sds, geom = 'density', fill = I('purple'), alpha = 0.75) +
 - Column stdev (mean): `r round_(mean(col_sds))`
 - Column stdev (max): `r round_(max(col_sds))`
 
-## Correlations
+Correlations
+------------
 
 ### Row correlations
 
@@ -435,49 +524,66 @@ qplot(median_row_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
   theme(legend.position = 'none')
 ```
 
-```{r heatmap_row_correlations}
-ind <- sample(nrow(row_cor_mat), min(nrow(row_cor_mat), 500))
-
-heatmap_args <- list(
-  x = row_cor_mat[ind, ind],
-  color = magma(100),
-  main = "Row correlation matrix (n = 500)"
-)
-
-# add annotation column, if specified
-if (!is.null(row_fill)) {
-  row_feats <- pull(row_mdata, row_fill[1])
-
-  heatmap_args[["annCol"]] <- setNames(data.frame(row_feats[row_ind]), row_fill[1])
-}
+```{r heatmap_row_correlations, fig.width = 1920/120, fig.height = 1400/120}
+heatmap_args$x <- row_cor_mat[row_ind, row_ind]
+heatmap_args$main <- sprintf("Row correlation matrix (n = %d)", nrow(row_cor_mat))
+heatmap_args$annCol <- NULL
 
 do.call(aheatmap, heatmap_args)
 ```
 
-**High-correlation rows**:
+**High positive correlation rows**:
 
-Rows with the highest pairwise correlations with all other rows.
+Rows with the highest positive pairwise correlations with all other rows.
 
-```{r high_cor_rows, results = 'asis'}
-row_cor_dat <- data.frame(row = rownames(dat), cor = as.numeric(median_row_cors))
+```{r high_pos_cor_rows}
+row_cor_dat <- data.frame(row_id = rownames(dat), cor = as.numeric(median_row_cors))
 
-row_cor_dat %>%
+tbl_out <- row_cor_dat %>%
     arrange(desc(cor)) %>%
-    head(10) %>%
-    kable()
+    head(10)
+
+if (!is.null(row_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(row_annot, by = 'row_id')
+}
+
+tbl_out
 ```
 
-**Low-correlation rows**:
+**High negative correlation rows**:
 
-Rows with the lowest (or strongest inverse) pairwise correlations with all other rows.
+Rows with the strongest inverse pairwise correlations with all other rows.
 
-```{r low_cor_rows, results = 'asis'}
-row_cor_dat %>%
+```{r high_neg_cor_rows}
+tbl_out <- row_cor_dat %>%
     arrange(cor) %>%
-    head(10) %>%
-    kable()
+    head(10)
+
+if (!is.null(row_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(row_annot, by = 'row_id')
+}
+
+tbl_out
 ```
 
+**Low correlation rows**
+
+Rows with the lowest median pairwise correlation with all other rows. 
+
+```{r low_cor_rows}
+tbl_out <- row_cor_dat %>%
+    arrange(abs(cor)) %>%
+    head(10)
+
+if (!is.null(row_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(row_annot, by = 'row_id')
+}
+
+tbl_out
+```
 
 ### Column correlations
 
@@ -495,53 +601,222 @@ qplot(median_col_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
   theme(legend.position = 'none')
 ```
 
-```{r heatmap_col_correlations}
-ind <- sample(ncol(col_cor_mat), min(ncol(col_cor_mat), 500))
+```{r heatmap_col_correlations, fig.width = 1920/120, fig.height = 1400/120}
+heatmap_args$x <- col_cor_mat[col_ind, col_ind]
+heatmap_args$main <- sprintf("Column correlation matrix (n = %d)", nrow(col_cor_mat))
+heatmap_args$annRow <- NULL
 
-heatmap_args <- list(
-  x = col_cor_mat[ind, ind],
-  color = magma(100),
-  main = "Column correlation matrix (n = 500)"
-)
-
-# add annotation column, if specified
-if (!is.null(col_fill)) {
-  col_feats <- pull(col_mdata, col_fill[1])
-
-  heatmap_args[["annCol"]] <- setNames(data.frame(col_feats[col_ind]), col_fill[1])
+if (!is.null(col_color)) {
+  heatmap_args[["annCol"]] <- col_mdata[col_ind, ] %>%
+    select(col_color) %>%
+    as.data.frame()
 }
 
 do.call(aheatmap, heatmap_args)
 ```
 
-**High-correlation columns**:
+**High positive correlation columns**:
 
-Columns with the highest pairwise correlations with all other columns.
+Columns with the highest positive pairwise correlations with all other columns.
 
-```{r high_cor_cols, results = 'asis'}
-col_cor_dat <- data.frame(col = colnames(dat), cor = as.numeric(median_col_cors))
+```{r high_pos_cor_cols, results = 'asis'}
+col_cor_dat <- data.frame(column_id = colnames(dat), cor = as.numeric(median_col_cors))
 
-col_cor_dat %>%
+tbl_out <- col_cor_dat %>%
     arrange(desc(cor)) %>%
-    head(10) %>%
-    kable()
+    head(10)
+
+if (!is.null(col_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(col_annot, by = 'column_id')
+}
+
+tbl_out
 ```
 
-**Low-correlation columns**:
+**High negative correlation columns**:
 
-Columns with the lowest (or strongest inverse) pairwise correlations with all other
-columns.
+Columns with the largest inverse pairwise correlations with all other columns.
 
-```{r low_cor_cols, results = 'asis'}
-col_cor_dat %>%
+```{r high_neg_cor_cols}
+tbl_out <- col_cor_dat %>%
     arrange(cor) %>%
-    head(10) %>%
-    kable()
+    head(10)
+
+if (!is.null(col_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(col_annot, by = 'column_id')
+}
+
+tbl_out
 ```
+
+**Low correlation columns**:
+
+Columns with the lowest median pairwise correlation with all other columns. 
+
+```{r low_cor_cols}
+tbl_out <- col_cor_dat %>%
+    arrange(abs(cor)) %>%
+    head(10)
+
+if (!is.null(col_annot)) {
+  tbl_out <- tbl_out %>%
+    inner_join(col_annot, by = 'column_id')
+}
+
+tbl_out
+```
+
+Projections
+-----------
 
 ```{r}
 # TESTING
 save.image("~/tmp-rmd.rda")
 ```
 
+### PCA
+
+#### Row PCA
+
+```{r plot_pca_rows}
+# column-wise pca projections
+row_pca <- prcomp(dat_complete, scale = TRUE)
+
+# % variance explained
+row_pca_var <- summary(row_pca)$importance[2, ] * 100
+
+row_pca_dat <- as.data.frame(row_pca$x[row_ind_complete, 1:2])
+
+if (!is.null(row_color)) {
+  for (rowname in row_color) {
+    plt_dat <- cbind(row_pca_dat, row_mdata[row_ind_complete, rowname, drop = FALSE])
+
+    print(ggplot(plt_dat) +
+      geom_point(aes_string(x = 'PC1', y = 'PC2', color = rowname), size = 0.5, alpha = 0.75) +
+      ggtitle(sprintf("PCA (Rows / %s)", rowname)) +
+      xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
+      ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
+      theme_bw())
+  }
+} else {
+  ggplot(row_pca_dat) +
+    geom_point(aes(x = PC1, y = PC2), size = 0.5, alpha = 0.75) +
+    ggtitle("PCA (Rows)") +
+    xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
+    ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
+    theme_bw()
+}
+```
+
+```{r table_pca_rows, results = 'asis'}
+row_pca_summary <- as.data.frame(summary(row_pca)$importance)
+
+kable(row_pca_summary[, 1:min(ncol(row_pca_summary), 10)], digits = 2)
+```
+
+#### Column PCA
+
+```{r plot_pca_columns}
+# column-wise pca projections
+col_pca <- prcomp(t(dat_complete), scale = TRUE)
+
+# % variance explained
+col_pca_var <- summary(col_pca)$importance[2, ] * 100
+
+col_pca_dat <- as.data.frame(col_pca$x[col_ind_complete, 1:2])
+
+if (!is.null(col_color)) {
+  for (colname in col_color) {
+    plt_dat <- cbind(col_pca_dat, col_mdata[col_ind_complete, colname, drop = FALSE])
+
+    print(ggplot(plt_dat) +
+      geom_point(aes_string(x = 'PC1', y = 'PC2', color = colname), size = 0.5, alpha = 0.75) +
+      ggtitle(sprintf("PCA (Columns / %s)", colname)) +
+      xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
+      ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
+      theme_bw())
+  }
+} else {
+  ggplot(col_pca_dat) +
+    geom_point(aes(x = PC1, y = PC2), size = 0.5, alpha = 0.75) +
+    ggtitle("PCA (Columns)") +
+    xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
+    ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
+    theme_bw()
+}
+```
+
+```{r table_pca_cols, results = 'asis'}
+col_pca_summary <- as.data.frame(summary(col_pca)$importance)
+
+kable(col_pca_summary[, 1:min(ncol(col_pca_summary), 10)], digits = 2)
+```
+
+### UMAP
+
+#### Row UMAP
+
+```{r plot_umap_rows}
+# column-wise UMAP projections
+row_umap_dat <- as.data.frame(umap(dat_complete, scale = TRUE))
+
+colnames(row_umap_dat) <- paste0("UMAP", 1:2)
+rownames(row_umap_dat) <- rownames(dat_complete)
+
+row_umap_dat <- row_umap_dat[row_ind_complete, ]
+
+if (!is.null(row_color)) {
+  for (rowname in row_color) {
+    plt_dat <- cbind(row_umap_dat, row_mdata[row_ind_complete, rowname, drop = FALSE])
+
+    print(ggplot(plt_dat) +
+      geom_point(aes_string(x = 'UMAP1', y = 'UMAP2', color = rowname), size = 0.5, alpha = 0.75) +
+      ggtitle(sprintf("UMAP (Rows / %s)", rowname)) +
+      xlab("UMAP1") +
+      ylab("UMAP2") +
+      theme_bw())
+  }
+} else {
+  ggplot(row_umap_dat) +
+    geom_point(aes(x = UMAP1, y = UMAP2), size = 0.5, alpha = 0.75) +
+    ggtitle("UMAP (Rows)") +
+    xlab("UMAP1") +
+    ylab("UMAP2") +
+    theme_bw()
+}
+```
+
+#### Column UMAP
+
+```{r plot_umap_columns}
+# column-wise UMAP projections
+col_umap_dat <- as.data.frame(umap(t(dat_complete), scale = TRUE))
+
+colnames(col_umap_dat) <- paste0("UMAP", 1:2)
+rownames(col_umap_dat) <- colnames(dat_complete)
+
+col_umap_dat <- col_umap_dat[col_ind_complete, ]
+
+if (!is.null(col_color)) {
+  for (colname in col_color) {
+    plt_dat <- cbind(col_umap_dat, col_mdata[col_ind_complete, colname, drop = FALSE])
+
+    print(ggplot(plt_dat) +
+      geom_point(aes_string(x = 'UMAP1', y = 'UMAP2', color = colname), size = 0.5, alpha = 0.75) +
+      ggtitle(sprintf("UMAP (Columns / %s)", colname)) +
+      xlab("UMAP1") +
+      ylab("UMAP2") +
+      theme_bw())
+  }
+} else {
+  ggplot(col_umap_dat) +
+    geom_point(aes(x = UMAP1, y = UMAP2), size = 0.5, alpha = 0.75) +
+    ggtitle("UMAP (Columns)") +
+    xlab("UMAP1") +
+    ylab("UMAP2") +
+    theme_bw()
+}
+```
 

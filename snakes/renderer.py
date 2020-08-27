@@ -215,10 +215,10 @@ class SnakefileRenderer:
             },
             "styles": {
                 "columns": {
-                    "fill": []
+                    "color": []
                 },
                 "rows": {
-                    "fill": []
+                    "color": []
                 }
             },
             "actions": []
