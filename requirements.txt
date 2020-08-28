@@ -1,3 +1,5 @@
+conda-forge::r-base>=4.0
+conda-forge::python>=3.8
 python
 jinja2
 lz4
@@ -6,12 +8,15 @@ numpy
 pandas
 pyarrow>=1.0
 pyyaml
-r-arrow
+r-arrow>=1.0
 r-caret
+r-coop
 r-janitor
+r-nmf
 r-rmarkdown
 r-pma
 r-tidyverse
+r-uwot
 r-vim
 r-wgcna
 bioconductor-biomart
