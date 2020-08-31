@@ -25,6 +25,8 @@ knitr::opts_knit$set(progress = TRUE, verbose = TRUE)
 
 ```{r load_libraries, include = FALSE}
 library(arrow)
+library(ggpmisc)
+library(ggrepel)
 library(janitor)
 library(NMF)
 library(RColorBrewer)
@@ -72,6 +74,12 @@ get_color_map <- function(annot) {
 }
 ```
 
+
+```{r}
+# TESTING
+save.image("~/tmp-rmd.rda")
+```
+
 ```{r load_data}
 # load dataset and convert to a matrix
 dat <- read_feather(snakemake@input[[1]])
@@ -94,6 +102,7 @@ if (snakemake@params$metadata$rows != '') {
   row_mdata <- load_data(snakemake@params$metadata$rows)
 }
 ```
+
 
 ```{r load_styles}
 col_annot <- NULL
@@ -136,6 +145,10 @@ if (!is.null(row_mdata) && all(colnames(dat) %in% rownames(row_mdata))) {
     row_color <- col_styles$color
   }
 }
+```
+
+```{r dev_mode_check, include = snakemake@params$dev_mode, eval = snakemake@params$dev_mode, results = 'asis'}
+cat("<span style='color: red; font-weight: bold'>= DEVELOPMENT MODE =</span>\n\n")
 ```
 
 ```{r variance_check}
@@ -453,7 +466,7 @@ Row Statistics
 
 **Row Means**
 
-```{r}
+```{r row_means}
 row_means <- apply(dat, 1, mean, na.rm = TRUE)
 
 qplot(row_means, geom = 'density', fill = I('green'), alpha = 0.75) +
@@ -468,9 +481,28 @@ qplot(row_means, geom = 'density', fill = I('green'), alpha = 0.75) +
 - Row mean (mean): `r round_(mean(row_means))`
 - Row mean (max): `r round_(max(row_means))`
 
+Largest row means:
+
+```{r row_means_table}
+row_means_dat <- data.frame(row = names(row_means), mean = row_means) %>%
+  as_tibble() %>%
+  arrange(desc(mean))
+
+row_means_dat %>%
+  head(10)
+```
+
+Smallest row means:
+
+```{r row_means_table}
+row_means_dat %>%
+  arrange(mean) %>%
+  head(10)
+```
+
 **Row Medians**
 
-```{r}
+```{r row_medians}
 row_medians <- apply(dat, 1, median, na.rm = TRUE)
 
 qplot(row_medians, geom = 'density', fill = I('green'), alpha = 0.75) +
@@ -485,9 +517,64 @@ qplot(row_medians, geom = 'density', fill = I('green'), alpha = 0.75) +
 - Row median (mean): `r round_(mean(row_medians))`
 - Row median (max): `r round_(max(row_medians))`
 
+Largest row medians:
+
+```{r row_medians_table}
+row_medians_dat <- data.frame(row = names(row_medians), median = row_medians) %>%
+  as_tibble() %>%
+  arrange(desc(median))
+
+row_medians_dat %>%
+  head(10)
+```
+
+Smallest row medians:
+
+```{r row_medians_table}
+row_medians_dat %>%
+  arrange(median) %>%
+  head(10)
+```
+
+**Row Maximums**
+
+```{r row_maxes}
+row_maxes <- apply(dat, 1, max, na.rm = TRUE)
+
+qplot(row_maxes, geom = 'density', fill = I('green'), alpha = 0.75) +
+  xlab("Row maximum") +
+  ggtitle("Distribution of row maximums") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Row maximum (min): `r round_(min(row_maxes))`
+- Row maximum (median): `r round_(median(row_maxes))`
+- Row maximum (mean): `r round_(mean(row_maxes))`
+- Row maximum (max): `r round_(max(row_maxes))`
+
+Largest row maximums:
+
+```{r row_maxes_table}
+row_maxes_dat <- data.frame(row = names(row_maxes), max = row_maxes) %>%
+  as_tibble() %>%
+  arrange(desc(max))
+
+row_maxes_dat %>%
+  head(10)
+```
+
+Smallest row maximums:
+
+```{r row_maxes_table}
+row_maxes_dat %>%
+  arrange(max) %>%
+  head(10)
+```
+
 **Row Standard Deviations**
 
-```{r}
+```{r row_stdevs}
 row_sds <- apply(dat, 1, sd, na.rm = TRUE)
 
 qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
@@ -502,12 +589,31 @@ qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
 - Row stdev (mean): `r round_(mean(row_sds))`
 - Row stdev (max): `r round_(max(row_sds))`
 
+Largest row standard deviations:
+
+```{r row_sds_table}
+row_sds_dat <- data.frame(row = names(row_sds), sd = row_sds) %>%
+  as_tibble() %>%
+  arrange(desc(sd))
+
+row_sds_dat %>%
+  head(10)
+```
+
+Smallest row standard deviations:
+
+```{r row_sds_table}
+row_sds_dat %>%
+  arrange(sd) %>%
+  head(10)
+```
+
 Column Statistics
 -----------------
 
 **Column Means**
 
-```{r}
+```{r column_means}
 col_means <- apply(dat, 2, mean, na.rm = TRUE)
 
 qplot(col_means, geom = 'density', fill = I('purple'), alpha = 0.75) +
@@ -522,9 +628,28 @@ qplot(col_means, geom = 'density', fill = I('purple'), alpha = 0.75) +
 - Column mean (mean): `r round_(mean(col_means))`
 - Column mean (max): `r round_(max(col_means))`
 
+Largest column means:
+
+```{r col_means_table}
+col_means_dat <- data.frame(col = names(col_means), mean = col_means) %>%
+  as_tibble() %>%
+  arrange(desc(mean))
+
+col_means_dat %>%
+  head(10)
+```
+
+Smallest col means:
+
+```{r col_means_table}
+col_means_dat %>%
+  arrange(mean) %>%
+  head(10)
+```
+
 **Column Medians**
 
-```{r}
+```{r column_medians}
 col_medians <- apply(dat, 2, median, na.rm = TRUE)
 
 qplot(col_medians, geom = 'density', fill = I('purple'), alpha = 0.75) +
@@ -539,9 +664,64 @@ qplot(col_medians, geom = 'density', fill = I('purple'), alpha = 0.75) +
 - Column median (mean): `r round_(mean(col_medians))`
 - Column median (max): `r round_(max(col_medians))`
 
+Largest column medians:
+
+```{r col_medians_table}
+col_medians_dat <- data.frame(col = names(col_medians), median = col_medians) %>%
+  as_tibble() %>%
+  arrange(desc(median))
+
+col_medians_dat %>%
+  head(10)
+```
+
+Smallest col medians:
+
+```{r col_medians_table}
+col_medians_dat %>%
+  arrange(median) %>%
+  head(10)
+```
+
+**Column Maximums**
+
+```{r column_maxes}
+col_maxes <- apply(dat, 2, max, na.rm = TRUE)
+
+qplot(col_maxes, geom = 'density', fill = I('purple'), alpha = 0.75) +
+  xlab("Column Maximum") +
+  ggtitle("Distribution of column Maximums") +
+  theme_bw() +
+  theme(legend.position = 'none')
+```
+
+- Column Maximum (min): `r round_(min(col_maxes))`
+- Column Maximum (median): `r round_(median(col_maxes))`
+- Column Maximum (mean): `r round_(mean(col_maxes))`
+- Column Maximum (max): `r round_(max(col_maxes))`
+
+Largest column maximums:
+
+```{r col_maxes_table}
+col_maxes_dat <- data.frame(col = names(col_maxes), median = col_maxes) %>%
+  as_tibble() %>%
+  arrange(desc(median))
+
+col_maxes_dat %>%
+  head(10)
+```
+
+Smallest col maximums:
+
+```{r col_maxes_table}
+col_maxes_dat %>%
+  arrange(median) %>%
+  head(10)
+```
+
 **Column Standard Deviations**
 
-```{r}
+```{r column_stdevs}
 col_sds <- apply(dat, 2, sd, na.rm = TRUE)
 
 qplot(col_sds, geom = 'density', fill = I('purple'), alpha = 0.75) +
@@ -556,6 +736,25 @@ qplot(col_sds, geom = 'density', fill = I('purple'), alpha = 0.75) +
 - Column stdev (mean): `r round_(mean(col_sds))`
 - Column stdev (max): `r round_(max(col_sds))`
 
+Largest column standard deviations:
+
+```{r col_sds_table}
+col_sds_dat <- data.frame(col = names(col_sds), median = col_sds) %>%
+  as_tibble() %>%
+  arrange(desc(median))
+
+col_sds_dat %>%
+  head(10)
+```
+
+Smallest column standard deviations:
+
+```{r col_sds_table}
+col_sds_dat %>%
+  arrange(median) %>%
+  head(10)
+```
+
 Correlations
 ------------
 
@@ -563,6 +762,7 @@ Correlations
 
 ```{r row_median_pairwise_correlations}
 # compute row pairwise correlation matrix
+#row_cor_mat <- cor(t(dat), use = 'pairwise.complete')
 row_cor_mat <- coop::pcor(t(dat), use = 'pairwise.complete')
 median_row_cors <- apply(row_cor_mat, 1, median, na.rm = TRUE)
 ```
@@ -652,6 +852,7 @@ tbl_out
 
 ```{r col_median_pairwise_correlations}
 # compute column pairwise correlation matrix
+#col_cor_mat <- cor(dat, use = 'pairwise.complete')
 col_cor_mat <- coop::pcor(dat, use = 'pairwise.complete')
 median_col_cors <- apply(col_cor_mat, 2, median, na.rm = TRUE)
 ```
@@ -752,22 +953,25 @@ row_pca <- prcomp(dat_complete, scale = TRUE)
 # % variance explained
 row_pca_var <- summary(row_pca)$importance[2, ] * 100
 
-row_pca_dat <- as.data.frame(row_pca$x[row_ind_complete, 1:2])
+row_pca_dat <- cbind(row = rownames(row_pca$x)[row_ind_complete],
+                     as.data.frame(row_pca$x[row_ind_complete, 1:2]))
 
 if (!is.null(row_color)) {
   for (rowname in row_color) {
     plt_dat <- cbind(row_pca_dat, row_mdata[row_ind_complete, rowname, drop = FALSE])
 
-    print(ggplot(plt_dat) +
-      geom_point(aes_string(x = 'PC1', y = 'PC2', color = rowname), size = 0.5, alpha = 0.75) +
+    print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
+      geom_point(size = 0.5, alpha = 0.5) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
       ggtitle(sprintf("PCA (Rows / %s)", rowname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
       theme_bw())
   }
 } else {
-  ggplot(row_pca_dat) +
-    geom_point(aes(x = PC1, y = PC2), size = 0.5, alpha = 0.75) +
+  ggplot(row_pca_dat, aes(x = PC1, y = PC2, label = row)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
     ggtitle("PCA (Rows)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
@@ -790,22 +994,25 @@ col_pca <- prcomp(t(dat_complete), scale = TRUE)
 # % variance explained
 col_pca_var <- summary(col_pca)$importance[2, ] * 100
 
-col_pca_dat <- as.data.frame(col_pca$x[col_ind_complete, 1:2])
+col_pca_dat <- cbind(column = rownames(col_pca$x)[col_ind_complete], 
+                     as.data.frame(col_pca$x[col_ind_complete, 1:2]))
 
 if (!is.null(col_color)) {
   for (colname in col_color) {
     plt_dat <- cbind(col_pca_dat, col_mdata[col_ind_complete, colname, drop = FALSE])
 
-    print(ggplot(plt_dat) +
-      geom_point(aes_string(x = 'PC1', y = 'PC2', color = colname), size = 0.5, alpha = 0.75) +
+    print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
+      geom_point(size = 0.5, alpha = 0.75) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
       ggtitle(sprintf("PCA (Columns / %s)", colname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
       theme_bw())
   }
 } else {
-  ggplot(col_pca_dat) +
-    geom_point(aes(x = PC1, y = PC2), size = 0.5, alpha = 0.75) +
+  ggplot(col_pca_dat, aes(x = PC1, y = PC2, label = column)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
     ggtitle("PCA (Columns)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
@@ -833,20 +1040,24 @@ rownames(row_umap_dat) <- rownames(dat_complete)
 
 row_umap_dat <- row_umap_dat[row_ind_complete, ]
 
+row_umap_dat <- cbind(row = rownames(row_umap_dat), row_umap_dat)
+
 if (!is.null(row_color)) {
   for (rowname in row_color) {
     plt_dat <- cbind(row_umap_dat, row_mdata[row_ind_complete, rowname, drop = FALSE])
 
-    print(ggplot(plt_dat) +
-      geom_point(aes_string(x = 'UMAP1', y = 'UMAP2', color = rowname), size = 0.5, alpha = 0.75) +
+    print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = rowname, label = 'row')) +
+      geom_point(size = 0.5, alpha = 0.75) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
       ggtitle(sprintf("UMAP (Rows / %s)", rowname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
       theme_bw())
   }
 } else {
-  ggplot(row_umap_dat) +
-    geom_point(aes(x = UMAP1, y = UMAP2), size = 0.5, alpha = 0.75) +
+  ggplot(row_umap_dat, aes(x = UMAP1, y = UMAP2, label = row)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
     ggtitle("UMAP (Rows)") +
     xlab("UMAP1") +
     ylab("UMAP2") +
@@ -865,21 +1076,24 @@ colnames(col_umap_dat) <- paste0("UMAP", 1:2)
 rownames(col_umap_dat) <- colnames(dat_complete)
 
 col_umap_dat <- col_umap_dat[col_ind_complete, ]
+col_umap_dat <- cbind(column = rownames(col_umap_dat), col_umap_dat)
 
 if (!is.null(col_color)) {
   for (colname in col_color) {
     plt_dat <- cbind(col_umap_dat, col_mdata[col_ind_complete, colname, drop = FALSE])
 
-    print(ggplot(plt_dat) +
-      geom_point(aes_string(x = 'UMAP1', y = 'UMAP2', color = colname), size = 0.5, alpha = 0.75) +
+    print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = colname, label = 'column')) +
+      geom_point(size = 0.5, alpha = 0.75) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
       ggtitle(sprintf("UMAP (Columns / %s)", colname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
       theme_bw())
   }
 } else {
-  ggplot(col_umap_dat) +
-    geom_point(aes(x = UMAP1, y = UMAP2), size = 0.5, alpha = 0.75) +
+  ggplot(col_umap_dat, aes(x = UMAP1, y = UMAP2, label = column)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
     ggtitle("UMAP (Columns)") +
     xlab("UMAP1") +
     ylab("UMAP2") +

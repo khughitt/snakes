@@ -1,5 +1,18 @@
+import pandas as pd
 from collections.abc import Mapping
 
+def load_data(infile):
+    """Attempts to detect filetype and load a specified dataset"""
+    if infile.endswith('.csv'):
+        dat = pd.read_csv(infile)
+    elif infile.endswith('.tsv'):
+        dat = pd.read_csv(infile, sep='\t')
+    elif infile.edswith('.feather'):
+        dat = pd.read_feather(infile)
+    elif infile.endswith('.parquet'):
+        dat = pd.read_parquet(infile)
+
+    return dat.set_index(dat.columns[0])
 
 def recursive_update(d, u):
     """

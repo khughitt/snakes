@@ -7,10 +7,13 @@ mygene
 numpy
 pandas
 pyarrow>=1.0
+pynvim
 pyyaml
 r-arrow>=1.0
 r-caret
 r-coop
+r-ggpmisc
+r-ggrepel
 r-janitor
 r-nmf
 r-rmarkdown

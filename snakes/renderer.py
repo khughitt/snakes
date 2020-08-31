@@ -13,7 +13,7 @@ import pandas as pd
 from argparse import ArgumentParser
 from jinja2 import Environment, ChoiceLoader, PackageLoader
 from pkg_resources import resource_filename
-from snakes.util import recursive_update
+from snakes.util import load_data, recursive_update
 from snakes.wrangler import SnakeWrangler
 
 
@@ -274,6 +274,10 @@ class SnakefileRenderer:
             dataset["actions"], dataset["name"]
         )
 
+        # if nothing is specified in config file, generate report plots using all
+        # relevant metadata fields as stylistic elements
+        self._check_styles(dataset)
+
         # validate dataset config
         self._validate_dataset_config(dataset)
 
@@ -287,6 +291,21 @@ class SnakefileRenderer:
 
         # store parsed dataset config
         return dataset
+
+    def _check_styles(self, dataset):
+        """Checks to see if style settings are specified in dataset config, and if not,
+        uses all available metadata fields as such."""
+        # check column styles
+        if dataset['styles']['columns']['color'] ==  []:
+            if dataset['metadata']['columns'] != '':
+                mdat = load_data(dataset['metadata']['columns'])
+                dataset['styles']['columns']['color'] = mdat.columns[mdat.nunique() > 1].tolist()
+
+        # check row styles
+        if dataset['styles']['rows']['color'] ==  []:
+            if dataset['metadata']['rows'] != '':
+                mdat = load_data(dataset['metadata']['rows'])
+                dataset['styles']['rows']['color'] = mdat.rows[mdat.nunique() > 1].tolist()
 
     def _detect_unknown_settings(self, supported_cfg, user_cfg):
         """
