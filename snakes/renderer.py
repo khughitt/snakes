@@ -301,7 +301,16 @@ class SnakefileRenderer:
         # check column styles
         if dataset['styles']['columns']['color'] ==  []:
             if dataset['metadata']['columns'] != '':
-                mdat = load_data(dataset['metadata']['columns']).drop(exclude_cols, axis=1)
+                # load metadata
+                mdat = load_data(dataset['metadata']['columns'])
+
+                # drop uninformative columns
+                cols_to_drop = [x for x in exclude_cols if x in mdat.columns]
+
+                if len(cols_to_drop) > 0:
+                    mdat = mdat.drop(cols_to_drop, axis=1)
+
+                # set default columns to use for plotting
                 dataset['styles']['columns']['color'] = mdat.columns[mdat.nunique() > 1].tolist()
 
         # check row styles

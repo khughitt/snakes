@@ -171,7 +171,7 @@ class SnakeWrangler:
             input=rule_output,
             output=report_output,
             rmd=self.report_cfgs[report_name]["rmd"],
-            title=sprintf("%s (%s)", self.report_cfgs[report_name]["title"], kwargs["name"]),
+            title="%s (%s)" % (self.report_cfgs[report_name]["title"], kwargs["name"]),
             name=kwargs["name"],
             metadata=kwargs["metadata"],
             styles=kwargs["styles"],
