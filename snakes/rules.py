@@ -88,12 +88,13 @@ class MultiTrainingSetRule(SnakemakeRule):
 
 
 class ReportRule(SnakemakeRule):
-    def __init__(self, rule_id, input, output, rmd, title, metadata, styles, theme, local=False, **kwargs):
+    def __init__(self, rule_id, input, output, rmd, title, name, metadata, styles, theme, local=False, **kwargs):
         """Creates a new ReportRule instance from a dict representation"""
         super().__init__(rule_id, None, input, output, local, **kwargs)
 
         self.rmd = rmd
         self.title = title
+        self.name = name
         self.metadata = metadata
         self.styles = styles
         self.theme = theme
@@ -103,6 +104,7 @@ class ReportRule(SnakemakeRule):
 
         # other parameters used for report generation
         self.params["title"] = title
+        self.params["name"] = name
         self.params["metadata"] = metadata
         self.params["styles"] = styles
         self.params["theme"] = theme

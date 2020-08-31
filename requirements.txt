@@ -18,6 +18,7 @@ r-janitor
 r-nmf
 r-rmarkdown
 r-pma
+r-rrcov
 r-tidyverse
 r-uwot
 r-vim

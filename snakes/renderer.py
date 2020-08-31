@@ -295,10 +295,13 @@ class SnakefileRenderer:
     def _check_styles(self, dataset):
         """Checks to see if style settings are specified in dataset config, and if not,
         uses all available metadata fields as such."""
+        # list of column ids to exclude from plotting
+        exclude_cols = ["sample_name", "patient_id", "title"]
+
         # check column styles
         if dataset['styles']['columns']['color'] ==  []:
             if dataset['metadata']['columns'] != '':
-                mdat = load_data(dataset['metadata']['columns'])
+                mdat = load_data(dataset['metadata']['columns']).drop(exclude_cols)
                 dataset['styles']['columns']['color'] = mdat.columns[mdat.nunique() > 1].tolist()
 
         # check row styles

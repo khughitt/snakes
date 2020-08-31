@@ -30,6 +30,7 @@ library(ggrepel)
 library(janitor)
 library(NMF)
 library(RColorBrewer)
+library(rrcov)
 library(tidyverse)
 library(uwot)
 library(viridis)
@@ -1026,13 +1027,97 @@ col_pca_summary <- as.data.frame(summary(col_pca)$importance)
 kable(col_pca_summary[, 1:min(ncol(col_pca_summary), 10)], digits = 2)
 ```
 
+### Robust PCA
+
+#### Row Robust PCA
+
+```{r plot_rpca_rows}
+# column-wise pca projections
+row_rpca <- PcaGrid(dat_complete, k = 2, scale = TRUE)
+
+# % variance explained
+row_rpca_var <- summary(row_rpca)@importance[2, ] * 100
+
+row_rpca_dat <- cbind(row = rownames(row_rpca$scores)[row_ind_complete],
+                      as.data.frame(row_rpca$scores[row_ind_complete, 1:2]))
+
+if (!is.null(row_color)) {
+  for (rowname in row_color) {
+    plt_dat <- cbind(row_rpca_dat, row_mdata[row_ind_complete, rowname, drop = FALSE])
+
+    print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
+      geom_point(size = 0.5, alpha = 0.5) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+      ggtitle(sprintf("Robust PCA (Rows / %s)", rowname)) +
+      xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
+      ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
+      theme_bw())
+  }
+} else {
+  ggplot(row_rpca_dat, aes(x = PC1, y = PC2, label = row)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+    ggtitle("Robust PCA (Rows)") +
+    xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
+    ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
+    theme_bw()
+}
+```
+
+```{r table_rpca_rows, results = 'asis'}
+row_rpca_summary <- as.data.frame(summary(row_rpca)@importance)
+
+kable(row_rpca_summary[, 1:min(ncol(row_rpca_summary), 10)], digits = 2)
+```
+
+#### Column Robust PCA
+
+```{r plot_rpca_columns}
+# column-wise pca projections
+col_rpca <- prcomp(t(dat_complete), scale = TRUE)
+
+# % variance explained
+col_rpca_var <- summary(col_rpca)@importance[2, ] * 100
+
+col_rpca_dat <- cbind(column = rownames(col_rpca$scores)[col_ind_complete],
+                     as.data.frame(col_rpca$scores[col_ind_complete, 1:2]))
+
+if (!is.null(col_color)) {
+  for (colname in col_color) {
+    plt_dat <- cbind(col_rpca_dat, col_mdata[col_ind_complete, colname, drop = FALSE])
+
+    print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
+      geom_point(size = 0.5, alpha = 0.75) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+      ggtitle(sprintf("Robust PCA (Columns / %s)", colname)) +
+      xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
+      ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
+      theme_bw())
+  }
+} else {
+  ggplot(col_rpca_dat, aes(x = PC1, y = PC2, label = column)) +
+    geom_point(size = 0.5, alpha = 0.75) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+    ggtitle("Robust PCA (Columns)") +
+    xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
+    ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
+    theme_bw()
+}
+```
+
+```{r table_rpca_cols, results = 'asis'}
+col_rpca_summary <- as.data.frame(summary(col_rpca)@importance)
+
+kable(col_rpca_summary[, 1:min(ncol(col_rpca_summary), 10)], digits = 2)
+```
+
 ### UMAP
 
 #### Row UMAP
 
 ```{r plot_umap_rows}
 # row-wise UMAP projections
-num_neighbors <- min(15, nrow(dat_complete) - 1)
+num_neighbors <- min(500, min(nrow(dat_complete) - 1, max(5, round(nrow(dat_complete) / 10))))
 row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, scale = TRUE))
 
 colnames(row_umap_dat) <- paste0("UMAP", 1:2)
@@ -1069,7 +1154,7 @@ if (!is.null(row_color)) {
 
 ```{r plot_umap_columns}
 # column-wise UMAP projections
-num_neighbors <- min(15, ncol(dat_complete) - 1)
+num_neighbors <- min(500, min(ncol(dat_complete) - 1, max(5, round(ncol(dat_complete) / 10))))
 col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors, scale = TRUE))
 
 colnames(col_umap_dat) <- paste0("UMAP", 1:2)

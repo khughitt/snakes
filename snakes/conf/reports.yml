@@ -5,5 +5,5 @@
 ############################################
 general_eda:
   rmd: 'general/general_eda.Rmd'
-  title: 'Exploratory Data Analysis (General)'
+  title: 'Exploratory Data Analysis'
   # defaults:
