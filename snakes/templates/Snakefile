@@ -110,6 +110,7 @@ rule {{ action.rule_id }}:
 rule {{ rule_id }}:
   input: "{{ report.input }}"
   output: "{{ report.output }}"
+  threads: workflow.cores * 0.5
   params:
     metadata={{ report.params['metadata'] }},
     styles={{ report.params['styles'] }},

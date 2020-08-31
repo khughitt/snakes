@@ -304,7 +304,7 @@ class SnakefileRenderer:
                 # load metadata
                 mdat = load_data(dataset['metadata']['columns'])
 
-                # drop uninformative columns
+                # exclude known uninformative columns
                 cols_to_drop = [x for x in exclude_cols if x in mdat.columns]
 
                 if len(cols_to_drop) > 0:

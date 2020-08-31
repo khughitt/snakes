@@ -52,8 +52,34 @@ load_data <- function(x) {
     dat <- arrow::read_feather(x)
   }
 
-  dat %>%
+  dat <- dat %>%
     column_to_rownames(colnames(dat)[1])
+
+  # drop columns with only a single level
+  mask <- apply(dat, 2, function(x) {
+    length(unique(x)) > 1
+  })
+
+  dat <- dat[, mask]
+
+  # attempt to detect categorical/binary variables and convert them to factors;
+  # for columns only containing numbers, convert to numeric
+  for (cname in colnames(dat)) {
+    n_levels <- length(unique(dat[, cname]))
+
+    if (n_levels < nrow(dat) && n_levels <= 25) {
+      # categorical
+      dat[, cname] <- factor(dat[, cname])
+    } else if (all(grepl("^[0-9]+\\.?[0-9]*", dat[, cname]))) {
+      # numeric
+      dat[, cname] <- as.numeric(dat[, cname])
+    } else if (n_levels == nrow(dat)) {
+      # likely identifiers (non-numeric, all unique)
+      dat <- dat[, colnames(dat) != cname]
+    }
+  }
+
+  dat
 }
 
 # helper function to get a list of colormaps to use for a set of annotations
@@ -216,7 +242,7 @@ col_ind_complete <- sample(ncol(dat_complete), min(ncol(dat_complete), 1000))
 
 dat_subset <- as.matrix(dat_complete[row_ind_complete, col_ind_complete])
 
-# exclude any entries with zero variance; these will cause problems during 
+# exclude any entries with zero variance; these will cause problems during
 # several of the eda steps
 # mask <- apply(dat_subset, 1, var) > 0
 
@@ -242,16 +268,17 @@ heatmap_args <- list(
 # add column and row annotations, if specified
 if (!is.null(col_color)) {
   heatmap_args[["annCol"]] <- col_mdata[col_ind_complete, ] %>%
-    select(col_color) %>%
+    select(all_of(col_color)) %>%
     as.data.frame()
+
   heatmap_args[["annColors"]] <- get_color_map(heatmap_args[["annCol"]])
 }
 if (!is.null(row_color)) {
   heatmap_args[["annRow"]] <- row_mdata[row_ind_complete, ] %>%
-    select(row_color) %>%
+    select(all_of(row_color)) %>%
     as.data.frame()
- 
-  heatmap_args[["annColors"]] <- c(heatmap_args[["annColors"]], 
+
+  heatmap_args[["annColors"]] <- c(heatmap_args[["annColors"]],
                                    get_color_map(heatmap_args[["annRow"]]))
 }
 do.call(aheatmap, heatmap_args)
@@ -640,7 +667,7 @@ col_means_dat %>%
   head(10)
 ```
 
-Smallest col means:
+Smallest column means:
 
 ```{r col_means_table_smallest}
 col_means_dat %>%
@@ -834,7 +861,7 @@ tbl_out
 
 **Low correlation rows**
 
-Rows with the lowest median pairwise correlation with all other rows. 
+Rows with the lowest median pairwise correlation with all other rows.
 
 ```{r low_cor_rows}
 tbl_out <- row_cor_dat %>%
@@ -925,7 +952,7 @@ tbl_out
 
 **Low correlation columns**:
 
-Columns with the lowest median pairwise correlation with all other columns. 
+Columns with the lowest median pairwise correlation with all other columns.
 
 ```{r low_cor_cols}
 tbl_out <- col_cor_dat %>%
@@ -963,7 +990,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
       geom_point(size = 0.5, alpha = 0.5) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
       ggtitle(sprintf("PCA (Rows / %s)", rowname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
@@ -972,7 +999,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_pca_dat, aes(x = PC1, y = PC2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
     ggtitle("PCA (Rows)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
@@ -995,7 +1022,7 @@ col_pca <- prcomp(t(dat_complete), scale = TRUE)
 # % variance explained
 col_pca_var <- summary(col_pca)$importance[2, ] * 100
 
-col_pca_dat <- cbind(column = rownames(col_pca$x)[col_ind_complete], 
+col_pca_dat <- cbind(column = rownames(col_pca$x)[col_ind_complete],
                      as.data.frame(col_pca$x[col_ind_complete, 1:2]))
 
 if (!is.null(col_color)) {
@@ -1004,7 +1031,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
       ggtitle(sprintf("PCA (Columns / %s)", colname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
@@ -1013,7 +1040,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_pca_dat, aes(x = PC1, y = PC2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
     ggtitle("PCA (Columns)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
@@ -1047,7 +1074,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
       geom_point(size = 0.5, alpha = 0.5) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
       ggtitle(sprintf("Robust PCA (Rows / %s)", rowname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
@@ -1056,7 +1083,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_rpca_dat, aes(x = PC1, y = PC2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
     ggtitle("Robust PCA (Rows)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
@@ -1074,7 +1101,7 @@ kable(row_rpca_summary[, 1:min(ncol(row_rpca_summary), 10)], digits = 2)
 
 ```{r plot_rpca_columns}
 # column-wise pca projections
-col_rpca <- prcomp(t(dat_complete), scale = TRUE)
+col_rpca <- PcaGrid(t(dat_complete), k = 2, scale = TRUE)
 
 # % variance explained
 col_rpca_var <- summary(col_rpca)@importance[2, ] * 100
@@ -1088,7 +1115,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
       ggtitle(sprintf("Robust PCA (Columns / %s)", colname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
@@ -1097,7 +1124,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_rpca_dat, aes(x = PC1, y = PC2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
     ggtitle("Robust PCA (Columns)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
@@ -1118,7 +1145,12 @@ kable(col_rpca_summary[, 1:min(ncol(col_rpca_summary), 10)], digits = 2)
 ```{r plot_umap_rows}
 # row-wise UMAP projections
 num_neighbors <- min(500, min(nrow(dat_complete) - 1, max(5, round(nrow(dat_complete) / 10))))
-row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, scale = TRUE))
+
+# for larger dataset, use pca to reduce dimensionality prior to nn search
+umap_pca <- ifelse(ncol(dat) > 100, 50, NULL)
+
+row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, pca = umap_pca,
+                                   scale = FALSE, n_threads = snakemake@threads))
 
 colnames(row_umap_dat) <- paste0("UMAP", 1:2)
 rownames(row_umap_dat) <- rownames(dat_complete)
@@ -1133,7 +1165,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = rowname, label = 'row')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
       ggtitle(sprintf("UMAP (Rows / %s)", rowname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
@@ -1142,7 +1174,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_umap_dat, aes(x = UMAP1, y = UMAP2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.01) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
     ggtitle("UMAP (Rows)") +
     xlab("UMAP1") +
     ylab("UMAP2") +
@@ -1155,7 +1187,12 @@ if (!is.null(row_color)) {
 ```{r plot_umap_columns}
 # column-wise UMAP projections
 num_neighbors <- min(500, min(ncol(dat_complete) - 1, max(5, round(ncol(dat_complete) / 10))))
-col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors, scale = TRUE))
+
+# for larger dataset, use pca to reduce dimensionality prior to nn search
+umap_pca <- ifelse(nrow(dat) > 100, 50, NULL)
+
+col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors,
+                                   scale = FALSE, pca = umap_pca, n_threads = snakemake@threads))
 
 colnames(col_umap_dat) <- paste0("UMAP", 1:2)
 rownames(col_umap_dat) <- colnames(dat_complete)
@@ -1169,7 +1206,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
       ggtitle(sprintf("UMAP (Columns / %s)", colname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
@@ -1178,7 +1215,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_umap_dat, aes(x = UMAP1, y = UMAP2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 0.1) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
     ggtitle("UMAP (Columns)") +
     xlab("UMAP1") +
     ylab("UMAP2") +

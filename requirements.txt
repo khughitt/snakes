@@ -1,6 +1,6 @@
+bioconda::snakemake-minimal>=5.23.0
 conda-forge::r-base>=4.0
 conda-forge::python>=3.8
-python
 jinja2
 lz4
 mygene
@@ -12,6 +12,7 @@ pyyaml
 r-arrow>=1.0
 r-caret
 r-coop
+r-devtools
 r-ggpmisc
 r-ggrepel
 r-janitor
@@ -26,6 +27,5 @@ r-wgcna
 bioconductor-biomart
 scikit-learn
 scipy
-snakemake-minimal
 statsmodels
 pytest
