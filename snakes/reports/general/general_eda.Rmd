@@ -484,7 +484,7 @@ qplot(row_means, geom = 'density', fill = I('green'), alpha = 0.75) +
 
 Largest row means:
 
-```{r row_means_table}
+```{r row_means_table_largest}
 row_means_dat <- data.frame(row = names(row_means), mean = row_means) %>%
   as_tibble() %>%
   arrange(desc(mean))
@@ -495,7 +495,7 @@ row_means_dat %>%
 
 Smallest row means:
 
-```{r row_means_table}
+```{r row_means_table_smallest}
 row_means_dat %>%
   arrange(mean) %>%
   head(10)
@@ -520,7 +520,7 @@ qplot(row_medians, geom = 'density', fill = I('green'), alpha = 0.75) +
 
 Largest row medians:
 
-```{r row_medians_table}
+```{r row_medians_table_largest}
 row_medians_dat <- data.frame(row = names(row_medians), median = row_medians) %>%
   as_tibble() %>%
   arrange(desc(median))
@@ -531,7 +531,7 @@ row_medians_dat %>%
 
 Smallest row medians:
 
-```{r row_medians_table}
+```{r row_medians_table_smallest}
 row_medians_dat %>%
   arrange(median) %>%
   head(10)
@@ -556,7 +556,7 @@ qplot(row_maxes, geom = 'density', fill = I('green'), alpha = 0.75) +
 
 Largest row maximums:
 
-```{r row_maxes_table}
+```{r row_maxes_table_largest}
 row_maxes_dat <- data.frame(row = names(row_maxes), max = row_maxes) %>%
   as_tibble() %>%
   arrange(desc(max))
@@ -567,7 +567,7 @@ row_maxes_dat %>%
 
 Smallest row maximums:
 
-```{r row_maxes_table}
+```{r row_maxes_table_smallest}
 row_maxes_dat %>%
   arrange(max) %>%
   head(10)
@@ -592,7 +592,7 @@ qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
 
 Largest row standard deviations:
 
-```{r row_sds_table}
+```{r row_sds_table_largest}
 row_sds_dat <- data.frame(row = names(row_sds), sd = row_sds) %>%
   as_tibble() %>%
   arrange(desc(sd))
@@ -603,7 +603,7 @@ row_sds_dat %>%
 
 Smallest row standard deviations:
 
-```{r row_sds_table}
+```{r row_sds_table_smallest}
 row_sds_dat %>%
   arrange(sd) %>%
   head(10)
@@ -631,7 +631,7 @@ qplot(col_means, geom = 'density', fill = I('purple'), alpha = 0.75) +
 
 Largest column means:
 
-```{r col_means_table}
+```{r col_means_table_largest}
 col_means_dat <- data.frame(col = names(col_means), mean = col_means) %>%
   as_tibble() %>%
   arrange(desc(mean))
@@ -642,7 +642,7 @@ col_means_dat %>%
 
 Smallest col means:
 
-```{r col_means_table}
+```{r col_means_table_smallest}
 col_means_dat %>%
   arrange(mean) %>%
   head(10)
@@ -667,7 +667,7 @@ qplot(col_medians, geom = 'density', fill = I('purple'), alpha = 0.75) +
 
 Largest column medians:
 
-```{r col_medians_table}
+```{r col_medians_table_largest}
 col_medians_dat <- data.frame(col = names(col_medians), median = col_medians) %>%
   as_tibble() %>%
   arrange(desc(median))
@@ -676,9 +676,9 @@ col_medians_dat %>%
   head(10)
 ```
 
-Smallest col medians:
+Smallest column medians:
 
-```{r col_medians_table}
+```{r col_medians_table_smallest}
 col_medians_dat %>%
   arrange(median) %>%
   head(10)
@@ -703,7 +703,7 @@ qplot(col_maxes, geom = 'density', fill = I('purple'), alpha = 0.75) +
 
 Largest column maximums:
 
-```{r col_maxes_table}
+```{r col_maxes_table_largest}
 col_maxes_dat <- data.frame(col = names(col_maxes), median = col_maxes) %>%
   as_tibble() %>%
   arrange(desc(median))
@@ -712,9 +712,9 @@ col_maxes_dat %>%
   head(10)
 ```
 
-Smallest col maximums:
+Smallest column maximums:
 
-```{r col_maxes_table}
+```{r col_maxes_table_smallest}
 col_maxes_dat %>%
   arrange(median) %>%
   head(10)
@@ -739,7 +739,7 @@ qplot(col_sds, geom = 'density', fill = I('purple'), alpha = 0.75) +
 
 Largest column standard deviations:
 
-```{r col_sds_table}
+```{r col_sds_table_largest}
 col_sds_dat <- data.frame(col = names(col_sds), median = col_sds) %>%
   as_tibble() %>%
   arrange(desc(median))
@@ -750,7 +750,7 @@ col_sds_dat %>%
 
 Smallest column standard deviations:
 
-```{r col_sds_table}
+```{r col_sds_table_smallest}
 col_sds_dat %>%
   arrange(median) %>%
   head(10)
