@@ -141,17 +141,21 @@ row_color <- NULL
 if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
   col_styles <- snakemake@params$styles$columns
 
+  # drop any columns excluded during load
+  valid_column_styles <- as.character(unlist(col_styles))
+  valid_column_styles <- valid_column_styles[valid_column_styles %in% colnames(col_mdata)]
+
   # match data / metadata order
   col_mdata <- col_mdata[match(rownames(col_mdata), colnames(dat)), ]
 
   # column annotations to display in tables
   col_annot <- col_mdata %>%
-    select(as.character(unlist(col_styles))) %>%
+    select(valid_column_styles) %>%
     rownames_to_column('column_id')
 
   # column fill color
   if (length(col_styles$color) > 0) {
-    col_color <- col_styles$color
+    col_color <- col_styles$color[col_styles$color %in% valid_column_styles]
   }
 }
 
@@ -159,17 +163,21 @@ if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
 if (!is.null(row_mdata) && all(colnames(dat) %in% rownames(row_mdata))) {
   row_styles <- snakemake@params$styles$rows
 
+  # drop any columns excluded during load
+  valid_row_styles <- as.character(unlist(row_styles))
+  valid_row_styles <- valid_row_styles[valid_row_styles %in% colnames(row_mdata)]
+
   # match data / metadata order
   row_mdata <- row_mdata[match(rownames(row_mdata), rownames(dat)), ]
 
   # column annotations to display in tables
   row_annot <- row_mdata %>%
-    select(as.character(unlist(row_styles))) %>%
+    select(valid_row_styles) %>%
     rownames_to_column('row_id')
 
   # row fill color
   if (length(row_styles$color) > 0) {
-    row_color <- col_styles$color
+    row_color <- row_styles$color[row_styles$color %in% valid_row_styles]
   }
 }
 ```
