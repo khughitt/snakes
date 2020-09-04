@@ -102,7 +102,7 @@ get_color_map <- function(annot) {
 ```
 
 
-```{r}
+```{r debug_save1}
 # TESTING
 save.image("~/tmp-rmd.rda")
 ```
@@ -207,7 +207,7 @@ if (sum(col_vars == 0) > 0) {
 }
 ```
 
-```{r}
+```{r debug_save2}
 # TESTING
 save.image("~/tmp-rmd.rda")
 ```
@@ -351,7 +351,7 @@ Values
 ```{r density, warning = FALSE}
 qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.75) +
   xlab("Value") +
-  ggtitle("Distribution of data values") +
+  ggtitle(sprintf("Distribution of data values (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -359,7 +359,7 @@ qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.
 ```{r density_log2, warning = FALSE}
 qplot(log2(pmax(0, as.numeric(as.matrix(dat))) + 2), geom = 'density', fill = I('blue'), alpha = 0.75) +
   xlab("Value (Log2)") +
-  ggtitle("Distribution of data values (Logged)") +
+  ggtitle(sprintf("Distribution of data log-values (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -399,7 +399,7 @@ Missing Values
 
 **Overall**
 
-```{r}
+```{r debug_save3}
 # TESTING
 save.image("~/tmp-rmd.rda")
 ```
@@ -454,7 +454,7 @@ cat("\n**Missing values by row**:\n")
 ```{r density_plot_missing_vals_by_row, include = num_missing > 0, eval = num_missing > 0}
 qplot(row_missing, geom = 'density', fill = I('purple'), alpha = 0.75) +
   xlab("# NA") +
-  ggtitle("Distribution of row missing values") +
+  ggtitle(sprintf("Distribution of row missing values (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -479,7 +479,7 @@ cat("\n**Missing values by column**:\n")
 ```{r density_plot_missing_vals_by_col, include = num_missing > 0, eval = num_missing > 0}
 qplot(col_missing, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("# NA") +
-  ggtitle("Distribution of column missing values") +
+  ggtitle(sprintf("Distribution of column missing values (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -507,7 +507,7 @@ row_means <- apply(dat, 1, mean, na.rm = TRUE)
 
 qplot(row_means, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("Row mean") +
-  ggtitle("Distribution of row means") +
+  ggtitle(sprintf("Distribution of row means (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -543,7 +543,7 @@ row_medians <- apply(dat, 1, median, na.rm = TRUE)
 
 qplot(row_medians, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("Row median") +
-  ggtitle("Distribution of row medians") +
+  ggtitle(sprintf("Distribution of row medians (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -579,7 +579,7 @@ row_maxes <- apply(dat, 1, max, na.rm = TRUE)
 
 qplot(row_maxes, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("Row maximum") +
-  ggtitle("Distribution of row maximums") +
+  ggtitle(sprintf("Distribution of row maximums (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -615,7 +615,7 @@ row_sds <- apply(dat, 1, sd, na.rm = TRUE)
 
 qplot(row_sds, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("Row standard deviation") +
-  ggtitle("Distribution of row standard deviations") +
+  ggtitle(sprintf("Distribution of row standard deviations (%s)", snakemake@params$name)) +
   theme_bw() +
   theme(legend.position = 'none')
 ```
@@ -811,7 +811,7 @@ qplot(median_row_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
   theme(legend.position = 'none')
 ```
 
-```{r}
+```{r debug_save4}
 # TESTING
 save.image("~/tmp-rmd.rda")
 ```
@@ -998,7 +998,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
       geom_point(size = 0.5, alpha = 0.5) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_pca_dat)) +
       ggtitle(sprintf("PCA (Rows / %s)", rowname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
@@ -1007,7 +1007,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_pca_dat, aes(x = PC1, y = PC2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_pca_dat)) +
     ggtitle("PCA (Rows)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", row_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", row_pca_var[2])) +
@@ -1039,7 +1039,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_pca_dat)) +
       ggtitle(sprintf("PCA (Columns / %s)", colname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
@@ -1048,7 +1048,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_pca_dat, aes(x = PC1, y = PC2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_pca_dat)) +
     ggtitle("PCA (Columns)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", col_pca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", col_pca_var[2])) +
@@ -1082,7 +1082,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', label = 'row', color = rowname)) +
       geom_point(size = 0.5, alpha = 0.5) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_rpca_dat)) +
       ggtitle(sprintf("Robust PCA (Rows / %s)", rowname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
@@ -1091,7 +1091,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_rpca_dat, aes(x = PC1, y = PC2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_rpca_dat)) +
     ggtitle("Robust PCA (Rows)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", row_rpca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", row_rpca_var[2])) +
@@ -1123,7 +1123,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'PC1', y = 'PC2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_rpca_dat)) +
       ggtitle(sprintf("Robust PCA (Columns / %s)", colname)) +
       xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
       ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
@@ -1132,7 +1132,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_rpca_dat, aes(x = PC1, y = PC2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_rpca_dat)) +
     ggtitle("Robust PCA (Columns)") +
     xlab(sprintf("PC1 (var = %0.2f %%)", col_rpca_var[1])) +
     ylab(sprintf("PC2 (var = %0.2f %%)", col_rpca_var[2])) +
@@ -1155,10 +1155,14 @@ kable(col_rpca_summary[, 1:min(ncol(col_rpca_summary), 10)], digits = 2)
 num_neighbors <- min(500, min(nrow(dat_complete) - 1, max(5, round(nrow(dat_complete) / 10))))
 
 # for larger dataset, use pca to reduce dimensionality prior to nn search
-umap_pca <- ifelse(ncol(dat) > 100, 50, NULL)
+umap_pca <- NULL
 
-row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, pca = umap_pca,
-                                   scale = FALSE, n_threads = snakemake@threads))
+if (nrow(dat_complete) > 100) {
+  umap_pca <- 50
+}
+
+row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, 
+                                   pca = umap_pca, scale = FALSE, n_threads = snakemake@threads))
 
 colnames(row_umap_dat) <- paste0("UMAP", 1:2)
 rownames(row_umap_dat) <- rownames(dat_complete)
@@ -1173,7 +1177,7 @@ if (!is.null(row_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = rowname, label = 'row')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_umap_dat)) +
       ggtitle(sprintf("UMAP (Rows / %s)", rowname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
@@ -1182,7 +1186,7 @@ if (!is.null(row_color)) {
 } else {
   ggplot(row_umap_dat, aes(x = UMAP1, y = UMAP2, label = row)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(row_umap_dat)) +
     ggtitle("UMAP (Rows)") +
     xlab("UMAP1") +
     ylab("UMAP2") +
@@ -1197,7 +1201,11 @@ if (!is.null(row_color)) {
 num_neighbors <- min(500, min(ncol(dat_complete) - 1, max(5, round(ncol(dat_complete) / 10))))
 
 # for larger dataset, use pca to reduce dimensionality prior to nn search
-umap_pca <- ifelse(nrow(dat) > 100, 50, NULL)
+umap_pca <- NULL
+
+if (ncol(dat_complete) > 100) {
+  umap_pca <- 50
+}
 
 col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors,
                                    scale = FALSE, pca = umap_pca, n_threads = snakemake@threads))
@@ -1214,7 +1222,7 @@ if (!is.null(col_color)) {
 
     print(ggplot(plt_dat, aes_string(x = 'UMAP1', y = 'UMAP2', color = colname, label = 'column')) +
       geom_point(size = 0.5, alpha = 0.75) +
-      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+      stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_umap_dat)) +
       ggtitle(sprintf("UMAP (Columns / %s)", colname)) +
       xlab("UMAP1") +
       ylab("UMAP2") +
@@ -1223,7 +1231,7 @@ if (!is.null(col_color)) {
 } else {
   ggplot(col_umap_dat, aes(x = UMAP1, y = UMAP2, label = column)) +
     geom_point(size = 0.5, alpha = 0.75) +
-    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / ncol(dat)) +
+    stat_dens2d_filter(geom = "text_repel", keep.fraction = 15 / nrow(col_umap_dat)) +
     ggtitle("UMAP (Columns)") +
     xlab("UMAP1") +
     ylab("UMAP2") +

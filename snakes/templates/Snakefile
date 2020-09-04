@@ -110,8 +110,9 @@ rule {{ action.rule_id }}:
 rule {{ rule_id }}:
   input: "{{ report.input }}"
   output: "{{ report.output }}"
-  threads: workflow.cores * 0.5
+  #threads: workflow.cores * 0.5
   params:
+    name={{ report.params['name'] }},
     metadata={{ report.params['metadata'] }},
     styles={{ report.params['styles'] }},
     random_seed={{ config["random_seed"] }},

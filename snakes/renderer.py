@@ -317,7 +317,7 @@ class SnakefileRenderer:
         if dataset['styles']['rows']['color'] ==  []:
             if dataset['metadata']['rows'] != '':
                 mdat = load_data(dataset['metadata']['rows'])
-                dataset['styles']['rows']['color'] = mdat.rows[mdat.nunique() > 1].tolist()
+                dataset['styles']['rows']['color'] = mdat.columns[mdat.nunique() > 1].tolist()
 
     def _detect_unknown_settings(self, supported_cfg, user_cfg):
         """

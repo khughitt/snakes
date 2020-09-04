@@ -178,6 +178,12 @@ project_pca:
     num_dims: 10
     whiten: false
     random_seed: 1
+project_umap:
+  required: {}
+  defaults:
+    target: 'columns'
+    num_dims: 10
+    random_seed: 1
 rename_cols_replace:
   required:
     old: 'str'

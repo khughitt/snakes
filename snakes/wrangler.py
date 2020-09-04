@@ -178,6 +178,57 @@ class SnakeWrangler:
             theme="theme_bw"
         )
 
+        # add any dependency rules of the report
+        #  for action in self.report_cfgs[report_name]["depends"]:
+        #      self.add_report_dependency_rule(dataset_name, report_name, report_id, rule_id, rule_output, action)
+
+    #
+    # Note: Aug 31, 2020
+    #
+    # Going to hold off adding report dependency support in this manner for now..
+    #
+    # It could be made to work, but it would require either including all dependency
+    # action default parameter values in the reports config, or passing in the default
+    # action configs from the renderer.
+    #
+    # Moreover, the current approach is limited to report dependencies, and doesn't
+    # provide a mechanism to check if the needed data products have already been
+    # explicitly generated.
+    #
+    # A better solution would be to impelement _generalized_ rule dependency support.
+    #
+
+    #  def add_report_dependency_rule(self, dataset_name, report_name, report_id, parent_id,
+    #                                 rule_output, action):
+    #      """Adds a report dependency rule to the pipeline"""
+    #      if isinstance(action, str):
+    #          action = {action: {}}
+    #
+    #      # determine action name, params, and template to use for report dependency
+    #      action_name, action_params = list(action.items())[0]
+    #      action_type = action_name.split("_")[0]
+    #
+    #      template = "actions/{}/{}.snakefile".format(action_type, action_name)
+    #
+    #      # rule name (ex. "report_general_eda_load_GSE106218_project_pca")
+    #      rule_id = self._get_action_rule_id(report_id, action_name)
+    #
+    #      # determine output filepath
+    #      #  if action["filename"] is not None:
+    #      #      output_filename = action["filename"]
+    #      #  else:
+    #      output_filename = "{}.feather".format(rule_id)
+    #      depend_output = os.path.join(os.path.dirname(rule_output), output_filename)
+    #
+    #      breakpoint()
+    #
+    #      rule = ActionRule(
+    #          rule_id, parent_id, depend_output, template=template, **action
+    #      )
+    #
+    #      # add to dataset
+    #      self.datasets[dataset_name][rule_id] = rule
+
     def add_trainingset_rule(self, features, response, options):
         """Adds a training set-related SnakemakeRule"""
         # convert input feature and response rule ids to filepaths
@@ -366,10 +417,10 @@ class SnakeWrangler:
 
         return rule_id
 
-    def _get_action_rule_id(self, dataset_name, action_name):
+    def _get_action_rule_id(self, rule_prefix, rule_suffix):
         """Determines a unique rule identifier to assign to a given action"""
         # base rule id: <dataset_name>_<action>
-        rule_id = dataset_name + "_" + action_name
+        rule_id = rule_prefix + "_" + rule_suffix
 
         # only allow letters, number, and underscores in rule names
         rule_id = re.sub(r"[^\w]", "_", rule_id)
@@ -380,7 +431,7 @@ class SnakeWrangler:
         id_counter = 2
 
         while rule_id in existing_ids:
-            rule_id = "_".join([dataset_name, action_name, str(id_counter)])
+            rule_id = "_".join([rule_prefix, rule_suffix, str(id_counter)])
             rule_id = re.sub(r"[^\w]", "_", rule_id)
             id_counter += 1
 
@@ -392,6 +443,8 @@ class SnakeWrangler:
 
         for dataset_name in self.datasets:
             ids = ids + list(self.datasets[dataset_name].keys())
+
+        ids = ids + list(self.reports.keys())
 
         return ids
 

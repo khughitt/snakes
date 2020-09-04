@@ -7,7 +7,7 @@ def load_data(infile):
         dat = pd.read_csv(infile)
     elif infile.endswith('.tsv'):
         dat = pd.read_csv(infile, sep='\t')
-    elif infile.edswith('.feather'):
+    elif infile.endswith('.feather'):
         dat = pd.read_feather(infile)
     elif infile.endswith('.parquet'):
         dat = pd.read_parquet(infile)

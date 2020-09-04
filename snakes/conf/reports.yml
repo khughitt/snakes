@@ -6,4 +6,10 @@
 general_eda:
   rmd: 'general/general_eda.Rmd'
   title: 'Exploratory Data Analysis'
-  # defaults:
+  # depends:
+  #   - project_pca
+  #   - project_pca:
+  #     target: rows
+  #   - project_umap
+  #   - project_umap:
+  #     target: rows
