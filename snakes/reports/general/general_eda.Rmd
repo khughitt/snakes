@@ -205,6 +205,16 @@ if (sum(col_vars == 0) > 0) {
 
   print(sprintf("Excluding %d/%d columns with zero variance...", sum(!mask), length(mask)))
 }
+
+# generate a logged version of data
+# in cases where negative values are preset, these will be transformed as if they were
+# positive, while still preserving the sign of the values
+dat_log2 <- dat
+
+neg_mask <- dat_log2 < 0
+
+dat_log2[!neg_mask] <- log2(dat_log2[!neg_mask] + 1)
+dat_log2[neg_mask] <- -log2(abs(dat_log2[neg_mask]) + 1)
 ```
 
 ```{r debug_save2}
@@ -244,11 +254,15 @@ col_mask <- col_missing <= 0.1 * ncol(dat)
 dat_complete <- dat[, col_mask]
 dat_complete <- dat_complete[complete.cases(dat_complete), ]
 
+dat_complete_log2 <- dat_log2[, col_mask]
+dat_complete_log2 <- dat_complete_log2[complete.cases(dat_complete_log2), ]
+
 # plot at most 1000 rows/columns
 row_ind_complete <- sample(nrow(dat_complete), min(nrow(dat_complete), 1000))
 col_ind_complete <- sample(ncol(dat_complete), min(ncol(dat_complete), 1000))
 
 dat_subset <- as.matrix(dat_complete[row_ind_complete, col_ind_complete])
+dat_subset_log2 <- as.matrix(dat_complete_log2[row_ind_complete, col_ind_complete])
 
 # exclude any entries with zero variance; these will cause problems during
 # several of the eda steps
@@ -258,10 +272,6 @@ dat_subset <- as.matrix(dat_complete[row_ind_complete, col_ind_complete])
 #   print(sprintf("Excluding %d/%d entries with zero variance.", !mask, length(mask)))
 #   dat_subset <- dat_subset[mask, ]
 # }
-
-dat_subset_log2 <- dat_subset
-dat_subset_log2[dat_subset_log2 < 0] <- 0
-dat_subset_log2 <- log2(dat_subset_log2 + 1)
 
 #
 # heatmap (raw)
@@ -357,7 +367,7 @@ qplot(as.numeric(as.matrix(dat)), geom = 'density', fill = I('blue'), alpha = 0.
 ```
 
 ```{r density_log2, warning = FALSE}
-qplot(log2(pmax(0, as.numeric(as.matrix(dat))) + 2), geom = 'density', fill = I('blue'), alpha = 0.75) +
+qplot(as.numeric(as.matrix(dat_log2)), geom = 'density', fill = I('blue'), alpha = 0.75) +
   xlab("Value (Log2)") +
   ggtitle(sprintf("Distribution of data log-values (%s)", snakemake@params$name)) +
   theme_bw() +
@@ -803,6 +813,11 @@ row_cor_mat <- coop::pcor(t(dat), use = 'pairwise.complete')
 median_row_cors <- apply(row_cor_mat, 1, median, na.rm = TRUE)
 ```
 
+```{r average_row_median_pairwise_correlation, result = 'asis'}
+cat(sprintf("\n- **Average row median pairwise correlation (Mean): %0.2f**:\n", mean(median_row_cors)))
+cat(sprintf("\n- **Average row median pairwise correlation (Median): %0.2f**:\n", median(median_row_cors)))
+```
+
 ```{r density_plot_row_correlations}
 qplot(median_row_cors, geom = 'density', fill = I('green'), alpha = 0.75) +
   xlab("Median pairwise pearson correlation") +
@@ -891,6 +906,11 @@ tbl_out
 #col_cor_mat <- cor(dat, use = 'pairwise.complete')
 col_cor_mat <- coop::pcor(dat, use = 'pairwise.complete')
 median_col_cors <- apply(col_cor_mat, 2, median, na.rm = TRUE)
+```
+
+```{r average_column_median_pairwise_correlation, result = 'asis'}
+cat(sprintf("\n- **Average column median pairwise correlation (Mean): %0.2f**:\n", mean(median_col_cors)))
+cat(sprintf("\n- **Average column median pairwise correlation (Median): %0.2f**:\n", median(median_col_cors)))
 ```
 
 ```{r density_plot_col_correlations}
