@@ -865,11 +865,12 @@ if (!is.null(row_annot)) {
 tbl_out
 ```
 
-**High negative correlation rows**:
+```{r high_neg_cor_rows_header, include = min(median_row_cors) < 0, eval = min(median_row_cors) < 0, results = 'asis'}
+cat('\n**High negative correlation rows**:\n')
+cat('\n*Rows with the strongest inverse pairwise correlations with all other rows.\n')
+```
 
-Rows with the strongest inverse pairwise correlations with all other rows.
-
-```{r high_neg_cor_rows}
+```{r high_neg_cor_rows, include = min(median_row_cors) < 0, eval = min(median_row_cors) < 0}
 tbl_out <- row_cor_dat %>%
     arrange(cor) %>%
     head(10)
@@ -961,11 +962,12 @@ if (!is.null(col_annot)) {
 tbl_out
 ```
 
-**High negative correlation columns**:
+```{r high_neg_col_cor_header, include = min(median_col_cors) < 0, eval = min(median_col_cors) < 0, results = 'asis'}
+cat('\n**High negative correlation columns**:\n')
+cat('\n*Columns with the strongest inverse pairwise correlations with all other columns.\n')
+```
 
-Columns with the largest inverse pairwise correlations with all other columns.
-
-```{r high_neg_cor_cols}
+```{r high_neg_cor_cols, include = min(median_col_cors) < 0, eval = min(median_col_cors) < 0}
 tbl_out <- col_cor_dat %>%
     arrange(cor) %>%
     head(10)
@@ -1181,8 +1183,18 @@ if (nrow(dat_complete) > 100) {
   umap_pca <- 50
 }
 
-row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors, 
-                                   pca = umap_pca, scale = FALSE, n_threads = snakemake@threads))
+# choose distance metric
+dist_metric <- 'euclidean'
+
+if (min(median_row_cors) < 0) {
+  # in the future, we can switch to "correlation"; conda version of uwot does not
+  # currently include this, however..
+  dist_metric <- 'cosine'
+}
+
+row_umap_dat <- as.data.frame(umap(dat_complete, n_neighbors = num_neighbors,
+                                   pca = umap_pca, metric = dist_metric,
+                                   scale = FALSE, n_threads = snakemake@threads))
 
 colnames(row_umap_dat) <- paste0("UMAP", 1:2)
 rownames(row_umap_dat) <- rownames(dat_complete)
@@ -1227,8 +1239,18 @@ if (ncol(dat_complete) > 100) {
   umap_pca <- 50
 }
 
+# choose distance metric
+dist_metric <- 'euclidean'
+
+if (min(median_col_cors) < 0) {
+  # in the future, we can switch to "correlation"; conda version of uwot does not
+  # currently include this, however..
+  dist_metric <- 'cosine'
+}
+
 col_umap_dat <- as.data.frame(umap(t(dat_complete), n_neighbors = num_neighbors,
-                                   scale = FALSE, pca = umap_pca, n_threads = snakemake@threads))
+                                   metric = dist_metric, scale = FALSE, pca = umap_pca, 
+                                   n_threads = snakemake@threads))
 
 colnames(col_umap_dat) <- paste0("UMAP", 1:2)
 rownames(col_umap_dat) <- colnames(dat_complete)
