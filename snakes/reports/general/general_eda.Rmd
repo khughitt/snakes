@@ -150,7 +150,7 @@ if (!is.null(col_mdata) && all(colnames(dat) %in% rownames(col_mdata))) {
 
   # column annotations to display in tables
   col_annot <- col_mdata %>%
-    select(valid_column_styles) %>%
+    select(all_of(valid_column_styles)) %>%
     rownames_to_column('column_id')
 
   # column fill color
@@ -212,6 +212,7 @@ if (sum(col_vars == 0) > 0) {
 dat_log2 <- dat
 
 neg_mask <- dat_log2 < 0
+neg_mask[is.na(neg_mask)] <- FALSE
 
 dat_log2[!neg_mask] <- log2(dat_log2[!neg_mask] + 1)
 dat_log2[neg_mask] <- -log2(abs(dat_log2[neg_mask]) + 1)

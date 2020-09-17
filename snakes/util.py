@@ -1,8 +1,19 @@
+import os
+import sys
+import logging
 import pandas as pd
 from collections.abc import Mapping
 
 def load_data(infile):
     """Attempts to detect filetype and load a specified dataset"""
+    # check to make sure file exists
+    if not os.path.exists(infile):
+        logging.error(
+            "Unable to find file: %s", infile
+        )
+        sys.exit()
+
+    # load data
     if infile.endswith('.csv'):
         dat = pd.read_csv(infile)
     elif infile.endswith('.tsv'):

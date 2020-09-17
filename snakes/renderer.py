@@ -105,8 +105,13 @@ class SnakefileRenderer:
         # load user-provided main snakes config file
         with open(config_file) as fp:
             # self.config.update(yaml.load(fp, Loader=yaml.FullLoader))
+            yaml_cfg = yaml.load(fp, Loader=yaml.FullLoader)
+
+            # check for common mistakes in yaml configuration
+            self._check_yaml(yaml_cfg)
+
             self.config = recursive_update(
-                self.config, yaml.load(fp, Loader=yaml.FullLoader)
+                self.config, yaml_cfg
             )
 
         # overide any settings specified via the command-line
@@ -249,7 +254,7 @@ class SnakefileRenderer:
             elif ext in [".parquet"]:
                 dataset["file_type"] = "parquet"
             else:
-                msg = "Config error: could not determine appropriate file_type for {}"
+                msg = "[ERROR] Config error: could not determine appropriate file_type for {}"
                 sys.exit(msg.format(dataset["path"]))
 
         # determine delimiter for csv/tsv files
@@ -291,6 +296,15 @@ class SnakefileRenderer:
 
         # store parsed dataset config
         return dataset
+
+    def _check_yaml(self, yaml):
+        """Checks main config file loaded from yaml for common mistakes and reports
+        any issues found to user."""
+        if type(yaml['datasets']) == dict:
+            logging.error(
+               "[ERROR] \"datasets\" section of config file must be a list, not a dictionary..." 
+            )
+            sys.exit()
 
     def _check_styles(self, dataset):
         """Checks to see if style settings are specified in dataset config, and if not,
@@ -335,7 +349,7 @@ class SnakefileRenderer:
 
         if unknown_opts:
             msg = (
-                "Config error: unexpected configuration options encountered for {}: {}"
+                "[ERROR] Config error: unexpected configuration options encountered for {}: {}"
             )
             sys.exit(msg.format(user_cfg["name"], ", ".join(unknown_opts)))
 
@@ -386,7 +400,7 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(action_params) != dict:
-            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            msg = "[ERROR] Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(action_name))
 
         # get default action params
@@ -418,7 +432,7 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(fsel_params) != dict:
-            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            msg = "[ERROR] Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(fsel_method))
 
         # get default feature selection params
@@ -440,7 +454,7 @@ class SnakefileRenderer:
         # check to make sure parameters specified as a dict (in case user accidentally uses
         # a list in the yaml)
         if type(data_int_params) != dict:
-            msg = "Config error: parameters for {} must be specified as a YAML dictionary."
+            msg = "[ERROR] Config error: parameters for {} must be specified as a YAML dictionary."
             sys.exit(msg.format(data_int_type))
 
         # get default feature selection params
@@ -462,12 +476,12 @@ class SnakefileRenderer:
         for param, expected_type in required_params.items():
             if param not in self.config:
                 msg = (
-                    "Config error: missing required configuration parameter in {}: '{}'"
+                    "[ERROR] Config error: missing required configuration parameter in {}: '{}'"
                 )
                 config_file = os.path.basename(self.config["config_file"])
                 sys.exit(msg.format(config_file, param))
             elif not isinstance(self.config[param], expected_type):
-                msg = "Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
+                msg = "[ERROR] Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
                 config_file = os.path.basename(self.config["config_file"])
                 sys.exit(msg.format(config_file, param, expected_type))
 
@@ -480,12 +494,12 @@ class SnakefileRenderer:
         for param, expected_type in required_params.items():
             if param not in dataset_cfg:
                 msg = (
-                    "Config error: missing required configuration parameter in {}: '{}'"
+                    "[ERROR] Config error: missing required configuration parameter in {}: '{}'"
                 )
                 config_file = os.path.basename(dataset_cfg["config_file"])
                 sys.exit(msg.format(config_file, param))
             elif not isinstance(dataset_cfg[param], expected_type):
-                msg = "Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
+                msg = "[ERROR] Config error: parameter is of unexpected type {}: '{}' (expected: '{}')"
                 config_file = os.path.basename(dataset_cfg["config_file"])
                 sys.exit(msg.format(config_file, param, expected_type))
 
