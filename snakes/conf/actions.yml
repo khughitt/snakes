@@ -3,6 +3,11 @@
 # Snakes action required/default parameters
 #
 ############################################
+aggregate_duplicate_rows:
+  required:
+    func: 'str'
+  defaults:
+    func: 'median'
 aggregate_gene_sets:
   required:
     gmt: 'str'
