@@ -53,7 +53,20 @@ class SnakefileRenderer:
         with open(os.path.join(self._conf_dir, "data_integration.yml")) as fp:
             self._supported_data_int_types = yaml.load(fp, Loader=yaml.FullLoader)
 
-        self._load_config(config_filepath, **kwargs)
+        # parse command-line arguments
+        self._args = self._get_args()
+
+        # if user specified a config filepath on the command-line, use that path
+        if "config" in self._args:
+            config_file = self._args["config"]
+        elif config_filepath is not None:
+            # otherwise use filepath specified in constructor, if specified
+            config_file = config_filepath
+        else:
+            # finally, check for config file in current working directory
+            config_file = "config.yml"
+
+        self._load_config(config_file, **kwargs)
 
     @staticmethod
     def _setup_logger():
@@ -72,23 +85,6 @@ class SnakefileRenderer:
 
     def _load_config(self, config_filepath, **kwargs):
         """Parses command-line arguments and loads snakes configuration."""
-        # get command-line arguments and convert to a dict
-        parser = self._get_args()
-        cmdline_args = parser.parse_args()
-        cmdline_args = dict(
-            (k, v) for k, v in list(vars(cmdline_args).items()) if v is not None
-        )
-
-        # if user specified a config filepath on the command-line, use that path
-        if "config" in cmdline_args:
-            config_file = cmdline_args["config"]
-        elif config_filepath is not None:
-            # otherwise use filepath specified in constructor, if specified
-            config_file = config_filepath
-        else:
-            # finally, check for config file in current working directory
-            config_file = "config.yml"
-
         # check to make sure config filepath is valid
         if not os.path.isfile(config_file):
             logging.error(
@@ -613,7 +609,23 @@ class SnakefileRenderer:
             ),
         )
 
-        return parser
+        parser.add_argument(
+            "-r",
+            "--run",
+            default=False,
+            help=(
+                "Runs pipeline, in addition to generating Snakefile."
+            ),
+        )
+
+        # convert command-line args to a dict and return
+        args = parser.parse_args()
+
+        args = dict(
+            (k, v) for k, v in list(vars(args).items()) if v is not None
+        )
+
+        return args
 
     def render(self):
         """Renders snakefile"""
@@ -671,8 +683,16 @@ class SnakefileRenderer:
             data_dir=data_dir
         )
 
-        # save rendered snakefile to disk
+        # otherwise, write Snakefile to disk
         logging.info("Saving Snakefile to %s", self.output_file)
 
         with open(self.output_file, "w") as file_handle:
             file_handle.write(snakefile)
+
+        # save rendered snakefile to disk
+        if self._args['run']:
+            import snakemake
+
+            # TODO: add support for specifying profile, number of cores
+            snakemake.snakemake(self.output_file)
+
